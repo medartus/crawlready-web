@@ -34,12 +34,12 @@ export const MarketOpportunitySection = () => {
               <Rocket className="size-24 text-indigo-600" />
             </div>
             <div className="relative">
-              <p className="mb-2 text-5xl font-bold text-indigo-600 dark:text-indigo-400">200M+</p>
+              <p className="mb-2 text-5xl font-bold text-indigo-600 dark:text-indigo-400">500M+</p>
               <p className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                ChatGPT Search Users
+                AI Search Users Globally
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                OpenAI launched ChatGPT Search in November 2024, giving 200M+ users direct access to AI-powered search. The shift is happening now.
+                ChatGPT Search, Perplexity, and Claude have exploded since late 2024. Over 500M users now use AI-powered search daily. The revolution is here.
               </p>
             </div>
           </div>
@@ -50,12 +50,12 @@ export const MarketOpportunitySection = () => {
               <Zap className="size-24 text-purple-600" />
             </div>
             <div className="relative">
-              <p className="mb-2 text-5xl font-bold text-purple-600 dark:text-purple-400">Q1 2025</p>
+              <p className="mb-2 text-5xl font-bold text-purple-600 dark:text-purple-400">Q4 2025</p>
               <p className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                Early Mover Window
+                Last Chance Window
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                The first 100 brands in each category to optimize for AI citations will establish authority. Competition is still low—act now.
+                Early movers are already dominating AI citations. Competition is heating up fast. The brands who act NOW will capture the remaining market share.
               </p>
             </div>
           </div>
@@ -94,13 +94,13 @@ export const MarketOpportunitySection = () => {
               </div>
               <div className="pb-8">
                 <p className="mb-1 text-sm font-semibold text-green-600 dark:text-green-400">
-                  November 2024
+                  November 2024 - Q2 2025
                 </p>
                 <h4 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">
-                  ChatGPT Search Launches
+                  AI Search Goes Mainstream
                 </h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  OpenAI launches ChatGPT Search, making AI-powered search mainstream. 200M+ users now have direct access to AI search.
+                  ChatGPT Search launched. Perplexity hit 100M users. Early adopters secured dominant AI citations in their categories. The foundation was set.
                 </p>
               </div>
             </div>
@@ -115,13 +115,13 @@ export const MarketOpportunitySection = () => {
               </div>
               <div className="pb-8">
                 <p className="mb-1 text-sm font-semibold text-indigo-600 dark:text-indigo-400">
-                  Q1 2025 (Now)
+                  Q3-Q4 2025 (Now)
                 </p>
                 <h4 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">
-                  Early Mover Advantage Window
+                  Final Window to Establish Authority
                 </h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  The first 100 brands in each category to optimize for AI citations will establish authority. Competition is still low.
+                  Competition is intensifying. Brands who optimize NOW can still capture significant AI citation share. This is your last chance to be an early mover.
                 </p>
               </div>
             </div>
@@ -135,13 +135,13 @@ export const MarketOpportunitySection = () => {
               </div>
               <div>
                 <p className="mb-1 text-sm font-semibold text-purple-600 dark:text-purple-400">
-                  Q2-Q4 2025
+                  Q1 2026 & Beyond
                 </p>
                 <h4 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">
-                  AI Search Becomes Standard
+                  Market Consolidation
                 </h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Google integrates AI Overviews deeper. Perplexity grows to 100M+ users. Late movers struggle to catch up with established AI citations.
+                  AI search becomes the default. Dominant brands solidify their position. Late movers face an uphill battle trying to displace established AI citation leaders.
                 </p>
               </div>
             </div>
