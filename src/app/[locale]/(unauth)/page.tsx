@@ -1,19 +1,21 @@
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 
+import { ComparisonSection } from '@/templates/ComparisonSection';
 import { CTA } from '@/templates/CTA';
-import { DemoBanner } from '@/templates/DemoBanner';
+import { DemoSection } from '@/templates/DemoSection';
 import { FAQ } from '@/templates/FAQ';
 import { Features } from '@/templates/Features';
-import { Footer } from '@/templates/Footer';
 import { Hero } from '@/templates/Hero';
-import { Navbar } from '@/templates/Navbar';
-import { Pricing } from '@/templates/Pricing';
-import { Sponsors } from '@/templates/Sponsors';
+import { LandingFooter } from '@/templates/LandingFooter';
+import { LandingNavbar } from '@/templates/LandingNavbar';
+import { MarketOpportunitySection } from '@/templates/MarketOpportunitySection';
+import { ProblemSection } from '@/templates/ProblemSection';
+import { SocialProofSection } from '@/templates/SocialProofSection';
 
 export async function generateMetadata(props: { params: { locale: string } }) {
   const t = await getTranslations({
     locale: props.params.locale,
-    namespace: 'Index',
+    namespace: 'LandingPage',
   });
 
   return {
@@ -27,15 +29,17 @@ const IndexPage = (props: { params: { locale: string } }) => {
 
   return (
     <>
-      <DemoBanner />
-      <Navbar />
+      <LandingNavbar />
       <Hero />
-      <Sponsors />
+      <DemoSection />
+      <ProblemSection />
+      <SocialProofSection />
       <Features />
-      <Pricing />
+      <ComparisonSection />
+      <MarketOpportunitySection />
       <FAQ />
       <CTA />
-      <Footer />
+      <LandingFooter />
     </>
   );
 };
