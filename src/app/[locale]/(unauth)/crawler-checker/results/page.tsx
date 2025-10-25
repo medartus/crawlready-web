@@ -5,10 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { CompatibilityScore } from '@/components/CompatibilityScore';
-import { CrawlerCompatibilityBadge } from '@/components/CrawlerCompatibilityBadge';
-import { CrawlerViewComparison } from '@/components/CrawlerViewComparison';
-import { IssuesAndRecommendations } from '@/components/IssuesAndRecommendations';
+import { ResultsTabs } from '@/components/ResultsTabs';
 import { buttonVariants } from '@/components/ui/buttonVariants';
 import { Section } from '@/features/landing/Section';
 import { LandingFooter } from '@/templates/LandingFooter';
@@ -33,12 +30,10 @@ export default function CrawlerCheckerResultsPage() {
     try {
       const parsedReport = JSON.parse(storedReport) as CompatibilityReport;
       setReport(parsedReport);
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error parsing report:', error);
       router.push('/crawler-checker');
-    }
-    finally {
+    } finally {
       setLoading(false);
     }
   }, [router]);
@@ -54,14 +49,12 @@ export default function CrawlerCheckerResultsPage() {
           text: shareText,
           url: shareUrl,
         });
+      } catch {
+        // Share failed silently - fallback to clipboard
+        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
       }
-      catch (err) {
-        console.log('Share failed:', err);
-      }
-    }
-    else {
-      navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
-      alert('Link copied to clipboard!');
+    } else {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
     }
   };
 
@@ -96,7 +89,7 @@ export default function CrawlerCheckerResultsPage() {
       {/* Header Section */}
       <Section className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 dark:border-gray-700 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-pink-950/20">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.1),transparent_50%)]" />
-        
+
         <div className="mx-auto max-w-5xl text-center">
           <Link
             href="/crawler-checker"
@@ -105,11 +98,11 @@ export default function CrawlerCheckerResultsPage() {
             <ArrowLeft className="size-4" />
             Back to Checker
           </Link>
-          
+
           <h1 className="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl">
             AI Crawler Compatibility Report
           </h1>
-          
+
           <div className="mx-auto max-w-2xl">
             <p className="mb-2 text-lg text-gray-600 dark:text-gray-400">
               Results for
@@ -118,98 +111,17 @@ export default function CrawlerCheckerResultsPage() {
               {url}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-500">
-              Checked at {new Date(report.checkedAt).toLocaleString()}
+              Checked at
+              {' '}
+              {new Date(report.checkedAt).toLocaleString()}
             </p>
           </div>
         </div>
       </Section>
 
-      {/* Score Section */}
-      <Section className="bg-white dark:bg-gray-900">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-8 shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/50 md:p-12">
-            <div className="text-center">
-              <h2 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
-                Overall Compatibility Score
-              </h2>
-              <CompatibilityScore score={report.score} />
-
-              {/* Quick Stats */}
-              <div className="mt-10 grid grid-cols-3 gap-6 border-t border-gray-200 pt-8 dark:border-gray-700">
-                <div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {report.issues.length}
-                  </div>
-                  <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">Issues Found</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {report.crawlerView.contentLength}
-                  </div>
-                  <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">Characters</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {report.crawlerView.hasSchema ? 'Yes' : 'No'}
-                  </div>
-                  <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">Schema Markup</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* Crawler Compatibility */}
-      <Section className="border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800 md:p-12">
-            <CrawlerCompatibilityBadge compatibility={report.crawlerCompatibility} />
-          </div>
-        </div>
-      </Section>
-
-      {/* Issues and Recommendations */}
-      <Section className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-8 shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/50 md:p-12">
-            <IssuesAndRecommendations
-              issues={report.issues}
-              recommendations={report.recommendations}
-            />
-          </div>
-        </div>
-      </Section>
-
-      {/* Visual Comparison: What AI Crawlers See */}
-      {report.visualComparison && (
-        <Section className="border-t border-gray-200 bg-gradient-to-br from-indigo-50 to-purple-50 dark:border-gray-700 dark:from-indigo-950/20 dark:to-purple-950/20">
-          <div className="mx-auto max-w-7xl">
-            <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800 md:p-12">
-              <CrawlerViewComparison comparison={report.visualComparison} />
-            </div>
-          </div>
-        </Section>
-      )}
-
-      {/* Content Preview */}
-      <Section className="border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
-        <div className="mx-auto max-w-5xl">
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800 md:p-12">
-            <h3 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
-              Content Preview
-            </h3>
-            <div className="rounded-xl bg-gray-50 p-6 dark:bg-gray-900">
-              <p className="font-mono text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-                {report.crawlerView.textContent.slice(0, 500)}
-                {report.crawlerView.textContent.length > 500 && '...'}
-              </p>
-            </div>
-            <p className="mt-4 text-sm text-gray-500 dark:text-gray-500">
-              Showing first 500 characters of {report.crawlerView.contentLength} total
-            </p>
-          </div>
-        </div>
+      {/* Main Content - Tab-Based Interface */}
+      <Section className="bg-white py-12 dark:bg-gray-900">
+        <ResultsTabs report={report} />
       </Section>
 
       {/* CTA Section */}
@@ -248,50 +160,6 @@ export default function CrawlerCheckerResultsPage() {
               Check Another Site
             </button>
           </div>
-        </div>
-      </Section>
-
-      {/* Technical Details */}
-      <Section className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
-        <div className="mx-auto max-w-3xl">
-          <details className="group rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 transition-all hover:border-indigo-200 hover:shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/50 dark:hover:border-indigo-800">
-            <summary className="cursor-pointer p-8 text-lg font-semibold text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
-              Technical Details (for developers)
-            </summary>
-            <div className="border-t border-gray-200 p-8 dark:border-gray-700">
-              <div className="space-y-6">
-                <div>
-                  <h4 className="mb-2 font-semibold text-gray-900 dark:text-white">Render Time</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {report.crawlerView.renderTime}
-                    ms
-                  </p>
-                </div>
-                <div>
-                  <h4 className="mb-2 font-semibold text-gray-900 dark:text-white">HTML Size</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {Math.round(report.crawlerView.html.length / 1024)}
-                    {' '}
-                    KB
-                  </p>
-                </div>
-                <div>
-                  <h4 className="mb-2 font-semibold text-gray-900 dark:text-white">Extracted Text</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {report.crawlerView.contentLength}
-                    {' '}
-                    characters
-                  </p>
-                </div>
-                <div>
-                  <h4 className="mb-2 font-semibold text-gray-900 dark:text-white">Schema.org Markup</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {report.crawlerView.hasSchema ? 'Detected' : 'Not detected'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </details>
         </div>
       </Section>
 

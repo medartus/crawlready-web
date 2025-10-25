@@ -331,7 +331,16 @@ function DifferenceCard({ difference }: { difference: CrawlerViewComparison['dif
               {difference.severity}
             </span>
           </div>
-          <p className="mb-2 text-sm text-gray-700">{difference.impact}</p>
+          <p className="mb-2 text-sm text-gray-700">
+            <strong>Impact:</strong>
+            {' '}
+            {difference.impact}
+          </p>
+          <p className="mb-2 text-sm text-gray-700">
+            <strong>Fix:</strong>
+            {' '}
+            {difference.fix}
+          </p>
           <div className="inline-block rounded bg-white bg-opacity-50 px-2 py-1 text-xs text-gray-600">
             Type:
             {' '}

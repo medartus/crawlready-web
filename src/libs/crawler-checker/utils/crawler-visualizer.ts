@@ -10,8 +10,10 @@ export type CrawlerViewComparison = {
   differences: Array<{
     type: 'javascript' | 'lazy-loading' | 'hidden-content' | 'dynamic-content';
     severity: 'critical' | 'high' | 'medium' | 'low';
+    crawler: string;
     description: string;
     impact: string;
+    fix: string;
   }>;
   statistics: {
     jsScriptsRemoved: number;
@@ -128,8 +130,10 @@ export class CrawlerVisualizer {
   private static analyzeDifferences(originalHtml: string, _crawlerHtml: string): Array<{
     type: 'javascript' | 'lazy-loading' | 'hidden-content' | 'dynamic-content';
     severity: 'critical' | 'high' | 'medium' | 'low';
+    crawler: string;
     description: string;
     impact: string;
+    fix: string;
   }> {
     const differences = [];
 
@@ -138,8 +142,10 @@ export class CrawlerVisualizer {
       differences.push({
         type: 'javascript' as const,
         severity: 'critical' as const,
+        crawler: 'All AI crawlers',
         description: 'Content rendered by JavaScript framework',
-        impact: 'AI crawlers may see empty page or loading spinner',
+        impact: 'AI crawlers cannot see your content as they don\'t execute JavaScript',
+        fix: 'Implement server-side rendering (SSR) or static site generation (SSG) to pre-render content in HTML',
       });
     }
 
@@ -149,8 +155,10 @@ export class CrawlerVisualizer {
       differences.push({
         type: 'lazy-loading' as const,
         severity: 'medium' as const,
+        crawler: 'All AI crawlers',
         description: `${lazyImagesCount} images use lazy loading`,
-        impact: 'Images may not load for crawlers without JavaScript',
+        impact: 'Images may not load for crawlers without JavaScript, reducing content understanding',
+        fix: 'Add fallback src attributes or use <noscript> tags with regular img tags for critical images',
       });
     }
 
@@ -159,8 +167,10 @@ export class CrawlerVisualizer {
       differences.push({
         type: 'hidden-content' as const,
         severity: 'low' as const,
-        description: 'Hidden content detected',
-        impact: 'Crawlers skip hidden content',
+        crawler: 'All AI crawlers',
+        description: 'Hidden content detected (display:none or visibility:hidden)',
+        impact: 'Hidden content may be ignored or deprioritized by AI crawlers',
+        fix: 'Move important content outside hidden elements or use CSS to visually hide but keep accessible (opacity, off-screen positioning)',
       });
     }
 
@@ -169,8 +179,10 @@ export class CrawlerVisualizer {
       differences.push({
         type: 'dynamic-content' as const,
         severity: 'high' as const,
-        description: 'Dynamic content loading detected',
-        impact: 'Content may not be visible to crawlers',
+        crawler: 'All AI crawlers',
+        description: 'Dynamic content loading detected (data-src, data-lazy attributes)',
+        impact: 'Content loaded dynamically won\'t be available to AI crawlers during initial page load',
+        fix: 'Include critical content directly in HTML source, use server-side rendering for dynamic data',
       });
     }
 
@@ -180,8 +192,10 @@ export class CrawlerVisualizer {
       differences.push({
         type: 'javascript' as const,
         severity: 'critical' as const,
-        description: 'Empty root container (requires JavaScript)',
-        impact: 'AI crawlers see no content',
+        crawler: 'All AI crawlers',
+        description: 'Empty root container (requires JavaScript to render)',
+        impact: 'AI crawlers will see an empty page with no content to index',
+        fix: 'Enable SSR/SSG to pre-render content or add static HTML fallback inside root element',
       });
     }
 
@@ -203,7 +217,7 @@ export class CrawlerVisualizer {
       /_next\/static/i,
     ];
 
-    return frameworks.some((pattern) => pattern.test(html));
+    return frameworks.some(pattern => pattern.test(html));
   }
 
   /**

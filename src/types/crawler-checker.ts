@@ -34,8 +34,10 @@ export type CategoryScores = {
 export type ViewDifference = {
   type: 'javascript' | 'lazy-loading' | 'hidden-content' | 'dynamic-content';
   severity: 'critical' | 'high' | 'medium' | 'low';
+  crawler: string;
   description: string;
   impact: string;
+  fix: string;
 };
 
 export interface CrawlerViewComparison {
