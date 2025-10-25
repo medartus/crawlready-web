@@ -3,7 +3,6 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-import { SchemaAnalysisSection } from '@/components/SchemaAnalysisSection';
 import { buttonVariants } from '@/components/ui/buttonVariants';
 import type { CompatibilityReport, Issue, ViewDifference } from '@/types/crawler-checker';
 
@@ -39,22 +38,6 @@ export function ResultsTabs({ report }: ResultsTabsProps) {
             <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
-      )}
-
-      {/* Schema Analysis Section */}
-      {report.schemaAnalysis && (
-        <section id="schema">
-          <div className="mb-6">
-            <h2 className="flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white">
-              <span className="text-4xl">📊</span>
-              Schema Markup Analysis
-            </h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Structured data quality assessment for AI crawler optimization
-            </p>
-          </div>
-          <SchemaAnalysisSection analysis={report.schemaAnalysis} />
-        </section>
       )}
 
       {/* Issues Section */}

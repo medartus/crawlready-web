@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Search, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -107,43 +107,32 @@ export default function SchemaCheckerPage() {
 
           {/* Input Form */}
           <form onSubmit={handleSubmit} className="mx-auto mb-12 max-w-2xl">
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-400" />
+            <div className="flex flex-col gap-2">
+              <label htmlFor="url" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Enter your website URL
+              </label>
+              <div className="flex gap-2">
                 <input
+                  id="url"
                   type="text"
                   value={url}
                   onChange={e => setUrl(e.target.value)}
-                  placeholder="Enter your website URL (e.g., example.com)"
-                  className="w-full rounded-lg border-2 border-gray-300 bg-white py-4 pl-12 pr-4 text-lg transition-colors focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  placeholder="example.com or https://example.com"
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-base focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                   disabled={loading}
                 />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loading ? 'Checking...' : 'Check Now'}
+                </button>
               </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className={`${buttonVariants({ size: 'lg' })} group whitespace-nowrap bg-gradient-to-r from-indigo-600 to-purple-600 px-8 text-lg shadow-xl transition-all hover:scale-105 hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100`}
-              >
-                {loading
-                  ? (
-                      <>
-                        <div className="mr-2 size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        Analyzing...
-                      </>
-                    )
-                  : (
-                      <>
-                        Analyze Schema
-                        <ArrowRight className="ml-2 size-5 transition-transform group-hover:translate-x-1" />
-                      </>
-                    )}
-              </button>
+              {error && (
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              )}
             </div>
-            {error && (
-              <p className="mt-3 text-left text-sm text-red-600 dark:text-red-400">
-                {error}
-              </p>
-            )}
           </form>
 
           {/* Trust Signals */}

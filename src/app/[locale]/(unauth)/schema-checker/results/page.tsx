@@ -87,10 +87,10 @@ export default function SchemaCheckerResultsPage() {
       <LandingNavbar />
 
       {/* Header Section */}
-      <Section className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 dark:border-gray-700 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-pink-950/20">
+      <Section className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-12 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-pink-950/20">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.1),transparent_50%)]" />
 
-        <div className="mx-auto max-w-5xl text-center">
+        <div className="mx-auto max-w-5xl">
           <Link
             href="/schema-checker"
             className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
@@ -99,40 +99,160 @@ export default function SchemaCheckerResultsPage() {
             Back to Schema Checker
           </Link>
 
-          <h1 className="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl">
-            Schema Markup Analysis Report
-          </h1>
-
-          <div className="mx-auto max-w-2xl">
-            <p className="mb-2 text-lg text-gray-600 dark:text-gray-400">
+          <div className="text-center">
+            <h1 className="mb-3 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+              Schema Markup Analysis
+            </h1>
+            <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
               Results for
             </p>
-            <p className="mb-3 break-all font-mono text-sm text-gray-900 dark:text-white">
+            <p className="mb-6 break-all font-mono text-sm font-medium text-gray-900 dark:text-white">
               {url}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              Analyzed just now
             </p>
           </div>
         </div>
       </Section>
 
-      {/* Main Content - Schema Analysis */}
-      <Section className="bg-white px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
+      {/* Score Hero Section */}
+      <Section className="border-b border-gray-200 bg-white py-12 dark:border-gray-700 dark:bg-gray-900">
         <div className="mx-auto max-w-5xl">
+          <div className="rounded-3xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-8 shadow-xl dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/50 md:p-12">
+            <div className="grid gap-8 md:grid-cols-2 md:gap-12">
+              {/* Overall Score Display */}
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                  Overall Schema Score
+                </div>
+                <div className="relative mb-6">
+                  <svg className="size-48" viewBox="0 0 200 200">
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="90"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="12"
+                      className="text-gray-200 dark:text-gray-700"
+                    />
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="90"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                      className={`transition-all ${
+                        analysis.overallScore >= 80
+                          ? 'text-green-500'
+                          : analysis.overallScore >= 60
+                            ? 'text-yellow-500'
+                            : 'text-red-500'
+                      }`}
+                      strokeDasharray={`${(analysis.overallScore / 100) * 565.48} 565.48`}
+                      transform="rotate(-90 100 100)"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div>
+                      <div
+                        className={`text-5xl font-bold ${
+                          analysis.overallScore >= 80
+                            ? 'text-green-600 dark:text-green-400'
+                            : analysis.overallScore >= 60
+                              ? 'text-yellow-600 dark:text-yellow-400'
+                              : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {analysis.overallScore}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">out of 100</div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${
+                    analysis.overallScore >= 80
+                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      : analysis.overallScore >= 60
+                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  }`}
+                >
+                  {analysis.overallScore >= 80 ? '✓ Excellent' : analysis.overallScore >= 60 ? '⚠ Needs Improvement' : '✗ Poor'}
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="flex flex-col justify-center space-y-4">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="mb-1 text-sm text-gray-600 dark:text-gray-400">Schemas Found</div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {analysis.schemaCount}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="mb-1 text-sm text-gray-600 dark:text-gray-400">Issues Detected</div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {analysis.issues.length}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="mb-1 text-sm text-gray-600 dark:text-gray-400">Recommendations</div>
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {analysis.recommendations.length}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4 border-t border-gray-200 pt-8 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={handleCheckAnother}
+                className={`${buttonVariants({ variant: 'outline' })} group gap-2`}
+              >
+                <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
+                Check Another Site
+              </button>
+              <button
+                type="button"
+                onClick={handleShare}
+                className={`${buttonVariants({ variant: 'outline' })} group gap-2`}
+              >
+                <Share2 className="size-4" />
+                Share Results
+              </button>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Main Content - Schema Analysis */}
+      <Section className="bg-gradient-to-br from-gray-50 to-white px-4 py-16 dark:from-gray-900 dark:to-gray-800 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-8 text-center">
+            <h2 className="mb-3 text-3xl font-bold text-gray-900 dark:text-white">
+              Detailed Analysis
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-400">
+              In-depth breakdown of your schema markup quality and recommendations
+            </p>
+          </div>
           <SchemaAnalysisSection analysis={analysis} />
         </div>
       </Section>
 
-      {/* Additional CTA Section */}
+      {/* CTA Section */}
       <Section className="border-t border-gray-200 bg-white py-20 dark:border-gray-700 dark:bg-gray-900">
-        <div className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-4xl">
           <div className="overflow-hidden rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 shadow-2xl dark:border-indigo-800 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
-            <div className="p-12 text-center">
-              <div className="mb-6 text-6xl">🎯</div>
-              <h3 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
+            <div className="p-8 text-center md:p-12">
+              <div className="mb-6 text-6xl">🚀</div>
+              <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
                 Want Perfect Schema Automatically?
-              </h3>
+              </h2>
               <p className="mb-2 text-xl text-gray-700 dark:text-gray-300">
                 CrawlReady generates comprehensive, valid Schema markup for every page.
               </p>
@@ -141,66 +261,47 @@ export default function SchemaCheckerResultsPage() {
               </p>
 
               {/* Value Props Grid */}
-              <div className="mb-10 grid gap-4 text-left sm:grid-cols-3">
-                <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
-                  <div className="mb-2 text-2xl">✨</div>
-                  <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">Auto-Generated</h4>
+              <div className="mb-10 grid gap-6 text-left md:grid-cols-3">
+                <div className="group rounded-2xl border border-white/40 bg-white/60 p-6 transition-all hover:scale-105 hover:shadow-lg dark:border-gray-700/40 dark:bg-black/20">
+                  <div className="mb-3 inline-flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-2xl text-white shadow-lg">
+                    ✨
+                  </div>
+                  <h4 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">Auto-Generated</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Analyzes content and creates perfect Schema
+                    Analyzes your content and creates perfect Schema markup automatically
                   </p>
                 </div>
-                <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
-                  <div className="mb-2 text-2xl">🎯</div>
-                  <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">Always Valid</h4>
+                <div className="group rounded-2xl border border-white/40 bg-white/60 p-6 transition-all hover:scale-105 hover:shadow-lg dark:border-gray-700/40 dark:bg-black/20">
+                  <div className="mb-3 inline-flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-2xl text-white shadow-lg">
+                    ✓
+                  </div>
+                  <h4 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">Always Valid</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Follows latest Schema.org standards
+                    Follows latest Schema.org standards and best practices
                   </p>
                 </div>
-                <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
-                  <div className="mb-2 text-2xl">🤖</div>
-                  <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">AI-Optimized</h4>
+                <div className="group rounded-2xl border border-white/40 bg-white/60 p-6 transition-all hover:scale-105 hover:shadow-lg dark:border-gray-700/40 dark:bg-black/20">
+                  <div className="mb-3 inline-flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 text-2xl text-white shadow-lg">
+                    🤖
+                  </div>
+                  <h4 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">AI-Optimized</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Maximizes visibility to AI crawlers
+                    Maximizes visibility and citation by AI crawlers
                   </p>
                 </div>
               </div>
 
-              <div className="mb-6 flex justify-center">
-                <Link
-                  href="/#early-access"
-                  className={`${buttonVariants({ size: 'lg' })} group bg-indigo-600 px-12 py-6 text-xl text-white shadow-2xl transition-all hover:scale-105 hover:bg-indigo-700`}
-                >
-                  Join Waitlist
-                  <ArrowRight className="ml-2 size-6 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </div>
+              <Link
+                href="/#early-access"
+                className={`${buttonVariants({ size: 'lg' })} group bg-gradient-to-r from-indigo-600 to-purple-600 px-12 text-xl shadow-xl transition-all hover:scale-105 hover:shadow-2xl`}
+              >
+                Join Waitlist
+                <ArrowRight className="ml-2 size-6 transition-transform group-hover:translate-x-1" />
+              </Link>
 
-              <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-6 text-sm text-gray-600 dark:text-gray-400">
                 ✓ Free to join • ✓ No commitment • ✓ Be notified at launch
               </p>
-            </div>
-
-            {/* Secondary Actions Bar */}
-            <div className="border-t border-indigo-200 bg-white/40 px-6 py-4 dark:border-indigo-800 dark:bg-black/20">
-              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="inline-flex items-center gap-2 text-gray-700 transition-colors hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
-                >
-                  <Share2 className="size-5" />
-                  Share Results
-                </button>
-                <span className="hidden text-gray-400 sm:inline">•</span>
-                <button
-                  type="button"
-                  onClick={handleCheckAnother}
-                  className="inline-flex items-center gap-2 text-gray-700 transition-colors hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
-                >
-                  <ArrowLeft className="size-5" />
-                  Check Another Site
-                </button>
-              </div>
             </div>
           </div>
         </div>
