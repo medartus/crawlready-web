@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 
 import { CompatibilityScore } from '@/components/CompatibilityScore';
 import { CrawlerCompatibilityBadge } from '@/components/CrawlerCompatibilityBadge';
+import { CrawlerViewComparison } from '@/components/CrawlerViewComparison';
 import { IssuesAndRecommendations } from '@/components/IssuesAndRecommendations';
 import { buttonVariants } from '@/components/ui/buttonVariants';
 import { Section } from '@/features/landing/Section';
@@ -179,6 +180,17 @@ export default function CrawlerCheckerResultsPage() {
           </div>
         </div>
       </Section>
+
+      {/* Visual Comparison: What AI Crawlers See */}
+      {report.visualComparison && (
+        <Section className="border-t border-gray-200 bg-gradient-to-br from-indigo-50 to-purple-50 dark:border-gray-700 dark:from-indigo-950/20 dark:to-purple-950/20">
+          <div className="mx-auto max-w-7xl">
+            <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800 md:p-12">
+              <CrawlerViewComparison comparison={report.visualComparison} />
+            </div>
+          </div>
+        </Section>
+      )}
 
       {/* Content Preview */}
       <Section className="border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
