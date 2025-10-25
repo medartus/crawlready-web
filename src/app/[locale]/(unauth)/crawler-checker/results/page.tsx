@@ -120,45 +120,51 @@ export default function CrawlerCheckerResultsPage() {
       </Section>
 
       {/* Main Content - Tab-Based Interface */}
-      <Section className="bg-white py-12 dark:bg-gray-900">
+      <Section className="bg-white px-4 py-12 dark:bg-gray-900 sm:px-6 lg:px-8">
         <ResultsTabs report={report} />
       </Section>
 
-      {/* CTA Section */}
-      <Section className="border-t border-gray-200 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:border-gray-700">
-        <div className="mx-auto max-w-4xl text-center">
-          <div className="mb-6 text-5xl">🚀</div>
-          <h3 className="mb-4 text-3xl font-bold text-white md:text-4xl">
-            Want to Fix These Issues Automatically?
-          </h3>
-          <p className="mb-8 text-xl text-indigo-100">
-            CrawlReady automatically renders your JavaScript and serves optimized HTML to AI crawlers.
-            <br />
-            <span className="font-semibold text-white">No code changes required.</span>
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link
-              href="/sign-up"
-              className={`${buttonVariants({ size: 'lg' })} group bg-white px-8 text-lg text-indigo-600 shadow-xl transition-all hover:scale-105 hover:bg-gray-100`}
-            >
-              Start Free Trial
-              <ArrowRight className="ml-2 size-5 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <button
-              type="button"
-              onClick={handleShare}
-              className={`${buttonVariants({ variant: 'outline', size: 'lg' })} border-2 border-white/30 bg-white/10 px-8 text-lg text-white backdrop-blur-sm transition-all hover:bg-white/20`}
-            >
-              <Share2 className="mr-2 size-5" />
-              Share Results
-            </button>
-            <button
-              type="button"
-              onClick={handleCheckAnother}
-              className={`${buttonVariants({ variant: 'outline', size: 'lg' })} border-2 border-white/30 bg-white/10 px-8 text-lg text-white backdrop-blur-sm transition-all hover:bg-white/20`}
-            >
-              Check Another Site
-            </button>
+      {/* Final CTA Section */}
+      <Section className="border-t border-gray-200 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 py-20 dark:border-gray-700">
+        <div className="mx-auto max-w-4xl">
+          <div className="text-center">
+            <div className="mb-6 text-6xl">🎯</div>
+            <h3 className="mb-4 text-3xl font-bold text-white md:text-5xl">
+              Ready to Optimize for AI Crawlers?
+            </h3>
+            <p className="mb-8 text-xl text-indigo-100">
+              Join companies using CrawlReady to ensure their content is fully visible to AI crawlers.
+              <br />
+              <span className="font-semibold text-white">Start your free trial today.</span>
+            </p>
+            <div className="mb-8 flex justify-center">
+              <Link
+                href="/sign-up"
+                className={`${buttonVariants({ size: 'lg' })} group bg-white px-12 py-6 text-xl text-indigo-600 shadow-2xl transition-all hover:scale-105 hover:bg-gray-100`}
+              >
+                Start Free Trial
+                <ArrowRight className="ml-2 size-6 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="inline-flex items-center gap-2 text-white/90 transition-colors hover:text-white"
+              >
+                <Share2 className="size-5" />
+                Share Results
+              </button>
+              <span className="hidden text-white/50 sm:inline">•</span>
+              <button
+                type="button"
+                onClick={handleCheckAnother}
+                className="inline-flex items-center gap-2 text-white/90 transition-colors hover:text-white"
+              >
+                <ArrowLeft className="size-5" />
+                Check Another Site
+              </button>
+            </div>
           </div>
         </div>
       </Section>

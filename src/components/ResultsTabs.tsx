@@ -1,77 +1,113 @@
 'use client';
 
-import { useState } from 'react';
+import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
+import { buttonVariants } from '@/components/ui/buttonVariants';
 import type { CompatibilityReport, Issue, ViewDifference } from '@/types/crawler-checker';
-
-type Tab = 'overview' | 'issues' | 'crawler-view' | 'technical';
 
 type ResultsTabsProps = {
   report: CompatibilityReport;
 };
 
 export function ResultsTabs({ report }: ResultsTabsProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
-
-  // Merge issues with crawler differences for accurate count
-  const totalIssues = report.issues.length + (report.visualComparison?.differences.length || 0);
-
-  const tabs = [
-    { id: 'overview' as Tab, label: 'Overview', icon: '📊', count: null },
-    { id: 'issues' as Tab, label: 'Issues', icon: '⚠️', count: totalIssues },
-    { id: 'crawler-view' as Tab, label: 'Crawler View', icon: '🤖', count: null },
-    { id: 'technical' as Tab, label: 'Technical', icon: '⚙️', count: null },
-  ];
-
   return (
-    <div className="mx-auto max-w-6xl">
-      {/* Tab Navigation */}
-      <div className="mb-8 overflow-x-auto">
-        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id)}
-              className={`
-                relative flex items-center gap-2 whitespace-nowrap px-6 py-4 text-sm font-medium transition-all
-                ${activeTab === tab.id
-              ? 'border-b-2 border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400'
-              : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
-            }
-              `}
-            >
-              <span className="text-lg">{tab.icon}</span>
-              <span>{tab.label}</span>
-              {tab.count !== null && tab.count > 0 && (
-                <span className={`
-                  ml-1 rounded-full px-2 py-0.5 text-xs font-semibold
-                  ${activeTab === tab.id
-                  ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'
-                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                }
-                `}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div className="mx-auto max-w-5xl space-y-12">
+      {/* Overview Section */}
+      <section id="overview">
+        <OverviewTab report={report} />
+      </section>
 
-      {/* Tab Content */}
-      <div className="min-h-[400px]">
-        {activeTab === 'overview' && <OverviewTab report={report} />}
-        {activeTab === 'issues' && <IssuesTab report={report} />}
-        {activeTab === 'crawler-view' && <CrawlerViewTab report={report} />}
-        {activeTab === 'technical' && <TechnicalTab report={report} />}
-      </div>
+      {/* CTA After Overview - Show if score is low */}
+      {report.score < 80 && (
+        <div className="rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 p-8 text-center dark:border-indigo-800 dark:from-indigo-950/30 dark:to-purple-950/30">
+          <div className="mb-4 text-5xl">🚀</div>
+          <h3 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
+            Fix These Issues Automatically
+          </h3>
+          <p className="mb-6 text-gray-600 dark:text-gray-400">
+            CrawlReady renders your JavaScript and serves optimized HTML to AI crawlers.
+            <br className="hidden sm:block" />
+            <span className="font-semibold">No code changes required.</span>
+          </p>
+          <Link
+            href="/sign-up"
+            className={`${buttonVariants({ size: 'lg' })} group inline-flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700`}
+          >
+            Start Free Trial
+            <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+      )}
+
+      {/* Issues Section */}
+      <section id="issues">
+        <div className="mb-6">
+          <h2 className="flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white">
+            <span className="text-4xl">⚠️</span>
+            Issues & Recommendations
+          </h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Detailed analysis of compatibility issues and how to fix them
+          </p>
+        </div>
+        <IssuesTab report={report} />
+      </section>
+
+      {/* Crawler View Section */}
+      <section id="crawler-view">
+        <div className="mb-6">
+          <h2 className="flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white">
+            <span className="text-4xl">🤖</span>
+            Crawler View
+          </h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            See what AI crawlers actually see when they visit your site
+          </p>
+        </div>
+        <CrawlerViewTab report={report} />
+      </section>
+
+      {/* CTA After Crawler View - Show if there are crawler differences */}
+      {report.visualComparison && report.visualComparison.differences.length > 0 && (
+        <div className="rounded-2xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 p-8 text-center dark:border-orange-800 dark:from-orange-950/30 dark:to-amber-950/30">
+          <div className="mb-4 text-5xl">⚡</div>
+          <h3 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
+            AI Crawlers See a Different Version
+          </h3>
+          <p className="mb-6 text-gray-600 dark:text-gray-400">
+            We detected {report.visualComparison.differences.length} difference{report.visualComparison.differences.length > 1 ? 's' : ''} between what users see and what crawlers see.
+            <br className="hidden sm:block" />
+            <span className="font-semibold">CrawlReady ensures crawlers see your full content.</span>
+          </p>
+          <Link
+            href="/sign-up"
+            className={`${buttonVariants({ size: 'lg' })} group inline-flex items-center gap-2 bg-orange-600 text-white hover:bg-orange-700`}
+          >
+            Get Full Crawler Visibility
+            <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+      )}
+
+      {/* Technical Details Section */}
+      <section id="technical">
+        <div className="mb-6">
+          <h2 className="flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white">
+            <span className="text-4xl">⚙️</span>
+            Technical Details
+          </h2>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            Performance metrics and technical analysis
+          </p>
+        </div>
+        <TechnicalTab report={report} />
+      </section>
     </div>
   );
 }
 
-// Overview Tab Component
+// Overview Section Component
 function OverviewTab({ report }: { report: CompatibilityReport }) {
   // Merge all issues including crawler differences
   const allIssues = [
@@ -197,7 +233,7 @@ function OverviewTab({ report }: { report: CompatibilityReport }) {
   );
 }
 
-// Issues Tab Component
+// Issues Section Component
 function IssuesTab({ report }: { report: CompatibilityReport }) {
   // Merge crawler view differences with regular issues
   const allIssues: Array<Issue | ViewDifference> = [
@@ -328,7 +364,7 @@ function IssuesTab({ report }: { report: CompatibilityReport }) {
   );
 }
 
-// Crawler View Tab Component
+// Crawler View Section Component
 function CrawlerViewTab({ report }: { report: CompatibilityReport }) {
   if (!report.visualComparison) {
     return (
@@ -395,7 +431,7 @@ function CrawlerViewTab({ report }: { report: CompatibilityReport }) {
   );
 }
 
-// Technical Tab Component
+// Technical Section Component
 function TechnicalTab({ report }: { report: CompatibilityReport }) {
   return (
     <div className="space-y-6">
