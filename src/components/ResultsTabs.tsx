@@ -31,7 +31,7 @@ export function ResultsTabs({ report }: ResultsTabsProps) {
             <span className="font-semibold">No code changes required.</span>
           </p>
           <Link
-            href="/sign-up"
+            href="/#early-access"
             className={`${buttonVariants({ size: 'lg' })} group inline-flex items-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700`}
           >
             Start Free Trial
@@ -76,12 +76,19 @@ export function ResultsTabs({ report }: ResultsTabsProps) {
             AI Crawlers See a Different Version
           </h3>
           <p className="mb-6 text-gray-600 dark:text-gray-400">
-            We detected {report.visualComparison.differences.length} difference{report.visualComparison.differences.length > 1 ? 's' : ''} between what users see and what crawlers see.
+            We detected
+            {' '}
+            {report.visualComparison.differences.length}
+            {' '}
+            difference
+            {report.visualComparison.differences.length > 1 ? 's' : ''}
+            {' '}
+            between what users see and what crawlers see.
             <br className="hidden sm:block" />
             <span className="font-semibold">CrawlReady ensures crawlers see your full content.</span>
           </p>
           <Link
-            href="/sign-up"
+            href="/#early-access"
             className={`${buttonVariants({ size: 'lg' })} group inline-flex items-center gap-2 bg-orange-600 text-white hover:bg-orange-700`}
           >
             Get Full Crawler Visibility
@@ -114,7 +121,7 @@ function OverviewTab({ report }: { report: CompatibilityReport }) {
     ...report.issues,
     ...(report.visualComparison?.differences || []),
   ];
-  
+
   const criticalIssues = allIssues.filter(i => i.severity === 'critical').length;
   const highIssues = allIssues.filter(i => i.severity === 'high').length;
 

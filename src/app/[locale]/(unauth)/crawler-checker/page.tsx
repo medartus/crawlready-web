@@ -28,9 +28,9 @@ const CrawlerCheckerPage = (props: { params: { locale: string } }) => {
         <div className="mx-auto max-w-5xl text-center">
           {/* Badge */}
           <div className="mb-8 flex justify-center">
-            <div className={`${badgeVariants()} border-indigo-200 bg-white/80 backdrop-blur-sm dark:border-indigo-800 dark:bg-black/40`}>
+            <div className={`${badgeVariants({ variant: 'outline' })} border-indigo-200 bg-white shadow-sm dark:border-indigo-800 dark:bg-gray-900`}>
               <Sparkles className="mr-2 size-4 text-indigo-600 dark:text-indigo-400" />
-              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text font-semibold text-transparent">
+              <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text font-semibold text-transparent dark:bg-none dark:!text-white">
                 Free AI Crawler Compatibility Checker
               </span>
             </div>
@@ -198,17 +198,44 @@ const CrawlerCheckerPage = (props: { params: { locale: string } }) => {
         </div>
       </Section>
 
-      {/* CTA Section */}
-      <Section className="border-t border-gray-200 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:border-gray-700">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="mb-4 text-3xl font-bold text-white drop-shadow-lg md:text-4xl">
-            Ready to Check Your Website?
-          </h2>
-          <p className="mb-10 text-xl text-white drop-shadow-md">
-            Join thousands of developers who've tested their AI crawler compatibility
-          </p>
-          <div className="mx-auto max-w-2xl">
-            <CrawlerCheckerForm className="[&_input]:border-white/30 [&_input]:bg-white/20 [&_input]:text-white [&_input]:placeholder-white/70 [&_input]:backdrop-blur-md [&_button]:bg-white [&_button]:text-indigo-600 [&_button]:shadow-lg [&_button]:hover:bg-gray-100 [&_button]:hover:shadow-xl" />
+      {/* CTA Section - Accessible Design */}
+      <Section className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+        <div className="mx-auto max-w-4xl">
+          <div className="overflow-hidden rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-12 shadow-xl dark:border-indigo-800 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
+            <div className="text-center">
+              <div className="mb-6 text-6xl">🚀</div>
+              <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+                Ready to Check Your Website?
+              </h2>
+              <p className="mb-10 text-xl text-gray-700 dark:text-gray-300">
+                Get instant insights into your website's AI crawler compatibility
+              </p>
+              <div className="mx-auto max-w-2xl">
+                <CrawlerCheckerForm />
+              </div>
+              
+              {/* Trust Indicators */}
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-2">
+                  <svg className="size-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>No signup required</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="size-5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                  </svg>
+                  <span>Instant analysis</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="size-5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Actionable recommendations</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </Section>

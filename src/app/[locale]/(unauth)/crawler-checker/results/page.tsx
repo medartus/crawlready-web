@@ -124,46 +124,77 @@ export default function CrawlerCheckerResultsPage() {
         <ResultsTabs report={report} />
       </Section>
 
-      {/* Final CTA Section */}
-      <Section className="border-t border-gray-200 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 py-20 dark:border-gray-700">
-        <div className="mx-auto max-w-4xl">
-          <div className="text-center">
-            <div className="mb-6 text-6xl">🎯</div>
-            <h3 className="mb-4 text-3xl font-bold text-white md:text-5xl">
-              Ready to Optimize for AI Crawlers?
-            </h3>
-            <p className="mb-8 text-xl text-indigo-100">
-              Join companies using CrawlReady to ensure their content is fully visible to AI crawlers.
-              <br />
-              <span className="font-semibold text-white">Start your free trial today.</span>
-            </p>
-            <div className="mb-8 flex justify-center">
-              <Link
-                href="/sign-up"
-                className={`${buttonVariants({ size: 'lg' })} group bg-white px-12 py-6 text-xl text-indigo-600 shadow-2xl transition-all hover:scale-105 hover:bg-gray-100`}
-              >
-                Start Free Trial
-                <ArrowRight className="ml-2 size-6 transition-transform group-hover:translate-x-1" />
-              </Link>
+      {/* Final CTA Section - Accessible & Conversion Optimized */}
+      <Section className="border-t border-gray-200 bg-white py-20 dark:border-gray-700 dark:bg-gray-900">
+        <div className="mx-auto max-w-5xl">
+          <div className="overflow-hidden rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 shadow-2xl dark:border-indigo-800 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
+            <div className="p-12 text-center">
+              <div className="mb-6 text-6xl">🎯</div>
+              <h3 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white md:text-5xl">
+                Want to Improve Your Score?
+              </h3>
+              <p className="mb-2 text-xl text-gray-700 dark:text-gray-300">
+                CrawlReady is building a solution to optimize sites for AI crawlers.
+              </p>
+              <p className="mb-8 text-lg font-semibold text-indigo-600 dark:text-indigo-400">
+                Join the early access waitlist to be notified when we launch.
+              </p>
+              
+              {/* Value Props Grid */}
+              <div className="mb-10 grid gap-4 text-left sm:grid-cols-3">
+                <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
+                  <div className="mb-2 text-2xl">🚀</div>
+                  <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">Early Access</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Be first to try it</p>
+                </div>
+                <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
+                  <div className="mb-2 text-2xl">💡</div>
+                  <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">Shape the Product</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Your feedback matters</p>
+                </div>
+                <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
+                  <div className="mb-2 text-2xl">🎁</div>
+                  <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">Special Pricing</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Early adopter discount</p>
+                </div>
+              </div>
+
+              <div className="mb-6 flex justify-center">
+                <Link
+                  href="/#early-access"
+                  className={`${buttonVariants({ size: 'lg' })} group bg-indigo-600 px-12 py-6 text-xl text-white shadow-2xl transition-all hover:scale-105 hover:bg-indigo-700`}
+                >
+                  Join Waitlist
+                  <ArrowRight className="ml-2 size-6 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </div>
+
+              <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
+                ✓ Free to join • ✓ No commitment • ✓ Be notified at launch
+              </p>
             </div>
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="inline-flex items-center gap-2 text-white/90 transition-colors hover:text-white"
-              >
-                <Share2 className="size-5" />
-                Share Results
-              </button>
-              <span className="hidden text-white/50 sm:inline">•</span>
-              <button
-                type="button"
-                onClick={handleCheckAnother}
-                className="inline-flex items-center gap-2 text-white/90 transition-colors hover:text-white"
-              >
-                <ArrowLeft className="size-5" />
-                Check Another Site
-              </button>
+            
+            {/* Secondary Actions Bar */}
+            <div className="border-t border-indigo-200 bg-white/40 px-6 py-4 dark:border-indigo-800 dark:bg-black/20">
+              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="inline-flex items-center gap-2 text-gray-700 transition-colors hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
+                >
+                  <Share2 className="size-5" />
+                  Share Results
+                </button>
+                <span className="hidden text-gray-400 sm:inline">•</span>
+                <button
+                  type="button"
+                  onClick={handleCheckAnother}
+                  className="inline-flex items-center gap-2 text-gray-700 transition-colors hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
+                >
+                  <ArrowLeft className="size-5" />
+                  Check Another Site
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -10,19 +10,19 @@ export const Hero = () => {
       {/* Animated background gradient */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-pink-950/20" />
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.1),transparent_50%),radial-gradient(circle_at_70%_60%,rgba(168,85,247,0.1),transparent_50%)]" />
-      
+
       <div className="mx-auto max-w-5xl text-center">
         {/* Badge */}
         <div className="mb-8 flex justify-center">
           <a
-            className={`${badgeVariants()} group relative overflow-hidden border-indigo-200 bg-white/80 backdrop-blur-sm transition-all hover:scale-105 hover:border-indigo-300 dark:border-indigo-800 dark:bg-black/40`}
+            className={`${badgeVariants({ variant: 'outline' })} relative overflow-hidden border-indigo-200 bg-white shadow-sm focus:outline-none focus:ring-0 dark:border-indigo-800 dark:bg-gray-900`}
             href="#early-access"
           >
             <Sparkles className="mr-2 size-4 text-indigo-600 dark:text-indigo-400" />
-            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text font-semibold text-transparent">
+            <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text font-semibold text-transparent dark:bg-none dark:!text-white">
               Phase 0: Early Access Now Open
             </span>
-            <ArrowRight className="ml-2 size-4 text-indigo-600 transition-transform group-hover:translate-x-1 dark:text-indigo-400" />
+            <ArrowRight className="ml-2 size-4 text-indigo-600 dark:text-indigo-400" />
           </a>
         </div>
 
@@ -41,8 +41,11 @@ export const Hero = () => {
 
         {/* Subheadline */}
         <p className="mx-auto mb-10 max-w-3xl text-xl text-gray-600 dark:text-gray-300 md:text-2xl">
-          <span className="font-semibold text-gray-900 dark:text-white">Only 31% of AI crawlers</span> can render JavaScript.
-          If your site uses React, Vue, or Angular, <span className="font-semibold text-gray-900 dark:text-white">ChatGPT can't see it.</span>
+          <span className="font-semibold text-gray-900 dark:text-white">Only 31% of AI crawlers</span>
+          {' '}
+          can render JavaScript.
+          If your site uses React, Vue, or Angular,
+          <span className="font-semibold text-gray-900 dark:text-white">ChatGPT can't see it.</span>
         </p>
 
         {/* Stats Bar - Unique value props instead of duplicated stats */}
@@ -50,19 +53,25 @@ export const Hero = () => {
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-green-500" />
             <span className="text-gray-600 dark:text-gray-400">
-              <span className="font-bold text-gray-900 dark:text-white">99.97%</span> uptime guaranteed
+              <span className="font-bold text-gray-900 dark:text-white">99.97%</span>
+              {' '}
+              uptime guaranteed
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-indigo-500" />
             <span className="text-gray-600 dark:text-gray-400">
-              <span className="font-bold text-gray-900 dark:text-white">67%</span> cheaper than alternatives
+              <span className="font-bold text-gray-900 dark:text-white">67%</span>
+              {' '}
+              cheaper than alternatives
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="size-2 rounded-full bg-purple-500" />
             <span className="text-gray-600 dark:text-gray-400">
-              <span className="font-bold text-gray-900 dark:text-white">&lt;200ms</span> render speed
+              <span className="font-bold text-gray-900 dark:text-white">&lt;200ms</span>
+              {' '}
+              render speed
             </span>
           </div>
         </div>

@@ -1,7 +1,8 @@
 'use client';
 
-import { Menu, X } from 'lucide-react';
+import { Menu, Search, X } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -10,8 +11,17 @@ import { buttonVariants } from '@/components/ui/buttonVariants';
 export const LandingNavbar = () => {
   const t = useTranslations('LandingNavbar');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
 
   const scrollToSection = (sectionId: string) => {
+    // If not on home page, navigate to home first
+    if (pathname !== '/' && !pathname.match(/^\/[a-z]{2}\/?$/)) {
+      router.push(`/#${sectionId}`);
+      setMobileMenuOpen(false);
+      return;
+    }
+
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -44,26 +54,41 @@ export const LandingNavbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden items-center gap-8 md:flex">
-            {navLinks.map((link) => (
-              <button
-                key={link.href}
-                onClick={() => scrollToSection(link.href.substring(1))}
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
-              >
-                {link.label}
-              </button>
+            {navLinks.map(link => (
+              link.isExternal
+                ? (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="text-sm font-medium text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
+                    >
+                      {link.label}
+                    </Link>
+                  )
+                : (
+                    <button
+                      type="button"
+                      key={link.href}
+                      onClick={() => scrollToSection(link.href.substring(1))}
+                      className="text-sm font-medium text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
+                    >
+                      {link.label}
+                    </button>
+                  )
             ))}
           </div>
 
-          {/* Desktop CTA */}
-          <div className="hidden items-center gap-4 md:flex">
-            {/* <Link
-              href="/sign-in"
-              className="text-sm font-medium text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400"
+          {/* Desktop Dual CTA */}
+          <div className="hidden items-center gap-3 md:flex">
+            <Link
+              href="/crawler-checker"
+              className={`${buttonVariants({ variant: 'outline', size: 'sm' })} group flex items-center gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950/30`}
             >
-              Sign In
-            </Link> */}
+              <Search className="size-4" />
+              Crawler Checker
+            </Link>
             <button
+              type="button"
               onClick={() => scrollToSection('early-access')}
               className={`${buttonVariants({ size: 'sm' })} bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg hover:shadow-xl`}
             >
@@ -79,11 +104,13 @@ export const LandingNavbar = () => {
               className="inline-flex items-center justify-center rounded-md p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
               aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? (
-                <X className="size-6" />
-              ) : (
-                <Menu className="size-6" />
-              )}
+              {mobileMenuOpen
+                ? (
+                    <X className="size-6" />
+                  )
+                : (
+                    <Menu className="size-6" />
+                  )}
             </button>
           </div>
         </div>
@@ -93,25 +120,42 @@ export const LandingNavbar = () => {
       {mobileMenuOpen && (
         <div className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 md:hidden">
           <div className="space-y-1 px-4 pb-3 pt-2">
-            {navLinks.map((link) => (
-              <button
-                key={link.href}
-                onClick={() => scrollToSection(link.href.substring(1))}
-                className="block w-full rounded-md px-3 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-400"
-              >
-                {link.label}
-              </button>
+            {navLinks.map(link => (
+              link.isExternal
+                ? (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="block w-full rounded-md px-3 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-400"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  )
+                : (
+                    <button
+                      type="button"
+                      key={link.href}
+                      onClick={() => scrollToSection(link.href.substring(1))}
+                      className="block w-full rounded-md px-3 py-2 text-left text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-400"
+                    >
+                      {link.label}
+                    </button>
+                  )
             ))}
-            <div className="border-t border-gray-200 pt-4 dark:border-gray-800">
-              {/* <Link
-                href="/sign-in"
-                className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-indigo-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-indigo-400"
+            <div className="space-y-2 border-t border-gray-200 pt-4 dark:border-gray-800">
+              <Link
+                href="/crawler-checker"
+                className={`${buttonVariants({ variant: 'outline', size: 'sm' })} flex w-full items-center justify-center gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950/30`}
+                onClick={() => setMobileMenuOpen(false)}
               >
-                Sign In
-              </Link> */}
+                <Search className="size-4" />
+                Crawler Checker
+              </Link>
               <button
+                type="button"
                 onClick={() => scrollToSection('early-access')}
-                className={`${buttonVariants({ size: 'sm' })} mt-2 w-full bg-gradient-to-r from-indigo-600 to-purple-600`}
+                className={`${buttonVariants({ size: 'sm' })} w-full bg-gradient-to-r from-indigo-600 to-purple-600`}
               >
                 {t('get_early_access')}
               </button>
