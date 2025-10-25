@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, CheckCircle, FileCode, Search, Sparkles } from 'lucide-react';
+import { ArrowRight, Search, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -97,12 +97,12 @@ export default function SchemaCheckerPage() {
           </h1>
 
           {/* Subheadline */}
-          <p className="mx-auto mb-10 max-w-3xl text-xl text-gray-600 dark:text-gray-300 md:text-2xl">
-            Analyze your website's structured data quality.
+          <p className="mx-auto mb-12 max-w-3xl text-xl text-gray-600 dark:text-gray-300 md:text-2xl">
+            Analyze your website's structured data quality and discover how AI crawlers interpret your content.
             {' '}
-            <span className="font-semibold text-gray-900 dark:text-white">Get a detailed report</span>
+            <span className="font-semibold text-gray-900 dark:text-white">Get instant results</span>
             {' '}
-            on what AI crawlers see and how to improve.
+            with actionable recommendations.
           </p>
 
           {/* Input Form */}
@@ -147,23 +147,23 @@ export default function SchemaCheckerPage() {
           </form>
 
           {/* Trust Signals */}
-          <div className="mb-12 flex flex-wrap items-center justify-center gap-8 text-sm md:text-base">
+          <div className="flex flex-wrap items-center justify-center gap-8 text-sm md:text-base">
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-5 text-green-500" />
+              <div className="size-2 rounded-full bg-green-500" />
               <span className="text-gray-600 dark:text-gray-400">
                 No signup required
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-5 text-green-500" />
+              <div className="size-2 rounded-full bg-indigo-500" />
               <span className="text-gray-600 dark:text-gray-400">
-                Instant analysis
+                Instant results
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-5 text-green-500" />
+              <div className="size-2 rounded-full bg-purple-500" />
               <span className="text-gray-600 dark:text-gray-400">
-                Actionable recommendations
+                100% free forever
               </span>
             </div>
           </div>
@@ -171,107 +171,123 @@ export default function SchemaCheckerPage() {
       </Section>
 
       {/* What We Check Section */}
-      <Section className="bg-white py-20 dark:bg-gray-900">
+      <Section className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
         <div className="mx-auto max-w-5xl">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
-              What We Analyze
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400">
-              Comprehensive schema markup assessment based on AI crawler requirements
-            </p>
-          </div>
+          <h2 className="mb-12 text-center text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+            What We Analyze
+          </h2>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <div className="mb-4 text-4xl">🎯</div>
-              <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-                Presence
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Which schema types are implemented and in what format (JSON-LD, Microdata, RDFa)
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <div className="mb-4 text-4xl">✅</div>
-              <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-                Completeness
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Are all required and recommended fields present for each schema type
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <div className="mb-4 text-4xl">🔍</div>
-              <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-                Validity
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Correct JSON syntax, valid formats, and proper schema.org structure
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <div className="mb-4 text-4xl">🤖</div>
-              <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-                AI Optimization
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Properties that maximize visibility and citation by AI crawlers
-              </p>
-            </div>
+          <div className="space-y-6">
+            {[
+              {
+                number: '1',
+                title: 'Schema Presence & Format',
+                description: 'We detect all schema types on your page (JSON-LD, Microdata, RDFa) and verify they follow schema.org standards that AI crawlers prefer.',
+                gradient: 'from-indigo-500 to-purple-600',
+              },
+              {
+                number: '2',
+                title: 'Completeness Analysis',
+                description: 'We check if all required and recommended fields are present for each schema type, ensuring maximum AI crawler understanding.',
+                gradient: 'from-purple-500 to-pink-600',
+              },
+              {
+                number: '3',
+                title: 'Validity & Structure',
+                description: 'We validate JSON syntax, data formats, and schema.org compliance to ensure your structured data is error-free and parseable.',
+                gradient: 'from-pink-500 to-rose-600',
+              },
+              {
+                number: '4',
+                title: 'AI Optimization Score',
+                description: 'Get a detailed 0-100 score with specific recommendations to maximize your visibility and citation chances in AI search results.',
+                gradient: 'from-indigo-600 to-indigo-700',
+              },
+            ].map(item => (
+              <div
+                key={item.number}
+                className="group flex items-start gap-6 rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:border-indigo-200 hover:shadow-xl dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-800"
+              >
+                <div className={`flex size-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient} text-2xl font-bold text-white shadow-lg`}>
+                  {item.number}
+                </div>
+                <div>
+                  <h3 className="mb-2 text-xl font-bold text-gray-900 dark:text-white">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </Section>
 
       {/* Why Schema Matters Section */}
-      <Section className="border-t border-gray-200 bg-gray-50 py-20 dark:border-gray-800 dark:bg-gray-950">
+      <Section className="border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
         <div className="mx-auto max-w-5xl">
-          <div className="mb-12 text-center">
-            <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
-              Why Schema Markup Matters for AI
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400">
-              Structured data is critical for AI crawler understanding and citation
-            </p>
-          </div>
+          <h2 className="mb-12 text-center text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+            Why Schema Markup Matters for AI
+          </h2>
 
           <div className="grid gap-8 md:grid-cols-3">
-            <div className="text-center">
+            {/* Card 1 */}
+            <div className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-8 text-center transition-all hover:border-indigo-200 hover:shadow-xl dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/50 dark:hover:border-indigo-800">
+              <div className="mb-6 inline-flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-3xl text-white shadow-lg">
+                ⚡
+              </div>
               <div className="mb-4 text-5xl font-bold text-indigo-600 dark:text-indigo-400">
                 11×
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
                 More Efficient
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                JSON-LD facts require 11× fewer tokens for AI to parse vs raw HTML
+              <p className="text-gray-600 dark:text-gray-300">
+                JSON-LD facts require
+                {' '}
+                <span className="font-semibold text-gray-900 dark:text-white">11× fewer tokens</span>
+                {' '}
+                for AI to parse vs raw HTML, making your content easier to understand.
               </p>
             </div>
 
-            <div className="text-center">
-              <div className="mb-4 text-5xl font-bold text-indigo-600 dark:text-indigo-400">
+            {/* Card 2 */}
+            <div className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-8 text-center transition-all hover:border-indigo-200 hover:shadow-xl dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/50 dark:hover:border-indigo-800">
+              <div className="mb-6 inline-flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 text-3xl text-white shadow-lg">
+                📈
+              </div>
+              <div className="mb-4 text-5xl font-bold text-green-600 dark:text-green-400">
                 +52%
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-                Higher Citation
+              <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
+                Higher Citation Rate
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                FAQPage schema shows 52% increase in AI answer citations
+              <p className="text-gray-600 dark:text-gray-300">
+                FAQPage schema shows
+                {' '}
+                <span className="font-semibold text-gray-900 dark:text-white">52% increase</span>
+                {' '}
+                in AI answer citations, boosting your visibility.
               </p>
             </div>
 
-            <div className="text-center">
-              <div className="mb-4 text-5xl font-bold text-indigo-600 dark:text-indigo-400">
+            {/* Card 3 */}
+            <div className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-8 text-center transition-all hover:border-indigo-200 hover:shadow-xl dark:border-gray-700 dark:from-gray-800 dark:to-gray-800/50 dark:hover:border-indigo-800">
+              <div className="mb-6 inline-flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-3xl text-white shadow-lg">
+                🎯
+              </div>
+              <div className="mb-4 text-5xl font-bold text-purple-600 dark:text-purple-400">
                 92%
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="mb-3 text-xl font-bold text-gray-900 dark:text-white">
                 Crawler Priority
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                92% of AI crawlers parse JSON-LD structured data first
+              <p className="text-gray-600 dark:text-gray-300">
+                <span className="font-semibold text-gray-900 dark:text-white">92% of AI crawlers</span>
+                {' '}
+                parse JSON-LD structured data first, giving you a competitive edge.
               </p>
             </div>
           </div>
@@ -279,24 +295,97 @@ export default function SchemaCheckerPage() {
       </Section>
 
       {/* CTA Section */}
-      <Section className="bg-white py-20 dark:bg-gray-900">
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-6 text-6xl">
-            <FileCode className="mx-auto size-16 text-indigo-600 dark:text-indigo-400" />
+      <Section className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+        <div className="mx-auto max-w-4xl">
+          <div className="overflow-hidden rounded-3xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-12 shadow-xl dark:border-indigo-800 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
+            <div className="text-center">
+              <div className="mb-6 text-6xl">🚀</div>
+              <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+                Ready to Optimize Your Schema?
+              </h2>
+              <p className="mb-10 text-xl text-gray-700 dark:text-gray-300">
+                Get instant insights into your structured data quality and AI crawler compatibility
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  setTimeout(() => document.querySelector('input')?.focus(), 500);
+                }}
+                className={`${buttonVariants({ size: 'lg' })} bg-gradient-to-r from-indigo-600 to-purple-600 px-12 text-xl shadow-xl transition-all hover:scale-105 hover:shadow-2xl`}
+              >
+                Analyze Your Schema Now
+              </button>
+
+              {/* Trust Indicators */}
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-2">
+                  <svg className="size-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>No signup required</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="size-5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                  </svg>
+                  <span>Instant analysis</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="size-5 text-purple-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Actionable recommendations</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
-            Ready to Optimize Your Schema?
+        </div>
+      </Section>
+
+      {/* FAQ Section */}
+      <Section className="border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="mb-12 text-center text-3xl font-bold text-gray-900 dark:text-white md:text-4xl">
+            Frequently Asked Questions
           </h2>
-          <p className="mb-8 text-lg text-gray-600 dark:text-gray-400">
-            Get instant insights into your structured data quality and learn how to improve AI visibility
-          </p>
-          <button
-            type="button"
-            onClick={() => document.querySelector('input')?.focus()}
-            className={`${buttonVariants({ size: 'lg' })} bg-indigo-600 px-12 py-6 text-xl text-white hover:bg-indigo-700`}
-          >
-            Analyze Your Schema Now
-          </button>
+
+          <div className="space-y-4">
+            {[
+              {
+                question: 'Is this tool really free?',
+                answer: 'Yes! This tool is 100% free with no signup required. We built it to help the community optimize their schema markup for AI crawlers.',
+              },
+              {
+                question: 'What schema formats do you support?',
+                answer: 'We analyze all major schema formats including JSON-LD (recommended), Microdata, and RDFa. JSON-LD is the preferred format for AI crawlers.',
+              },
+              {
+                question: 'How accurate are the results?',
+                answer: 'Our analyzer uses the same parsing methods as major AI crawlers. We validate against schema.org standards and provide actionable recommendations based on current best practices.',
+              },
+              {
+                question: 'What if my site has no schema markup?',
+                answer: 'No problem! Our tool will identify this and provide specific recommendations on which schema types to implement based on your content type and industry.',
+              },
+              {
+                question: 'Can this help with SEO?',
+                answer: 'Absolutely! While schema markup is crucial for AI crawlers, it also improves traditional SEO by helping search engines understand your content better, potentially leading to rich snippets.',
+              },
+            ].map(faq => (
+              <details
+                key={faq.question}
+                className="group rounded-xl border border-gray-200 bg-white transition-all hover:border-indigo-200 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800 dark:hover:border-indigo-800"
+              >
+                <summary className="cursor-pointer p-6 font-semibold text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-white dark:group-hover:text-indigo-400">
+                  {faq.question}
+                </summary>
+                <div className="border-t border-gray-200 px-6 pb-6 pt-4 text-gray-600 dark:border-gray-700 dark:text-gray-300">
+                  {faq.answer}
+                </div>
+              </details>
+            ))}
+          </div>
         </div>
       </Section>
 

@@ -1,19 +1,23 @@
-import { AlertCircle, AlertTriangle, ArrowRight, CheckCircle, FileCode, XCircle } from 'lucide-react';
-import Link from 'next/link';
+import { AlertCircle, AlertTriangle, CheckCircle, FileCode, XCircle } from 'lucide-react';
 
-import { buttonVariants } from '@/components/ui/buttonVariants';
 import type { SchemaAnalysis, SchemaIssue } from '@/types/crawler-checker';
 
-interface SchemaAnalysisSectionProps {
+type SchemaAnalysisSectionProps = {
   analysis: SchemaAnalysis;
-}
+};
 
 function ScoreCard({ title, score, max, icon }: { title: string; score: number; max: number; icon: string }) {
   const percentage = (score / max) * 100;
   const getColor = () => {
-    if (percentage >= 90) return 'bg-green-500';
-    if (percentage >= 70) return 'bg-blue-500';
-    if (percentage >= 50) return 'bg-yellow-500';
+    if (percentage >= 90) {
+      return 'bg-green-500';
+    }
+    if (percentage >= 70) {
+      return 'bg-blue-500';
+    }
+    if (percentage >= 50) {
+      return 'bg-yellow-500';
+    }
     return 'bg-red-500';
   };
 
@@ -23,7 +27,10 @@ function ScoreCard({ title, score, max, icon }: { title: string; score: number; 
       <h4 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">{title}</h4>
       <div className="mb-2 flex items-baseline gap-2">
         <span className="text-3xl font-bold text-gray-900 dark:text-white">{score}</span>
-        <span className="text-lg text-gray-500 dark:text-gray-400">/ {max}</span>
+        <span className="text-lg text-gray-500 dark:text-gray-400">
+          /
+          {max}
+        </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
         <div
@@ -239,31 +246,37 @@ export function SchemaAnalysisSection({ analysis }: SchemaAnalysisSectionProps) 
             {/* Quick Indicators */}
             <div className="mt-4 space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                {analysis.categories.presence.hasJsonLd ? (
-                  <CheckCircle className="size-5 text-green-500" />
-                ) : (
-                  <XCircle className="size-5 text-red-500" />
-                )}
+                {analysis.categories.presence.hasJsonLd
+                  ? (
+                      <CheckCircle className="size-5 text-green-500" />
+                    )
+                  : (
+                      <XCircle className="size-5 text-red-500" />
+                    )}
                 <span className="text-gray-700 dark:text-gray-300">
                   JSON-LD format (preferred by AI crawlers)
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                {analysis.categories.presence.hasOrganization ? (
-                  <CheckCircle className="size-5 text-green-500" />
-                ) : (
-                  <AlertCircle className="size-5 text-yellow-500" />
-                )}
+                {analysis.categories.presence.hasOrganization
+                  ? (
+                      <CheckCircle className="size-5 text-green-500" />
+                    )
+                  : (
+                      <AlertCircle className="size-5 text-yellow-500" />
+                    )}
                 <span className="text-gray-700 dark:text-gray-300">
                   Organization schema
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                {analysis.categories.presence.hasContentType ? (
-                  <CheckCircle className="size-5 text-green-500" />
-                ) : (
-                  <AlertCircle className="size-5 text-yellow-500" />
-                )}
+                {analysis.categories.presence.hasContentType
+                  ? (
+                      <CheckCircle className="size-5 text-green-500" />
+                    )
+                  : (
+                      <AlertCircle className="size-5 text-yellow-500" />
+                    )}
                 <span className="text-gray-700 dark:text-gray-300">
                   Content-specific schema (Article, Product, etc.)
                 </span>
@@ -344,56 +357,6 @@ export function SchemaAnalysisSection({ analysis }: SchemaAnalysisSectionProps) 
           </ul>
         </div>
       )}
-
-      {/* CTA Section */}
-      <div className="rounded-2xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-8 text-center dark:border-indigo-800 dark:from-indigo-950/30 dark:via-purple-950/30 dark:to-pink-950/30">
-        <div className="mb-4 text-5xl">🚀</div>
-        <h3 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white md:text-3xl">
-          Let CrawlReady Generate Perfect Schema
-        </h3>
-        <p className="mb-6 text-gray-700 dark:text-gray-300">
-          CrawlReady automatically generates comprehensive, valid Schema markup for every page.
-          <br />
-          <span className="font-semibold">No manual coding. Always up-to-date. AI-optimized.</span>
-        </p>
-
-        {/* Benefits Grid */}
-        <div className="mb-6 grid gap-4 text-left sm:grid-cols-3">
-          <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
-            <div className="mb-2 text-2xl">✨</div>
-            <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">Auto-Generated</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Analyzes your content and creates perfect Schema
-            </p>
-          </div>
-          <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
-            <div className="mb-2 text-2xl">🎯</div>
-            <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">Always Valid</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Follows latest Schema.org standards
-            </p>
-          </div>
-          <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
-            <div className="mb-2 text-2xl">🤖</div>
-            <h4 className="mb-1 font-semibold text-gray-900 dark:text-white">AI-Optimized</h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Maximizes visibility to AI crawlers
-            </p>
-          </div>
-        </div>
-
-        <Link
-          href="/#early-access"
-          className={`${buttonVariants({ size: 'lg' })} group bg-indigo-600 px-12 py-6 text-xl text-white shadow-2xl transition-all hover:scale-105 hover:bg-indigo-700`}
-        >
-          Join Waitlist
-          <ArrowRight className="ml-2 size-6 transition-transform group-hover:translate-x-1" />
-        </Link>
-
-        <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-          ✓ Free to join • ✓ No commitment • ✓ Be notified at launch
-        </p>
-      </div>
     </div>
   );
 }
