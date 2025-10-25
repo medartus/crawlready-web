@@ -19,10 +19,10 @@ import { RobotsTxtChecker } from './checkers/robots-txt.checker';
 import { SchemaChecker } from './checkers/schema.checker';
 import { SecurityChecker } from './checkers/security.checker';
 import { SemanticHTMLChecker } from './checkers/semantic-html.checker';
-
 import { type AllChecks, ScoreCalculator } from './scoring/score-calculator';
 import { CrawlerVisualizer } from './utils/crawler-visualizer';
 import { HTMLParser } from './utils/html-parser';
+import { analyzeSchema } from './utils/schema-analyzer';
 import { URLFetcher } from './utils/url-fetcher';
 
 export class CrawlerCheckerService {
@@ -75,6 +75,15 @@ export class CrawlerCheckerService {
 
     const { score, issues, categoryScores } = ScoreCalculator.calculate(checks);
 
+    // Analyze schema markup in detail
+    const schemaAnalysis = analyzeSchema(html, url);
+
+    // Update category scores with detailed schema score
+    const updatedCategoryScores = {
+      ...categoryScores,
+      schemaMarkup: schemaAnalysis.overallScore,
+    };
+
     // Generate visual comparison between user and crawler view
     const visualComparison = CrawlerVisualizer.generateComparison(html, url);
 
@@ -88,8 +97,9 @@ export class CrawlerCheckerService {
         PerplexityBot: score >= 90 ? 'full' : score >= 70 ? 'partial' : 'poor',
         GoogleBot: score >= 70 ? 'full' : score >= 40 ? 'partial' : 'poor',
       },
-      categoryScores,
+      categoryScores: updatedCategoryScores,
       visualComparison,
+      schemaAnalysis,
       userView: { html, textContent, contentLength: textContent.length, hasSchema: schema.hasSchema, renderTime: responseTime },
       crawlerView: { html, textContent, contentLength: textContent.length, hasSchema: schema.hasSchema, renderTime: responseTime },
       limitedJSView: { html, textContent, contentLength: textContent.length, hasSchema: schema.hasSchema, renderTime: responseTime },

@@ -39,8 +39,7 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-    }
-    catch {
+    } catch {
       return NextResponse.json<CheckCrawlerResponse>(
         {
           success: false,
@@ -57,8 +56,7 @@ export async function POST(request: Request) {
       success: true,
       report,
     });
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Crawler check error:', error);
     return NextResponse.json<CheckCrawlerResponse>(
       {

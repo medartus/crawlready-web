@@ -17,6 +17,7 @@ const intlMiddleware = createMiddleware({
 // Public API routes that don't require authentication
 const publicApiRoutes = [
   '/api/check-crawler',
+  '/api/check-schema',
 ];
 
 const isProtectedRoute = createRouteMatcher([
@@ -33,7 +34,7 @@ export default function middleware(
   event: NextFetchEvent,
 ) {
   // Allow public access to allowlisted API routes
-  if (publicApiRoutes.some(route => request.nextUrl.pathname === route)) {
+  if (publicApiRoutes.includes(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
 

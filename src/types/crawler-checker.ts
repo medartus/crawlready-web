@@ -7,6 +7,120 @@ export type RenderResult = {
   screenshot?: string;
 };
 
+export type SchemaType =
+  | 'Article'
+  | 'NewsArticle'
+  | 'BlogPosting'
+  | 'FAQPage'
+  | 'Organization'
+  | 'Person'
+  | 'Product'
+  | 'HowTo'
+  | 'BreadcrumbList'
+  | 'WebPage'
+  | 'WebSite'
+  | 'VideoObject'
+  | 'ImageObject'
+  | 'Review'
+  | 'AggregateRating'
+  | 'Event'
+  | 'Recipe'
+  | 'LocalBusiness'
+  | 'SoftwareApplication'
+  | 'Course'
+  | 'JobPosting'
+  | 'Dataset'
+  | 'Other';
+
+export type SchemaFormat = 'json-ld' | 'microdata' | 'rdfa' | 'none';
+
+export type SchemaIssue = {
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  category: 'presence' | 'completeness' | 'validity' | 'ai-optimization';
+  title: string;
+  description: string;
+  impact: string;
+  fix?: string;
+  example?: string;
+};
+
+export type SchemaLocation = {
+  type: SchemaFormat;
+  location: 'head' | 'body';
+  schemaType: string;
+  raw: string;
+};
+
+export type SchemaPresenceScore = {
+  score: number; // 0-100
+  hasJsonLd: boolean;
+  hasOrganization: boolean;
+  hasWebPage: boolean;
+  hasContentType: boolean;
+  issues: string[];
+};
+
+export type SchemaCompletenessScore = {
+  score: number; // 0-100
+  requiredFieldsPresent: number;
+  requiredFieldsTotal: number;
+  recommendedFieldsPresent: number;
+  recommendedFieldsTotal: number;
+  missingCriticalFields: string[];
+  missingRecommendedFields: string[];
+};
+
+export type SchemaValidityScore = {
+  score: number; // 0-100
+  isValidJson: boolean;
+  hasValidContext: boolean;
+  hasValidTypes: boolean;
+  validationErrors: Array<{
+    field: string;
+    message: string;
+    severity: 'error' | 'warning';
+  }>;
+};
+
+export type SchemaAIOptimizationScore = {
+  score: number; // 0-100
+  hasDescription: boolean;
+  hasImages: boolean;
+  hasAuthor: boolean;
+  hasPublishDate: boolean;
+  hasBreadcrumbs: boolean;
+  hasStructuredContent: boolean;
+  opportunities: string[];
+};
+
+export type SchemaAnalysis = {
+  overallScore: number; // 0-100
+  grade: 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
+  hasSchema: boolean;
+  schemaTypes: SchemaType[];
+  schemaCount: number;
+  primaryFormat: SchemaFormat;
+  schemaLocations: SchemaLocation[];
+  rawSchemas: any[];
+  pageType: 'homepage' | 'article' | 'product' | 'service' | 'about' | 'contact' | 'blog-listing' | 'other';
+  recommendedSchemas: SchemaType[];
+  missingSchemas: SchemaType[];
+  categories: {
+    presence: SchemaPresenceScore;
+    completeness: SchemaCompletenessScore;
+    validity: SchemaValidityScore;
+    aiOptimization: SchemaAIOptimizationScore;
+  };
+  issues: SchemaIssue[];
+  recommendations: Array<{
+    priority: 'critical' | 'high' | 'medium' | 'low';
+    title: string;
+    description: string;
+    impact: string;
+    implementation?: string;
+  }>;
+};
+
 export type Issue = {
   severity: 'critical' | 'high' | 'medium' | 'low';
   crawler: string;
@@ -24,7 +138,7 @@ export type CrawlerCompatibility = {
 export type CategoryScores = {
   javascript: number;
   technicalSEO: number;
-  schemaMetadata: number;
+  schemaMarkup: number; // Unified schema score (replaces schemaMetadata)
   contentQuality: number;
   performance: number;
   navigation: number;
@@ -60,6 +174,7 @@ export type CompatibilityReport = {
   crawlerCompatibility: CrawlerCompatibility;
   categoryScores?: CategoryScores; // Optional for backward compatibility
   visualComparison?: CrawlerViewComparison; // Visual comparison between user and crawler view
+  schemaAnalysis?: SchemaAnalysis; // Detailed schema markup analysis
   userView: RenderResult;
   crawlerView: RenderResult;
   limitedJSView: RenderResult;

@@ -11,7 +11,7 @@
 export const CATEGORY_WEIGHTS = {
   javascript: 0.25, // 25% - CRITICAL (most AI crawlers don't execute JS)
   technicalSEO: 0.20, // 20% - robots.txt, HTTPS, canonical
-  schemaMetadata: 0.20, // 20% - Schema.org, meta tags
+  schemaMarkup: 0.20, // 20% - Schema.org structured data quality
   contentQuality: 0.15, // 15% - E-E-A-T, freshness, structure
   performance: 0.10, // 10% - Speed, Core Web Vitals
   navigation: 0.05, // 5% - Internal linking, discoverability

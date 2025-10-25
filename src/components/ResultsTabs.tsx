@@ -3,6 +3,7 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
+import { SchemaAnalysisSection } from '@/components/SchemaAnalysisSection';
 import { buttonVariants } from '@/components/ui/buttonVariants';
 import type { CompatibilityReport, Issue, ViewDifference } from '@/types/crawler-checker';
 
@@ -38,6 +39,22 @@ export function ResultsTabs({ report }: ResultsTabsProps) {
             <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
+      )}
+
+      {/* Schema Analysis Section */}
+      {report.schemaAnalysis && (
+        <section id="schema">
+          <div className="mb-6">
+            <h2 className="flex items-center gap-3 text-3xl font-bold text-gray-900 dark:text-white">
+              <span className="text-4xl">📊</span>
+              Schema Markup Analysis
+            </h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Structured data quality assessment for AI crawler optimization
+            </p>
+          </div>
+          <SchemaAnalysisSection analysis={report.schemaAnalysis} />
+        </section>
       )}
 
       {/* Issues Section */}
@@ -180,10 +197,20 @@ function OverviewTab({ report }: { report: CompatibilityReport }) {
               <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">Characters</div>
             </div>
             <div className="rounded-lg bg-white/80 p-4 text-center backdrop-blur dark:bg-gray-800/80">
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {report.crawlerView.hasSchema ? '✓' : '✗'}
+              <div className={`text-2xl font-bold ${
+                report.categoryScores?.schemaMarkup
+                  ? report.categoryScores.schemaMarkup >= 80
+                    ? 'text-green-600 dark:text-green-400'
+                    : report.categoryScores.schemaMarkup >= 60
+                      ? 'text-yellow-600 dark:text-yellow-400'
+                      : 'text-red-600 dark:text-red-400'
+                  : 'text-gray-400'
+              }`}
+              >
+                {report.categoryScores?.schemaMarkup ?? 0}
+                %
               </div>
-              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">Schema</div>
+              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">Schema Quality</div>
             </div>
           </div>
         </div>

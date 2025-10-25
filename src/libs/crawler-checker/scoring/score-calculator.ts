@@ -318,7 +318,7 @@ export class ScoreCalculator {
     const categoryScores: CategoryScores = {
       javascript: Math.max(0, jsScore),
       technicalSEO: Math.max(0, techSeoScore),
-      schemaMetadata: Math.max(0, schemaScore),
+      schemaMarkup: Math.max(0, schemaScore),
       contentQuality: Math.max(0, contentScore),
       performance: Math.max(0, performanceScore),
       navigation: Math.max(0, navScore),
@@ -328,7 +328,7 @@ export class ScoreCalculator {
     const finalScore = Math.round(
       categoryScores.javascript * CATEGORY_WEIGHTS.javascript
       + categoryScores.technicalSEO * CATEGORY_WEIGHTS.technicalSEO
-      + categoryScores.schemaMetadata * CATEGORY_WEIGHTS.schemaMetadata
+      + categoryScores.schemaMarkup * CATEGORY_WEIGHTS.schemaMarkup
       + categoryScores.contentQuality * CATEGORY_WEIGHTS.contentQuality
       + categoryScores.performance * CATEGORY_WEIGHTS.performance
       + categoryScores.navigation * CATEGORY_WEIGHTS.navigation

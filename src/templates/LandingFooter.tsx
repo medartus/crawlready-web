@@ -126,6 +126,14 @@ export const LandingFooter = () => {
                   AI Crawler Checker
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/schema-checker"
+                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+                >
+                  Schema Markup Analyzer
+                </Link>
+              </li>
             </ul>
           </div>
 
