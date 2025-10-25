@@ -14,6 +14,11 @@ const intlMiddleware = createMiddleware({
   defaultLocale: AppConfig.defaultLocale,
 });
 
+// Public API routes that don't require authentication
+const publicApiRoutes = [
+  '/api/check-crawler',
+];
+
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
   '/:locale/dashboard(.*)',
@@ -27,6 +32,11 @@ export default function middleware(
   request: NextRequest,
   event: NextFetchEvent,
 ) {
+  // Allow public access to allowlisted API routes
+  if (publicApiRoutes.some(route => request.nextUrl.pathname === route)) {
+    return NextResponse.next();
+  }
+
   if (
     request.nextUrl.pathname.includes('/sign-in')
     || request.nextUrl.pathname.includes('/sign-up')
