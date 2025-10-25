@@ -18,6 +18,7 @@ const intlMiddleware = createMiddleware({
 const publicApiRoutes = [
   '/api/check-crawler',
   '/api/check-schema',
+  '/api/waitlist',
 ];
 
 const isProtectedRoute = createRouteMatcher([
