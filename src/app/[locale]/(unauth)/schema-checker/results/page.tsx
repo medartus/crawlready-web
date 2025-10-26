@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import { SchemaAnalysisSection } from '@/components/SchemaAnalysisSection';
 import { buttonVariants } from '@/components/ui/buttonVariants';
@@ -12,7 +12,7 @@ import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 import type { SchemaAnalysis } from '@/types/crawler-checker';
 
-export default function SchemaCheckerResultsPage() {
+function SchemaCheckerResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [analysis, setAnalysis] = useState<SchemaAnalysis | null>(null);
@@ -309,5 +309,13 @@ export default function SchemaCheckerResultsPage() {
 
       <LandingFooter />
     </>
+  );
+}
+
+export default function SchemaCheckerResultsPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="text-lg">Loading...</div></div>}>
+      <SchemaCheckerResultsContent />
+    </Suspense>
   );
 }

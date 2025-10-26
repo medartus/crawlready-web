@@ -1,24 +1,8 @@
-import type { LocalePrefix } from 'node_modules/next-intl/dist/types/src/routing/types';
-
 import { BILLING_INTERVAL, type PricingPlan } from '@/types/Subscription';
 
-const localePrefix: LocalePrefix = 'always';
-
-// FIXME: Update this configuration file based on your project information
 export const AppConfig = {
   name: 'CrawlReady',
-  locales: [
-    {
-      id: 'en',
-      name: 'English',
-    },
-    { id: 'fr', name: 'Français' },
-  ],
-  defaultLocale: 'en',
-  localePrefix,
 };
-
-export const AllLocales = AppConfig.locales.map(locale => locale.id);
 
 export const PLAN_ID = {
   FREE: 'free',

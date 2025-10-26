@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { unstable_setRequestLocale } from 'next-intl/server';
 
-import { AllLocales } from '@/utils/AppConfig';
+import { routing } from '@/libs/i18n/routing';
 
 export const metadata: Metadata = {
   icons: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
 };
 
 export function generateStaticParams() {
-  return AllLocales.map(locale => ({ locale }));
+  return routing.locales.map(locale => ({ locale }));
 }
 
 export default function RootLayout(props: {

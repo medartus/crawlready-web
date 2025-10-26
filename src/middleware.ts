@@ -6,13 +6,9 @@ import {
 } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 
-import { AllLocales, AppConfig } from './utils/AppConfig';
+import { routing } from './libs/i18n/routing';
 
-const intlMiddleware = createMiddleware({
-  locales: AllLocales,
-  localePrefix: AppConfig.localePrefix,
-  defaultLocale: AppConfig.defaultLocale,
-});
+const intlMiddleware = createMiddleware(routing);
 
 // Public API routes that don't require authentication
 const publicApiRoutes = [

@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import { ResultsTabs } from '@/components/ResultsTabs';
 import { buttonVariants } from '@/components/ui/buttonVariants';
@@ -12,7 +12,7 @@ import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 import type { CompatibilityReport } from '@/types/crawler-checker';
 
-export default function CrawlerCheckerResultsPage() {
+function CrawlerCheckerResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [report, setReport] = useState<CompatibilityReport | null>(null);
@@ -85,19 +85,18 @@ export default function CrawlerCheckerResultsPage() {
   return (
     <>
       <LandingNavbar />
-
-      {/* Header Section */}
-      <Section className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 dark:border-gray-700 dark:from-indigo-950/20 dark:via-purple-950/20 dark:to-pink-950/20">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.1),transparent_50%)]" />
-
-        <div className="mx-auto max-w-5xl text-center">
-          <Link
-            href="/crawler-checker"
-            className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-          >
-            <ArrowLeft className="size-4" />
-            Back to Checker
-          </Link>
+      <Section>
+        <div className="mx-auto max-w-7xl px-4 py-12">
+          {/* Header */}
+          <div className="mb-8">
+            <Link
+              href="/crawler-checker"
+              className={buttonVariants({ variant: 'ghost', size: 'sm' })}
+            >
+              <ArrowLeft className="mr-2 size-4" />
+              Back to Checker
+            </Link>
+          </div>
 
           <h1 className="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl">
             AI Crawler Compatibility Report
@@ -202,5 +201,13 @@ export default function CrawlerCheckerResultsPage() {
 
       <LandingFooter />
     </>
+  );
+}
+
+export default function CrawlerCheckerResultsPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="text-lg">Loading...</div></div>}>
+      <CrawlerCheckerResultsContent />
+    </Suspense>
   );
 }

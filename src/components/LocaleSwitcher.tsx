@@ -1,27 +1,20 @@
 'use client';
 
-import { useLocale } from 'next-intl';
-
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { usePathname, useRouter } from '@/libs/i18nNavigation';
-import { AppConfig } from '@/utils/AppConfig';
 
 export const LocaleSwitcher = () => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const locale = useLocale();
+  // const router = useRouter();
+  // const pathname = usePathname();
+  // const locale = useLocale();
 
-  const handleChange = (value: string) => {
-    router.push(pathname, { locale: value });
-    router.refresh();
-  };
+  // const handleChange = (value: string) => {
+  //   router.push(pathname, { locale: value });
+  //   router.refresh();
+  // };
 
   return (
     <DropdownMenu>
@@ -41,15 +34,15 @@ export const LocaleSwitcher = () => {
           </svg>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      {/* <DropdownMenuContent>
         <DropdownMenuRadioGroup value={locale} onValueChange={handleChange}>
-          {AppConfig.locales.map(elt => (
+          {routing.locales.map(elt => (
             <DropdownMenuRadioItem key={elt.id} value={elt.id}>
               {elt.name}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
+      </DropdownMenuContent> */}
     </DropdownMenu>
   );
 };
