@@ -20,23 +20,52 @@ function SchemaCheckerResultsContent() {
   const url = searchParams.get('url') || '';
 
   useEffect(() => {
-    const storedAnalysis = sessionStorage.getItem('schemaCheckResult');
+    const fetchResults = async () => {
+      // First, try to get from sessionStorage
+      const storedAnalysis = sessionStorage.getItem('schemaCheckResult');
 
-    if (!storedAnalysis) {
-      router.push('/schema-checker');
-      return;
-    }
+      if (storedAnalysis) {
+        try {
+          const parsedAnalysis = JSON.parse(storedAnalysis) as SchemaAnalysis;
+          setAnalysis(parsedAnalysis);
+          setLoading(false);
+          return;
+        } catch (error) {
+          console.error('Error parsing stored analysis:', error);
+        }
+      }
 
-    try {
-      const parsedAnalysis = JSON.parse(storedAnalysis) as SchemaAnalysis;
-      setAnalysis(parsedAnalysis);
-    } catch (error) {
-      console.error('Error parsing analysis:', error);
-      router.push('/schema-checker');
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
+      // If no stored analysis and URL param exists, fetch from API
+      if (url) {
+        try {
+          const response = await fetch('/api/check-schema', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch schema analysis results');
+          }
+
+          const data = await response.json();
+          setAnalysis(data.analysis);
+        } catch (error) {
+          console.error('Error fetching analysis:', error);
+          router.push('/schema-checker');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // No stored analysis and no URL param, redirect
+        router.push('/schema-checker');
+      }
+    };
+
+    fetchResults();
+  }, [router, url]);
 
   const handleShare = async () => {
     const shareUrl = window.location.href;

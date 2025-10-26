@@ -20,23 +20,52 @@ function CrawlerCheckerResultsContent() {
   const url = searchParams.get('url') || '';
 
   useEffect(() => {
-    const storedReport = sessionStorage.getItem('crawlerCheckResult');
+    const fetchResults = async () => {
+      // First, try to get from sessionStorage
+      const storedReport = sessionStorage.getItem('crawlerCheckResult');
 
-    if (!storedReport) {
-      router.push('/crawler-checker');
-      return;
-    }
+      if (storedReport) {
+        try {
+          const parsedReport = JSON.parse(storedReport) as CompatibilityReport;
+          setReport(parsedReport);
+          setLoading(false);
+          return;
+        } catch (error) {
+          console.error('Error parsing stored report:', error);
+        }
+      }
 
-    try {
-      const parsedReport = JSON.parse(storedReport) as CompatibilityReport;
-      setReport(parsedReport);
-    } catch (error) {
-      console.error('Error parsing report:', error);
-      router.push('/crawler-checker');
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
+      // If no stored report and URL param exists, fetch from API
+      if (url) {
+        try {
+          const response = await fetch('/api/check-crawler', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to fetch crawler check results');
+          }
+
+          const data = await response.json();
+          setReport(data.report);
+        } catch (error) {
+          console.error('Error fetching report:', error);
+          router.push('/crawler-checker');
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // No stored report and no URL param, redirect
+        router.push('/crawler-checker');
+      }
+    };
+
+    fetchResults();
+  }, [router, url]);
 
   const handleShare = async () => {
     const shareUrl = window.location.href;
