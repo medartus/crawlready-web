@@ -213,7 +213,7 @@ const CrawlerCheckerPage = (props: { params: { locale: string } }) => {
               <div className="mx-auto max-w-2xl">
                 <CrawlerCheckerForm />
               </div>
-              
+
               {/* Trust Indicators */}
               <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-400">
                 <div className="flex items-center gap-2">

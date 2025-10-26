@@ -29,7 +29,7 @@ export const LandingNavbar = () => {
     }
   };
 
-  const navLinks = [
+  const navLinks: Array<{ label: string; href: string; isExternal?: boolean }> = [
     { label: t('demo'), href: '#demo' },
     { label: t('features'), href: '#features' },
     // { label: t('pricing'), href: '#pricing' },

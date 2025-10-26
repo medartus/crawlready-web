@@ -3,28 +3,10 @@
  * Security headers and trust signals impact crawler trust and user safety
  */
 
-export type SecurityCheckResult = {
-  isHTTPS: boolean;
-  hasHSTS: boolean;
-  hasCSP: boolean;
-  hasXFrameOptions: boolean;
-  hasXContentTypeOptions: boolean;
-  hasReferrerPolicy: boolean;
-  hasPermissionsPolicy: boolean;
-  mixedContentDetected: boolean;
-  trustSignals: {
-    hasPrivacyPolicy: boolean;
-    hasTermsOfService: boolean;
-    hasAboutPage: boolean;
-    hasContactPage: boolean;
-    hasCookieConsent: boolean;
-  };
-  securityScore: number;
-  issues: string[];
-};
+import type { SecurityCheck } from '../types';
 
 export class SecurityChecker {
-  static check(url: string, html: string, headers: Headers): SecurityCheckResult {
+  static check(url: string, html: string, headers: Headers): SecurityCheck {
     const issues: string[] = [];
 
     // HTTPS validation
@@ -157,7 +139,7 @@ export class SecurityChecker {
     }
 
     const maxAgeMatch = header.match(/max-age=(\d+)/i);
-    const maxAge = maxAgeMatch ? Number.parseInt(maxAgeMatch[1], 10) : 0;
+    const maxAge = maxAgeMatch && maxAgeMatch[1] ? Number.parseInt(maxAgeMatch[1], 10) : 0;
     const includeSubDomains = /includeSubDomains/i.test(header);
     const preload = /preload/i.test(header);
 

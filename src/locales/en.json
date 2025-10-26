@@ -1,7 +1,7 @@
 {
   "Index": {
-    "meta_title": "SaaS Template - The perfect SaaS template to build and scale your business with ease.",
-    "meta_description": "A free and open-source landing page template for your SaaS business, built with React, TypeScript, Shadcn UI, and Tailwind CSS."
+    "meta_title": "CrawlReady - Get Cited in ChatGPT Answers Without Rebuilding Your Site",
+    "meta_description": "Make your JavaScript site visible to AI search engines. Only 31% of AI crawlers can render JavaScript. CrawlReady fixes this in 5 minutes with citation tracking, schema injection, and real-time analytics."
   },
   "Navbar": {
     "sign_in": "Sign In",
@@ -13,7 +13,7 @@
     "company": "Company"
   },
   "Hero": {
-    "follow_twitter": "Follow @Ixartz on Twitter",
+    "follow_twitter": "Follow @medartus on Twitter",
     "title": "The perfect <important>SaaS template</important> to build and scale your business with ease.",
     "description": "A free and open-source landing page template for your SaaS business, built with React, TypeScript, Shadcn UI, and Tailwind CSS.",
     "primary_button": "Get Started",

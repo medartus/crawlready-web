@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-interface CrawlerCheckerFormProps {
+type CrawlerCheckerFormProps = {
   className?: string;
-}
+};
 
 export function CrawlerCheckerForm({ className = '' }: CrawlerCheckerFormProps) {
   const [url, setUrl] = useState('');
@@ -34,9 +34,9 @@ export function CrawlerCheckerForm({ className = '' }: CrawlerCheckerFormProps) 
 
       // Validate URL format
       try {
+        // eslint-disable-next-line no-new
         new URL(fullUrl);
-      }
-      catch {
+      } catch {
         setError('Please enter a valid URL');
         setLoading(false);
         return;
@@ -62,8 +62,7 @@ export function CrawlerCheckerForm({ className = '' }: CrawlerCheckerFormProps) 
       // Store result in sessionStorage and redirect to results
       sessionStorage.setItem('crawlerCheckResult', JSON.stringify(data.report));
       router.push(`/crawler-checker/results?url=${encodeURIComponent(fullUrl)}`);
-    }
-    catch (err) {
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       setLoading(false);
     }

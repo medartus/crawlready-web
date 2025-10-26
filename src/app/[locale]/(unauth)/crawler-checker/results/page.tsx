@@ -139,7 +139,7 @@ export default function CrawlerCheckerResultsPage() {
               <p className="mb-8 text-lg font-semibold text-indigo-600 dark:text-indigo-400">
                 Join the early access waitlist to be notified when we launch.
               </p>
-              
+
               {/* Value Props Grid */}
               <div className="mb-10 grid gap-4 text-left sm:grid-cols-3">
                 <div className="rounded-xl bg-white/60 p-4 dark:bg-black/20">
@@ -173,7 +173,7 @@ export default function CrawlerCheckerResultsPage() {
                 ✓ Free to join • ✓ No commitment • ✓ Be notified at launch
               </p>
             </div>
-            
+
             {/* Secondary Actions Bar */}
             <div className="border-t border-indigo-200 bg-white/40 px-6 py-4 dark:border-indigo-800 dark:bg-black/20">
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">

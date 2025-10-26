@@ -7,11 +7,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  // Add CORS headers for development
-  const headers = {
-    'Content-Type': 'application/json',
-  };
-
   try {
     const body = await request.json() as CheckCrawlerRequest;
     const { url } = body;

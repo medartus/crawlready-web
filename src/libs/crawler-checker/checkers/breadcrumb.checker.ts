@@ -80,14 +80,14 @@ export class BreadcrumbChecker {
       /<nav[^>]*class=["'][^"']*breadcrumb[^"']*["'][^>]*>/i,
     ];
 
-    const hasVisualBreadcrumbs = visualBreadcrumbPatterns.some((pattern) => pattern.test(html));
+    const hasVisualBreadcrumbs = visualBreadcrumbPatterns.some(pattern => pattern.test(html));
 
     // Check for proper hierarchy
     let hasProperHierarchy = false;
 
     if (hasVisualBreadcrumbs) {
       // Look for breadcrumb separators (>, /, →, etc.)
-      const hasSeparators = /[>\/→›]/.test(html);
+      const hasSeparators = /[>/→›]/.test(html);
 
       // Look for Home link
       const hasHomeLink = /home|accueil|inicio|startseite/i.test(html);
@@ -125,9 +125,9 @@ export class BreadcrumbChecker {
   static generateExampleSchema(pages: Array<{ name: string; url: string }>): string {
     const itemListElement = pages.map((page, index) => ({
       '@type': 'ListItem',
-      position: index + 1,
-      name: page.name,
-      item: page.url,
+      'position': index + 1,
+      'name': page.name,
+      'item': page.url,
     }));
 
     const schema = {

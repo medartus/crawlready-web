@@ -1,9 +1,9 @@
 # Technical Architecture Document
 ## CrawlReady: AI Crawler Optimization Platform
 
-**Document Version:** 1.0  
-**Date:** October 2025  
-**Project:** CrawlReady  
+**Document Version:** 1.0
+**Date:** October 2025
+**Project:** CrawlReady
 **Target Launch:** Q1 2026
 
 ---
@@ -99,7 +99,7 @@ CrawlReady is an AI-first rendering service designed to make JavaScript-heavy we
 async function renderPage(url: string, options: RenderOptions): Promise<string> {
   // 1. Launch Browser Context
   const page = await cluster.getPage();
-  
+
   // 2. Block Unnecessary Resources (speed optimization)
   await page.setRequestInterception(true);
   page.on('request', (req) => {
@@ -109,29 +109,29 @@ async function renderPage(url: string, options: RenderOptions): Promise<string> 
       req.continue();
     }
   });
-  
+
   // 3. Navigate to URL
   await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
-  
+
   // 4. Wait for JavaScript Execution
   await page.waitForTimeout(1000);
-  
+
   // 5. Handle Lazy Loading (auto-scroll)
   if (options.enableScroll) {
     await autoScroll(page);
   }
-  
+
   // 6. Inject AI-Optimized Schema
   if (options.injectSchema) {
     await injectSchema(page);
   }
-  
+
   // 7. Extract HTML
   const html = await page.content();
-  
+
   // 8. Optimize HTML (remove scripts, minify)
   const optimized = optimizeHtml(html);
-  
+
   // 9. Return & Cache
   return optimized;
 }
@@ -147,19 +147,19 @@ export const AI_CRAWLERS = {
   GPTBot: /GPTBot/i,
   OAI_SearchBot: /OAI-SearchBot/i,
   ChatGPT_User: /ChatGPT-User/i,
-  
+
   // Anthropic
   ClaudeBot: /ClaudeBot|Claude-Web/i,
-  
+
   // Perplexity
   PerplexityBot: /PerplexityBot/i,
-  
+
   // Google AI
   Google_Extended: /Google-Extended/i,
-  
+
   // Meta AI
   Meta_ExternalAgent: /Meta-ExternalAgent/i,
-  
+
   // Others
   YouBot: /YouBot/i,
   BingBot: /bingbot/i,
@@ -187,17 +187,17 @@ Auto-detects page type and injects appropriate structured data:
 // Auto-detect and inject schema
 async function injectSchema(page: Page): Promise<void> {
   const pageType = await detectPageType(page);
-  
+
   const schemaGenerators = {
-    'article': generateArticleSchema,
-    'product': generateProductSchema,
-    'faq': generateFAQSchema,
-    'howto': generateHowToSchema,
-    'default': generateWebPageSchema,
+    article: generateArticleSchema,
+    product: generateProductSchema,
+    faq: generateFAQSchema,
+    howto: generateHowToSchema,
+    default: generateWebPageSchema,
   };
-  
+
   const schema = await schemaGenerators[pageType](page);
-  
+
   // Inject as JSON-LD
   await page.evaluate((schemaJson) => {
     const script = document.createElement('script');
@@ -215,14 +215,14 @@ function generateFAQSchema(page: Page): SchemaType {
       answer: el.querySelector('.answer, p')?.textContent,
     }));
   });
-  
+
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: faqs.map(faq => ({
+    'mainEntity': faqs.map(faq => ({
       '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+      'name': faq.question,
+      'acceptedAnswer': { '@type': 'Answer', 'text': faq.answer },
     })),
   };
 }
@@ -293,21 +293,21 @@ function generateFAQSchema(page: Page): SchemaType {
 
 export async function POST(req: Request) {
   const { url } = await req.json();
-  
+
   // Validate URL
   if (!isValidUrl(url)) {
     return Response.json({ error: 'Invalid URL' }, { status: 400 });
   }
-  
+
   // Run parallel checks
   const [userView, crawlerView] = await Promise.all([
     renderAsUser(url),
     renderAsCrawler(url),
   ]);
-  
+
   // Compare results
   const analysis = analyzeCompatibility(userView, crawlerView);
-  
+
   // Store result for analytics
   await saveCheckResult({
     url,
@@ -315,11 +315,11 @@ export async function POST(req: Request) {
     issues: analysis.issues,
     timestamp: new Date(),
   });
-  
+
   return Response.json(analysis);
 }
 
-interface CheckResult {
+type CheckResult = {
   score: number; // 0-100
   issues: Issue[];
   recommendations: string[];
@@ -328,12 +328,12 @@ interface CheckResult {
     claudebot: boolean;
     perplexitybot: boolean;
   };
-}
+};
 
 function analyzeCompatibility(userView: RenderResult, crawlerView: RenderResult): CheckResult {
   const issues: Issue[] = [];
   let score = 100;
-  
+
   // Check 1: Content parity
   const contentDiff = calculateContentDiff(userView.html, crawlerView.html);
   if (contentDiff > 20) {
@@ -344,7 +344,7 @@ function analyzeCompatibility(userView: RenderResult, crawlerView: RenderResult)
     });
     score -= 30;
   }
-  
+
   // Check 2: Schema markup
   if (!hasSchemaMarkup(crawlerView.html)) {
     issues.push({
@@ -354,7 +354,7 @@ function analyzeCompatibility(userView: RenderResult, crawlerView: RenderResult)
     });
     score -= 20;
   }
-  
+
   // Check 3: JavaScript rendering
   if (!hasRenderedJs(crawlerView.html)) {
     issues.push({
@@ -364,7 +364,7 @@ function analyzeCompatibility(userView: RenderResult, crawlerView: RenderResult)
     });
     score -= 40;
   }
-  
+
   // Check 4: Meta tags
   if (!hasMetaTags(crawlerView.html)) {
     issues.push({
@@ -374,7 +374,7 @@ function analyzeCompatibility(userView: RenderResult, crawlerView: RenderResult)
     });
     score -= 10;
   }
-  
+
   return {
     score: Math.max(0, score),
     issues,
@@ -576,30 +576,30 @@ Uptime: 99.9% (43 minutes downtime/month)
 // Intelligent caching strategy
 function calculateCacheTTL(url: string, userPlan: string): number {
   const baseTTL = {
-    developer: 6 * 3600,   // 6 hours
-    startup: 24 * 3600,    // 24 hours
-    growth: 48 * 3600,     // 48 hours
-    scale: 48 * 3600,      // 48 hours
+    developer: 6 * 3600, // 6 hours
+    startup: 24 * 3600, // 24 hours
+    growth: 48 * 3600, // 48 hours
+    scale: 48 * 3600, // 48 hours
   };
-  
+
   // Dynamic content = shorter TTL
   if (isDynamicPage(url)) {
     return baseTTL[userPlan] / 2;
   }
-  
+
   // Static content = longer TTL
   if (isStaticPage(url)) {
     return baseTTL[userPlan] * 2;
   }
-  
+
   return baseTTL[userPlan];
 }
 
 // Spot instance usage
 const renderWorkers = {
   production: {
-    spot: 0.70,      // 70% spot instances
-    onDemand: 0.30,  // 30% on-demand (reliability)
+    spot: 0.70, // 70% spot instances
+    onDemand: 0.30, // 30% on-demand (reliability)
   },
   costSavings: 0.65, // 65% cost reduction
 };
@@ -613,7 +613,7 @@ const renderWorkers = {
 
 ```typescript
 // API Key management
-interface ApiKey {
+type ApiKey = {
   id: string;
   userId: string;
   key: string; // Hashed with bcrypt
@@ -622,11 +622,11 @@ interface ApiKey {
   quotaLimit: number;
   createdAt: Date;
   lastUsed: Date;
-}
+};
 
 // Rate limiting (per API key)
 const rateLimits = {
-  developer: 100,  // requests per minute
+  developer: 100, // requests per minute
   startup: 500,
   growth: 2000,
   scale: 10000,
@@ -650,11 +650,11 @@ const securityChecks = {
     const blocked = ['localhost', '127.0.0.1', '0.0.0.0', 'file://'];
     return !blocked.some(b => url.includes(b));
   },
-  
+
   // Prevent infinite loops
   maxRedirects: 3,
   timeout: 30000, // 30s max per render
-  
+
   // Resource limits
   maxMemory: '2GB',
   maxCPU: '1 core',
@@ -728,13 +728,13 @@ const kpis = {
   churnRate: 'Customer churn rate',
   cac: 'Customer Acquisition Cost',
   ltv: 'Lifetime Value',
-  
+
   // Technical Metrics
   renderLatency: 'p50, p95, p99 render times',
   cacheHitRate: 'Percentage of cache hits',
   errorRate: 'Failed renders / total renders',
   uptime: '99.9% SLA compliance',
-  
+
   // Product Metrics
   dailyActiveUsers: 'DAU',
   apiCallsPerUser: 'Usage intensity',
@@ -750,15 +750,15 @@ alerts:
   - name: High Error Rate
     condition: error_rate > 5%
     action: PagerDuty + Slack
-    
+
   - name: Slow Renders
     condition: p95_latency > 300ms
     action: Slack notification
-    
+
   - name: Queue Backlog
     condition: queue_depth > 200
     action: Auto-scale workers
-    
+
   - name: Low Cache Hit Rate
     condition: cache_hit_rate < 80%
     action: Investigate + adjust TTL
@@ -830,7 +830,7 @@ crawlready-web/
 
 ---
 
-**Document Status**: Draft v1.0  
-**Last Updated**: October 23, 2025  
-**Owner**: Technical Architecture Team  
+**Document Status**: Draft v1.0
+**Last Updated**: October 23, 2025
+**Owner**: Technical Architecture Team
 **Review Cycle**: Bi-weekly during MVP phase

@@ -3,13 +3,13 @@
  * Detects and categorizes various AI crawlers and bots
  */
 
-export interface CrawlerInfo {
+export type CrawlerInfo = {
   name: string;
   type: 'ai' | 'search' | 'social' | 'seo';
   vendor: string;
   supportsJS: boolean;
   priority: number;
-}
+};
 
 export const AI_CRAWLERS: Record<string, { pattern: RegExp; info: Omit<CrawlerInfo, 'name'> }> = {
   GPTBot: {
@@ -67,7 +67,9 @@ export const AI_CRAWLERS: Record<string, { pattern: RegExp; info: Omit<CrawlerIn
 };
 
 export function detectCrawler(userAgent: string): CrawlerInfo | null {
-  if (!userAgent) return null;
+  if (!userAgent) {
+    return null;
+  }
 
   for (const [name, { pattern, info }] of Object.entries(AI_CRAWLERS)) {
     if (pattern.test(userAgent)) {

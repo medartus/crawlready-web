@@ -3,23 +3,12 @@
  * AI crawlers have 1-5 second timeout constraints - critical for visibility
  */
 
-export type PerformanceCheckResult = {
-  responseTime: number;
-  htmlSize: number;
-  contentType: string;
-  isHTML: boolean;
-  hasCompression: boolean;
-  isCacheable: boolean;
-  ttfb: number;
-  scriptCount: number;
-  stylesheetCount: number;
-  imageCount: number;
-  totalResourcesEstimate: number;
-  issues: string[];
-};
+import { Buffer } from 'node:buffer';
+
+import type { PerformanceCheck } from '../types';
 
 export class PerformanceChecker {
-  static check(html: string, headers: Headers, responseTime: number): PerformanceCheckResult {
+  static check(html: string, headers: Headers, responseTime: number): PerformanceCheck {
     const issues: string[] = [];
 
     // Content-Type validation
@@ -102,7 +91,7 @@ export class PerformanceChecker {
     const issues: string[] = [];
 
     // Scripts without defer/async
-    const blockingScripts = html.match(/<script(?![^>]*\b(?:defer|async)\b)[^>]*src=/gi) || [];
+    const blockingScripts = html.match(/<script(?![^>]*(?:defer|async))[^>]*src=/gi) || [];
     const blockingCount = blockingScripts.length;
 
     if (blockingCount > 5) {

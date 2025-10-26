@@ -1,7 +1,7 @@
 # CrawlReady Golden Circle Framework
 
-**Document Version:** 1.0  
-**Last Updated:** October 22, 2025  
+**Document Version:** 1.0
+**Last Updated:** October 22, 2025
 **Purpose:** Define the fundamental "Why, How, What" of CrawlReady's existence
 
 ---
@@ -524,8 +524,8 @@ Automatically detects AI crawlers (GPTBot, PerplexityBot, ClaudeBot), renders yo
 
 ---
 
-**Document Owner:** Leadership Team  
-**Review Cycle:** Annually (or when pivoting)  
+**Document Owner:** Leadership Team
+**Review Cycle:** Annually (or when pivoting)
 **Next Review:** October 2026
 
 ---

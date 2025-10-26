@@ -3,10 +3,10 @@
  * Displays side-by-side comparison of user view vs crawler view
  */
 
-import type { CrawlerViewComparison } from '@/types/crawler-checker';
+import type { CrawlerViewComparison as CrawlerViewComparisonType } from '@/types/crawler-checker';
 
 type CrawlerViewComparisonProps = {
-  comparison: CrawlerViewComparison;
+  comparison: CrawlerViewComparisonType;
 };
 
 export function CrawlerViewComparison({ comparison }: CrawlerViewComparisonProps) {
@@ -290,7 +290,7 @@ function StatCard({
 }
 
 // Difference Card Component
-function DifferenceCard({ difference }: { difference: CrawlerViewComparison['differences'][0] }) {
+function DifferenceCard({ difference }: { difference: CrawlerViewComparisonType['differences'][0] }) {
   const severityConfig = {
     critical: {
       bg: 'bg-red-50',

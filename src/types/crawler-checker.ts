@@ -154,7 +154,7 @@ export type ViewDifference = {
   fix: string;
 };
 
-export interface CrawlerViewComparison {
+export type CrawlerViewComparison = {
   userViewUrl: string;
   crawlerViewHtml: string;
   differences: ViewDifference[];

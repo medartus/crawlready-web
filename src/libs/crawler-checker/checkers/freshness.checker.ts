@@ -3,26 +3,16 @@
  * AI systems prioritize recent, verified, and contextually updated content
  */
 
-export type FreshnessCheckResult = {
-  hasDatePublished: boolean;
-  hasDateModified: boolean;
-  publishedDate: string | null;
-  modifiedDate: string | null;
-  ageInDays: number | null;
-  isStale: boolean;
-  hasLastModifiedHeader: boolean;
-  hasCurrentYearReference: boolean;
-  issues: string[];
-};
+import type { FreshnessCheck } from '../types';
 
 export class FreshnessChecker {
-  static check(html: string, headers: Headers): FreshnessCheckResult {
+  static check(html: string, headers: Headers): FreshnessCheck {
     const issues: string[] = [];
     const currentYear = new Date().getFullYear();
 
     // Check schema.org dates
-    let publishedDate: string | null = null;
-    let modifiedDate: string | null = null;
+    let publishedDate: string | undefined;
+    let modifiedDate: string | undefined;
 
     const jsonLdMatches = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
 
@@ -30,7 +20,7 @@ export class FreshnessChecker {
       jsonLdMatches.forEach((match) => {
         try {
           const jsonStr = match.replace(/<script[^>]*>/, '').replace(/<\/script>/, '');
-          const schema = JSON.parse(jsonStr);
+          const schema = JSON.parse(jsonStr) as { datePublished?: string; dateModified?: string };
 
           if (schema.datePublished) {
             publishedDate = schema.datePublished;
@@ -47,14 +37,14 @@ export class FreshnessChecker {
     // Check Open Graph dates
     if (!publishedDate) {
       const ogPublished = html.match(/<meta[^>]+property=["']article:published_time["'][^>]+content=["']([^"']+)["']/i);
-      if (ogPublished) {
+      if (ogPublished && ogPublished[1]) {
         publishedDate = ogPublished[1];
       }
     }
 
     if (!modifiedDate) {
       const ogModified = html.match(/<meta[^>]+property=["']article:modified_time["'][^>]+content=["']([^"']+)["']/i);
-      if (ogModified) {
+      if (ogModified && ogModified[1]) {
         modifiedDate = ogModified[1];
       }
     }
@@ -62,7 +52,7 @@ export class FreshnessChecker {
     // Check meta tags
     if (!publishedDate) {
       const metaDate = html.match(/<meta[^>]+name=["']date["'][^>]+content=["']([^"']+)["']/i);
-      if (metaDate) {
+      if (metaDate && metaDate[1]) {
         publishedDate = metaDate[1];
       }
     }

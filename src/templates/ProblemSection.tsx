@@ -1,4 +1,4 @@
-import { AlertTriangle, TrendingDown, X, ArrowRight } from 'lucide-react';
+import { AlertTriangle, ArrowRight, TrendingDown, X } from 'lucide-react';
 
 import { Section } from '@/features/landing/Section';
 
@@ -45,7 +45,7 @@ export const ProblemSection = () => {
             <div className="rounded-lg bg-gray-50 p-3 font-mono text-xs text-gray-500 dark:bg-gray-800 dark:text-gray-500">
               &lt;div id="root"&gt;&lt;/div&gt;
               <br />
-              <span className="text-red-500">// AI sees nothing ❌</span>
+              <span className="text-red-500">&#47;&#47; AI sees nothing ❌</span>
             </div>
           </div>
 
@@ -123,7 +123,9 @@ export const ProblemSection = () => {
         {/* Bottom CTA */}
         <div className="mt-16 text-center">
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            <span className="font-semibold text-gray-900 dark:text-white">The opportunity cost?</span> Every day you're invisible, your competitors are building AI search authority.
+            <span className="font-semibold text-gray-900 dark:text-white">The opportunity cost?</span>
+            {' '}
+            Every day you're invisible, your competitors are building AI search authority.
           </p>
         </div>
 

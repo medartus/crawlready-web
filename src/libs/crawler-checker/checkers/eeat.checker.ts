@@ -3,21 +3,10 @@
  * Critical for AI citation likelihood - 52% of AI sources come from top 10 search results where E-E-A-T is key
  */
 
-export type EEATCheckResult = {
-  hasAuthorBio: boolean;
-  hasCredentials: boolean;
-  hasAboutPage: boolean;
-  hasContactPage: boolean;
-  hasPrivacyPolicy: boolean;
-  hasSourceCitations: boolean;
-  hasSocialProof: boolean;
-  hasOriginalContent: boolean;
-  score: number;
-  issues: string[];
-};
+import type { EEATCheck } from '../types';
 
 export class EEATChecker {
-  static check(html: string): EEATCheckResult {
+  static check(html: string): EEATCheck {
     const issues: string[] = [];
 
     const hasAuthorBio = /author|by\s+[a-z]{2,}\s+[a-z]{2,}|written\s+by/i.test(html);
@@ -25,7 +14,7 @@ export class EEATChecker {
     const hasAboutPage = /href=["'][^"']*about[^"']*["']/i.test(html);
     const hasContactPage = /href=["'][^"']*contact[^"']*["']/i.test(html);
     const hasPrivacyPolicy = /privacy[\s-]policy/i.test(html);
-    const hasSourceCitations = /<sup>|<cite>|\[1\]|\[\d+\]/i.test(html);
+    const hasSourceCitations = /<sup>|<cite>|\[\d+\]/i.test(html);
     const hasSocialProof = /linkedin\.com|twitter\.com|github\.com/i.test(html);
 
     const stockPhotoSites = /unsplash\.com|pexels\.com|shutterstock\.com/i;

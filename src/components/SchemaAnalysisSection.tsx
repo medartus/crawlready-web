@@ -216,87 +216,89 @@ export function SchemaAnalysisSection({ analysis }: SchemaAnalysisSectionProps) 
           What We Found
         </h4>
 
-        {analysis.hasSchema ? (
-          <>
-            <p className="mb-4 text-gray-700 dark:text-gray-300">
-              Your site has
-              {' '}
-              <strong>{analysis.schemaCount}</strong>
-              {' '}
-              schema markup
-              {analysis.schemaCount !== 1 ? 's' : ''}
-              {' '}
-              implemented using
-              {' '}
-              <strong>{analysis.primaryFormat.toUpperCase()}</strong>
-              :
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {analysis.schemaTypes.map(type => (
-                <span
-                  key={type}
-                  className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400"
-                >
-                  <FileCode className="size-4" />
-                  {type}
-                </span>
-              ))}
-            </div>
+        {analysis.hasSchema
+          ? (
+              <>
+                <p className="mb-4 text-gray-700 dark:text-gray-300">
+                  Your site has
+                  {' '}
+                  <strong>{analysis.schemaCount}</strong>
+                  {' '}
+                  schema markup
+                  {analysis.schemaCount !== 1 ? 's' : ''}
+                  {' '}
+                  implemented using
+                  {' '}
+                  <strong>{analysis.primaryFormat.toUpperCase()}</strong>
+                  :
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.schemaTypes.map(type => (
+                    <span
+                      key={type}
+                      className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-sm font-medium text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400"
+                    >
+                      <FileCode className="size-4" />
+                      {type}
+                    </span>
+                  ))}
+                </div>
 
-            {/* Quick Indicators */}
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                {analysis.categories.presence.hasJsonLd
-                  ? (
-                      <CheckCircle className="size-5 text-green-500" />
-                    )
-                  : (
-                      <XCircle className="size-5 text-red-500" />
-                    )}
-                <span className="text-gray-700 dark:text-gray-300">
-                  JSON-LD format (preferred by AI crawlers)
-                </span>
+                {/* Quick Indicators */}
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    {analysis.categories.presence.hasJsonLd
+                      ? (
+                          <CheckCircle className="size-5 text-green-500" />
+                        )
+                      : (
+                          <XCircle className="size-5 text-red-500" />
+                        )}
+                    <span className="text-gray-700 dark:text-gray-300">
+                      JSON-LD format (preferred by AI crawlers)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    {analysis.categories.presence.hasOrganization
+                      ? (
+                          <CheckCircle className="size-5 text-green-500" />
+                        )
+                      : (
+                          <AlertCircle className="size-5 text-yellow-500" />
+                        )}
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Organization schema
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    {analysis.categories.presence.hasContentType
+                      ? (
+                          <CheckCircle className="size-5 text-green-500" />
+                        )
+                      : (
+                          <AlertCircle className="size-5 text-yellow-500" />
+                        )}
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Content-specific schema (Article, Product, etc.)
+                    </span>
+                  </div>
+                </div>
+              </>
+            )
+          : (
+              <div className="flex items-start gap-3 rounded-lg bg-red-50 p-4 dark:bg-red-950/20">
+                <AlertTriangle className="size-5 shrink-0 text-red-600 dark:text-red-400" />
+                <div>
+                  <p className="font-medium text-red-900 dark:text-red-200">
+                    No Schema Markup Found
+                  </p>
+                  <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                    Your site is missing structured data, making it harder for AI crawlers to understand your content.
+                    This reduces your chances of being cited by AI systems by up to 80%.
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                {analysis.categories.presence.hasOrganization
-                  ? (
-                      <CheckCircle className="size-5 text-green-500" />
-                    )
-                  : (
-                      <AlertCircle className="size-5 text-yellow-500" />
-                    )}
-                <span className="text-gray-700 dark:text-gray-300">
-                  Organization schema
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                {analysis.categories.presence.hasContentType
-                  ? (
-                      <CheckCircle className="size-5 text-green-500" />
-                    )
-                  : (
-                      <AlertCircle className="size-5 text-yellow-500" />
-                    )}
-                <span className="text-gray-700 dark:text-gray-300">
-                  Content-specific schema (Article, Product, etc.)
-                </span>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex items-start gap-3 rounded-lg bg-red-50 p-4 dark:bg-red-950/20">
-            <AlertTriangle className="size-5 shrink-0 text-red-600 dark:text-red-400" />
-            <div>
-              <p className="font-medium text-red-900 dark:text-red-200">
-                No Schema Markup Found
-              </p>
-              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                Your site is missing structured data, making it harder for AI crawlers to understand your content.
-                This reduces your chances of being cited by AI systems by up to 80%.
-              </p>
-            </div>
-          </div>
-        )}
+            )}
       </div>
 
       {/* Issues */}

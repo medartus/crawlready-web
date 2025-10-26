@@ -119,7 +119,7 @@ export const CTA = () => {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             placeholder="Enter your work email"
-                            className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-500 transition-colors focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+                            className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 transition-colors placeholder:text-gray-500 focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
                             required
                             disabled={loading}
                           />
@@ -130,7 +130,7 @@ export const CTA = () => {
                             value={website}
                             onChange={e => setWebsite(e.target.value)}
                             placeholder="Your website URL"
-                            className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 placeholder:text-gray-500 transition-colors focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
+                            className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 transition-colors placeholder:text-gray-500 focus:border-indigo-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-400"
                             required
                             disabled={loading}
                           />

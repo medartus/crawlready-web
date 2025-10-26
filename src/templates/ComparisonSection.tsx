@@ -1,4 +1,4 @@
-import { Check, X, ArrowRight } from 'lucide-react';
+import { ArrowRight, Check, X } from 'lucide-react';
 
 import { Section } from '@/features/landing/Section';
 
@@ -198,8 +198,12 @@ export const ComparisonSection = () => {
         {/* Bottom CTA */}
         <div className="mt-12 text-center">
           <p className="mb-6 text-lg text-gray-600 dark:text-gray-400">
-            <span className="font-semibold text-gray-900 dark:text-white">40% cheaper</span> than Prerender.io. 
-            <span className="font-semibold text-gray-900 dark:text-white"> 99% faster</span> than building it yourself.
+            <span className="font-semibold text-gray-900 dark:text-white">40% cheaper</span>
+            {' '}
+            than Prerender.io.
+            <span className="font-semibold text-gray-900 dark:text-white"> 99% faster</span>
+            {' '}
+            than building it yourself.
           </p>
           <a
             href="#early-access"

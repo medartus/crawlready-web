@@ -34,7 +34,7 @@ export class HTMLParser {
   static extractMetaTag(html: string, name: string): string | null {
     const pattern = new RegExp(`<meta\\s+name=["']${name}["']\\s+content=["']([^"']+)["']`, 'i');
     const match = html.match(pattern);
-    return match ? match[1] : null;
+    return match && match[1] ? match[1] : null;
   }
 
   /**
@@ -43,7 +43,7 @@ export class HTMLParser {
   static extractLinkTag(html: string, rel: string): string | null {
     const pattern = new RegExp(`<link\\s+rel=["']${rel}["']\\s+href=["']([^"']+)["']`, 'i');
     const match = html.match(pattern);
-    return match ? match[1] : null;
+    return match && match[1] ? match[1] : null;
   }
 
   /**
@@ -68,7 +68,7 @@ export class HTMLParser {
     const linkMatches = html.match(/<a[^>]+href=["']([^"']+)["']/gi) || [];
     return linkMatches.map((link) => {
       const match = link.match(/href=["']([^"']+)["']/i);
-      return match ? match[1] : '';
+      return match && match[1] ? match[1] : '';
     }).filter(Boolean);
   }
 

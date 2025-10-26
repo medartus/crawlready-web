@@ -31,8 +31,8 @@ export class CrawlerVisualizer {
    */
   static generateComparison(html: string, url: string): CrawlerViewComparison {
     const crawlerHtml = this.stripJavaScript(html);
-    const differences = this.analyzeDifferences(html, crawlerHtml);
-    const statistics = this.generateStatistics(html, crawlerHtml);
+    const differences = this.analyzeDifferences(html);
+    const statistics = this.generateStatistics(html);
 
     return {
       userViewUrl: url, // Use actual URL to show styled version
@@ -127,7 +127,7 @@ export class CrawlerVisualizer {
   /**
    * Analyze differences between user and crawler view
    */
-  private static analyzeDifferences(originalHtml: string, _crawlerHtml: string): Array<{
+  private static analyzeDifferences(originalHtml: string): Array<{
     type: 'javascript' | 'lazy-loading' | 'hidden-content' | 'dynamic-content';
     severity: 'critical' | 'high' | 'medium' | 'low';
     crawler: string;
@@ -187,7 +187,7 @@ export class CrawlerVisualizer {
     }
 
     // Check for empty containers that need JS
-    const emptyRootPattern = /<div[^>]+id=["'](root|app|__next)["'][^>]*>\s*<\/div>/i;
+    const emptyRootPattern = /<div[^>]+id=["'](?:root|app|__next)["'][^>]*>\s*<\/div>/i;
     if (emptyRootPattern.test(originalHtml)) {
       differences.push({
         type: 'javascript' as const,
@@ -223,7 +223,7 @@ export class CrawlerVisualizer {
   /**
    * Generate statistics about differences
    */
-  private static generateStatistics(originalHtml: string, _crawlerHtml: string) {
+  private static generateStatistics(originalHtml: string) {
     return {
       jsScriptsRemoved: (originalHtml.match(/<script/gi) || []).length,
       eventHandlersRemoved: (originalHtml.match(/\son\w+\s*=/gi) || []).length,

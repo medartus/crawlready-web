@@ -18,8 +18,6 @@ export class URLFetcher {
     const startTime = Date.now();
 
     try {
-      console.log(`[URLFetcher] Fetching: ${url}`);
-
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -32,15 +30,12 @@ export class URLFetcher {
       });
 
       const responseTime = Date.now() - startTime;
-      console.log(`[URLFetcher] Response: ${response.status} in ${responseTime}ms`);
 
       const html = await response.text();
-      console.log(`[URLFetcher] Received ${html.length} bytes`);
 
       // Validate we got HTML, not JSON or other content
       const trimmedHtml = html.trim();
       if (!trimmedHtml.startsWith('<')) {
-        console.error(`[URLFetcher] Not HTML. First 100 chars: ${trimmedHtml.substring(0, 100)}`);
         throw new Error('Response does not appear to be HTML. The website may be returning JSON or plain text.');
       }
 
@@ -89,6 +84,7 @@ export class URLFetcher {
    */
   static validateUrl(url: string): void {
     try {
+      // eslint-disable-next-line no-new
       new URL(url);
     } catch {
       throw new Error('Invalid URL format');

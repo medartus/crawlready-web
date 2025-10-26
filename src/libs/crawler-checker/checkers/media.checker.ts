@@ -3,30 +3,10 @@
  * Images and videos are critical for AI understanding and accessibility
  */
 
-export type MediaCheckResult = {
-  imageCount: number;
-  imagesWithAlt: number;
-  imagesWithoutAlt: number;
-  altTextQuality: {
-    tooShort: number;
-    tooLong: number;
-    optimal: number;
-  };
-  modernFormats: {
-    webp: number;
-    avif: number;
-    svg: number;
-  };
-  lazyLoadingUsed: boolean;
-  responsiveImagesUsed: boolean;
-  imageDimensionsSpecified: number;
-  videoCount: number;
-  videosWithSchema: number;
-  issues: string[];
-};
+import type { MediaCheck } from '../types';
 
 export class MediaChecker {
-  static check(html: string): MediaCheckResult {
+  static check(html: string): MediaCheck {
     const issues: string[] = [];
 
     // Extract all images
@@ -48,7 +28,7 @@ export class MediaChecker {
       if (altMatch) {
         imagesWithAlt++;
         const altText = altMatch[1];
-        const altLength = altText.length;
+        const altLength = altText?.length || 0;
 
         if (altLength === 0) {
           // Empty alt is valid for decorative images
@@ -94,7 +74,7 @@ export class MediaChecker {
       jsonLdMatches.forEach((match) => {
         try {
           const jsonStr = match.replace(/<script[^>]*>/, '').replace(/<\/script>/, '');
-          const schema = JSON.parse(jsonStr);
+          const schema = JSON.parse(jsonStr) as { '@type'?: string };
 
           if (schema['@type'] === 'VideoObject') {
             videosWithSchema++;

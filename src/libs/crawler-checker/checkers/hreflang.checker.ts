@@ -3,20 +3,10 @@
  * Critical for multi-language and international SEO
  */
 
-export type HreflangCheckResult = {
-  hasHreflangTags: boolean;
-  hreflangCount: number;
-  languages: string[];
-  hasXDefault: boolean;
-  hasBidirectionalLinks: boolean;
-  conflictsWithLangAttribute: boolean;
-  duplicateLanguages: string[];
-  invalidFormats: string[];
-  issues: string[];
-};
+import type { HreflangCheck } from '../types';
 
 export class HreflangChecker {
-  static check(html: string, url: string): HreflangCheckResult {
+  static check(html: string, url: string): HreflangCheck {
     const issues: string[] = [];
 
     // Extract all hreflang tags
@@ -50,6 +40,10 @@ export class HreflangChecker {
         const lang = langMatch[1];
         const href = hrefMatch[1];
 
+        if (!lang || !href) {
+          return;
+        }
+
         // Check for x-default
         if (lang === 'x-default') {
           hasXDefault = true;
@@ -60,7 +54,7 @@ export class HreflangChecker {
         urls.push(href);
 
         // Validate format (should be language-REGION or just language)
-        if (!/^[a-z]{2}(-[A-Z]{2})?$/.test(lang) && lang !== 'x-default') {
+        if (!/^[a-z]{2}(?:-[A-Z]{2})?$/.test(lang) && lang !== 'x-default') {
           invalidFormats.push(lang);
           issues.push(`Invalid hreflang format: ${lang} (should be 'en', 'en-US', etc.)`);
         }
@@ -83,7 +77,7 @@ export class HreflangChecker {
     const htmlLangMatch = html.match(/<html[^>]+lang=["']([^"']+)["']/i);
     let conflictsWithLangAttribute = false;
 
-    if (htmlLangMatch) {
+    if (htmlLangMatch && htmlLangMatch[1]) {
       const htmlLang = htmlLangMatch[1].toLowerCase();
       const normalizedHtmlLang = htmlLang.split('-')[0]; // Get base language
 
@@ -128,35 +122,5 @@ export class HreflangChecker {
       invalidFormats,
       issues,
     };
-  }
-
-  /**
-   * Get language name from code
-   */
-  static getLanguageName(code: string): string {
-    const languages: Record<string, string> = {
-      en: 'English',
-      es: 'Spanish',
-      fr: 'French',
-      de: 'German',
-      it: 'Italian',
-      pt: 'Portuguese',
-      ru: 'Russian',
-      ja: 'Japanese',
-      zh: 'Chinese',
-      ko: 'Korean',
-      ar: 'Arabic',
-      hi: 'Hindi',
-      nl: 'Dutch',
-      pl: 'Polish',
-      tr: 'Turkish',
-      sv: 'Swedish',
-      da: 'Danish',
-      fi: 'Finnish',
-      no: 'Norwegian',
-    };
-
-    const baseLang = code.split('-')[0];
-    return languages[baseLang] || code;
   }
 }

@@ -48,23 +48,23 @@ We're the only platform built specifically for AI search engines (ChatGPT, Perpl
 ## Unique Features (Our Moat)
 
 ### 1. AI Citation Tracking ⭐
-**What:** Monitor when ChatGPT, Perplexity, Claude cite your content  
-**Why Unique:** Requires LLM API costs, complex parsing, ongoing maintenance  
+**What:** Monitor when ChatGPT, Perplexity, Claude cite your content
+**Why Unique:** Requires LLM API costs, complex parsing, ongoing maintenance
 **Competitive Moat:** High - requires AI expertise and infrastructure
 
 ### 2. LLM-Optimized Schema Injection ⭐
-**What:** Auto-inject FAQ, HowTo, Article schemas optimized for LLMs  
-**Why Unique:** Requires AI/ML expertise, not just SEO knowledge  
+**What:** Auto-inject FAQ, HowTo, Article schemas optimized for LLMs
+**Why Unique:** Requires AI/ML expertise, not just SEO knowledge
 **Competitive Moat:** Medium-High - requires understanding of LLM behavior
 
 ### 3. Real-Time AI Crawler Analytics ⭐
-**What:** Track GPTBot, PerplexityBot, ClaudeBot with pattern analysis  
-**Why Unique:** Specialized crawler detection beyond user-agent matching  
+**What:** Track GPTBot, PerplexityBot, ClaudeBot with pattern analysis
+**Why Unique:** Specialized crawler detection beyond user-agent matching
 **Competitive Moat:** Medium - requires crawler expertise
 
 ### 4. Competitor Citation Comparison ⭐
-**What:** See when competitors get cited vs you  
-**Why Unique:** Combines citation tracking with competitive intelligence  
+**What:** See when competitors get cited vs you
+**Why Unique:** Combines citation tracking with competitive intelligence
 **Competitive Moat:** High - requires all of the above
 
 ---
@@ -151,30 +151,30 @@ We're the only platform built specifically for AI search engines (ChatGPT, Perpl
 ## Competitive Response Strategy
 
 ### If Prerender.io Lowers Prices
-**Our Response:** Emphasize unique features they don't have (citation tracking)  
+**Our Response:** Emphasize unique features they don't have (citation tracking)
 **Message:** "Price isn't everything. Can they show you when ChatGPT cites you?"
 
 ### If Prerender.io Adds AI Features
-**Our Response:** Emphasize AI-first positioning and depth of features  
+**Our Response:** Emphasize AI-first positioning and depth of features
 **Message:** "We've been AI-first from day one. They're bolting it on."
 
 ### If New AI-First Competitor Emerges
-**Our Response:** Emphasize first-mover advantage, proven scale, and community  
+**Our Response:** Emphasize first-mover advantage, proven scale, and community
 **Message:** "We've been doing this since 2025. 10K+ renders/day. Join the community."
 
 ### If Google/OpenAI Builds Native Solution
-**Our Response:** Emphasize platform-agnostic approach and multi-crawler support  
+**Our Response:** Emphasize platform-agnostic approach and multi-crawler support
 **Message:** "We optimize for ALL AI platforms, not just one. Plus citation tracking."
 
 ---
 
 ## Positioning Statement
 
-**For** JavaScript-heavy SaaS companies, e-commerce stores, and content publishers  
-**Who** are losing visibility in AI search because only 31% of AI crawlers can render JavaScript  
-**CrawlReady is** the first AI-first crawler optimization platform  
-**That** tracks citations across ChatGPT, Perplexity, and Claude with unique AI-specific features  
-**Unlike** Prerender.io (SEO-focused) or DIY solutions (expensive and time-consuming)  
+**For** JavaScript-heavy SaaS companies, e-commerce stores, and content publishers
+**Who** are losing visibility in AI search because only 31% of AI crawlers can render JavaScript
+**CrawlReady is** the first AI-first crawler optimization platform
+**That** tracks citations across ChatGPT, Perplexity, and Claude with unique AI-specific features
+**Unlike** Prerender.io (SEO-focused) or DIY solutions (expensive and time-consuming)
 **We** specialize exclusively in AI search optimization with features competitors can't easily replicate
 
 ---
@@ -222,15 +222,15 @@ We're the only platform built specifically for AI search engines (ChatGPT, Perpl
 ## Differentiation Roadmap
 
 ### Q1 2025 (Phase 0)
-**Focus:** Establish AI-first positioning  
+**Focus:** Establish AI-first positioning
 **Tactics:** Launch with citation tracking, content marketing, developer community
 
 ### Q2-Q3 2025 (Phase 1)
-**Focus:** Prove unique value with case studies  
+**Focus:** Prove unique value with case studies
 **Tactics:** Customer success stories, performance benchmarks, feature expansion
 
 ### Q4 2025-Q2 2026 (Phase 2)
-**Focus:** Own the "AI search optimization" category  
+**Focus:** Own the "AI search optimization" category
 **Tactics:** Thought leadership, integrations, ecosystem building
 
 ---

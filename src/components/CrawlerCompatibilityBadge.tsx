@@ -2,12 +2,12 @@
 
 import type { CrawlerCompatibility } from '@/types/crawler-checker';
 
-interface CrawlerBadgeProps {
+type CrawlerBadgeProps = {
   name: string;
   vendor: string;
   status: 'full' | 'partial' | 'poor';
   icon?: string;
-}
+};
 
 function CrawlerBadge({ name, vendor, status, icon }: CrawlerBadgeProps) {
   const getStatusColor = (status: string) => {
@@ -66,10 +66,10 @@ function CrawlerBadge({ name, vendor, status, icon }: CrawlerBadgeProps) {
   );
 }
 
-interface CrawlerCompatibilityBadgeProps {
+type CrawlerCompatibilityBadgeProps = {
   compatibility: CrawlerCompatibility;
   className?: string;
-}
+};
 
 export function CrawlerCompatibilityBadge({ compatibility, className = '' }: CrawlerCompatibilityBadgeProps) {
   const crawlers = [

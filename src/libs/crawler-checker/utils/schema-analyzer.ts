@@ -252,16 +252,22 @@ function calculatePresenceScore(
  * Calculate completeness score (30 points max)
  */
 function calculateCompletenessScore(rawSchemas: any[]): number {
-  if (rawSchemas.length === 0) return 0;
+  if (rawSchemas.length === 0) {
+    return 0;
+  }
 
   const scores = rawSchemas.map((schema) => {
     const type = schema['@type'];
-    if (!type) return 0;
+    if (!type) {
+      return 0;
+    }
 
     const required = SCHEMA_REQUIRED_FIELDS[type] || [];
     const recommended = SCHEMA_RECOMMENDED_FIELDS[type] || [];
 
-    if (required.length === 0) return 100; // No validation rules
+    if (required.length === 0) {
+      return 100;
+    } // No validation rules
 
     const requiredPresent = required.filter(field => schema[field] !== undefined).length;
     const recommendedPresent = recommended.filter(field => schema[field] !== undefined).length;
@@ -373,7 +379,6 @@ function generateIssuesAndRecommendations(
   schemas: SchemaLocation[],
   rawSchemas: any[],
   pageType: SchemaAnalysis['pageType'],
-  recommendedSchemas: SchemaType[],
   missingSchemas: SchemaType[],
 ): { issues: SchemaIssue[]; recommendations: SchemaAnalysis['recommendations'] } {
   const issues: SchemaIssue[] = [];
@@ -428,7 +433,9 @@ function generateIssuesAndRecommendations(
   // Check for incomplete schemas
   rawSchemas.forEach((schema) => {
     const type = schema['@type'];
-    if (!type) return;
+    if (!type) {
+      return;
+    }
 
     const required = SCHEMA_REQUIRED_FIELDS[type] || [];
     const missing = required.filter(field => !schema[field]);
@@ -539,7 +546,6 @@ export function analyzeSchema(html: string, url: string): SchemaAnalysis {
     schemas,
     rawSchemas,
     pageType,
-    recommendedSchemas,
     missingSchemas,
   );
 

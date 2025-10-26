@@ -1,4 +1,4 @@
-import { ArrowUpRight, Rocket, TrendingUp, Zap, ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Rocket, TrendingUp, Zap } from 'lucide-react';
 
 import { Section } from '@/features/landing/Section';
 
@@ -82,7 +82,7 @@ export const MarketOpportunitySection = () => {
           <h3 className="mb-8 text-center text-2xl font-bold text-gray-900 dark:text-white">
             Why Now is the Perfect Time
           </h3>
-          
+
           <div className="space-y-6">
             {/* Timeline Item 1 */}
             <div className="flex gap-6">

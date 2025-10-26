@@ -2,11 +2,11 @@
 
 import type { Issue } from '@/types/crawler-checker';
 
-interface IssuesAndRecommendationsProps {
+type IssuesAndRecommendationsProps = {
   issues: Issue[];
   recommendations: string[];
   className?: string;
-}
+};
 
 export function IssuesAndRecommendations({
   issues,
@@ -49,7 +49,9 @@ export function IssuesAndRecommendations({
       {issues.length > 0 && (
         <div>
           <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-            Issues Found ({issues.length})
+            Issues Found (
+            {issues.length}
+            )
           </h3>
           <div className="space-y-3">
             {issues.map((issue, index) => (
@@ -64,13 +66,18 @@ export function IssuesAndRecommendations({
                       <span className="text-xs font-semibold uppercase tracking-wide">
                         {issue.severity}
                       </span>
-                      <span className="text-xs opacity-75">• {issue.crawler}</span>
+                      <span className="text-xs opacity-75">
+                        •
+                        {issue.crawler}
+                      </span>
                     </div>
                     <p className="font-medium">{issue.description}</p>
                   </div>
                 </div>
                 <div className="ml-7 mt-2 rounded bg-white/50 p-3 text-sm dark:bg-black/20">
-                  <strong className="font-semibold">Fix:</strong> {issue.fix}
+                  <strong className="font-semibold">Fix:</strong>
+                  {' '}
+                  {issue.fix}
                 </div>
               </div>
             ))}

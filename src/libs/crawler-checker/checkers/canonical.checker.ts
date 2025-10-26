@@ -25,6 +25,7 @@ export class CanonicalChecker {
     // Validate URL format
     let isValid = false;
     try {
+      // eslint-disable-next-line no-new
       new URL(canonicalUrl);
       isValid = true;
     } catch {

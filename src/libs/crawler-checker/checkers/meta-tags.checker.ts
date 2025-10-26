@@ -11,10 +11,10 @@ export class MetaTagsChecker {
    */
   static check(html: string): MetaTagsCheck {
     const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].trim() : null;
+    const title = titleMatch && titleMatch[1] ? titleMatch[1].trim() : null;
 
     const descriptionMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
-    const description = descriptionMatch ? descriptionMatch[1] : null;
+    const description = descriptionMatch && descriptionMatch[1] ? descriptionMatch[1] : null;
 
     const hasOpenGraph = html.includes('property="og:');
     const langMatch = html.match(/<html[^>]+lang=["']([^"']+)["']/i);

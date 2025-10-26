@@ -95,8 +95,8 @@ export type PerformanceCheck = {
 export type FreshnessCheck = {
   hasDatePublished: boolean;
   hasDateModified: boolean;
-  publishedDate: string | null;
-  modifiedDate: string | null;
+  publishedDate?: string;
+  modifiedDate?: string;
   ageInDays: number | null;
   isStale: boolean;
   hasLastModifiedHeader: boolean;
@@ -159,10 +159,22 @@ export type EEATCheck = {
   issues: string[];
 };
 
+export type HreflangCheck = {
+  hasHreflangTags: boolean;
+  hreflangCount: number;
+  languages: string[];
+  hasXDefault: boolean;
+  hasBidirectionalLinks: boolean;
+  conflictsWithLangAttribute: boolean;
+  duplicateLanguages: string[];
+  invalidFormats: string[];
+  issues: string[];
+};
+
 export type CategoryScores = {
   javascript: number;
   technicalSEO: number;
-  schemaMetadata: number;
+  schemaMarkup: number;
   contentQuality: number;
   performance: number;
   navigation: number;

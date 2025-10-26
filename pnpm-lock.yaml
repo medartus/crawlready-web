@@ -126,6 +126,9 @@ importers:
       '@commitlint/cz-commitlint':
         specifier: ^19.5.0
         version: 19.8.1(@types/node@22.18.12)(commitizen@4.3.1(@types/node@22.18.12)(typescript@5.9.3))(inquirer@8.2.5)(typescript@5.9.3)
+      '@commitlint/types':
+        specifier: ^19.5.0
+        version: 19.8.1
       '@eslint-react/eslint-plugin':
         specifier: ^1.15.0
         version: 1.53.1(eslint@8.57.1)(ts-api-utils@2.1.0(typescript@5.9.3))(typescript@5.9.3)

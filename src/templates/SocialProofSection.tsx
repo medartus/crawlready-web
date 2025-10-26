@@ -1,4 +1,4 @@
-import { Building2, Code2, ShoppingCart, TrendingUp, ArrowRight } from 'lucide-react';
+import { ArrowRight, Building2, Code2, ShoppingCart, TrendingUp } from 'lucide-react';
 
 import { Section } from '@/features/landing/Section';
 
@@ -22,11 +22,11 @@ export const SocialProofSection = () => {
                 Most Popular
               </span>
             </div>
-            
+
             <h3 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
               JavaScript SaaS Platforms
             </h3>
-            
+
             <p className="mb-4 text-gray-600 dark:text-gray-400">
               React, Vue, Angular SPAs with 500-50K pages. Product-led growth companies where AI search visibility drives signups.
             </p>
@@ -69,11 +69,11 @@ export const SocialProofSection = () => {
                 <ShoppingCart className="size-7" />
               </div>
             </div>
-            
+
             <h3 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
               E-Commerce Stores
             </h3>
-            
+
             <p className="mb-4 text-gray-600 dark:text-gray-400">
               Headless commerce, custom React storefronts with 1K-50K product SKUs and dynamic filtering.
             </p>
@@ -116,11 +116,11 @@ export const SocialProofSection = () => {
                 <TrendingUp className="size-7" />
               </div>
             </div>
-            
+
             <h3 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
               Technical Content Publishers
             </h3>
-            
+
             <p className="mb-4 text-gray-600 dark:text-gray-400">
               Tech blogs, documentation sites, developer resources with 500-10K articles and code snippets.
             </p>
@@ -163,11 +163,11 @@ export const SocialProofSection = () => {
                 <Building2 className="size-7" />
               </div>
             </div>
-            
+
             <h3 className="mb-3 text-2xl font-bold text-gray-900 dark:text-white">
               Enterprise Portals
             </h3>
-            
+
             <p className="mb-4 text-gray-600 dark:text-gray-400">
               Large-scale customer portals, knowledge bases, and internal tools with complex JavaScript frameworks.
             </p>

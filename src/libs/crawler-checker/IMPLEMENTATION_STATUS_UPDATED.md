@@ -218,13 +218,13 @@
 ### Research-Backed Weights
 ```typescript
 const CATEGORY_WEIGHTS = {
-  javascript: 0.25,        // 25% - CRITICAL
-  technicalSEO: 0.20,      // 20% - robots.txt, HTTPS, canonical
-  schemaMetadata: 0.20,    // 20% - Schema + freshness
-  contentQuality: 0.15,    // 15% - E-E-A-T + word count
-  performance: 0.10,       // 10% - Response time, size, compression
-  navigation: 0.05,        // 5% - Links + breadcrumbs
-  security: 0.05,          // 5% - HTTPS + headers + trust
+  javascript: 0.25, // 25% - CRITICAL
+  technicalSEO: 0.20, // 20% - robots.txt, HTTPS, canonical
+  schemaMetadata: 0.20, // 20% - Schema + freshness
+  contentQuality: 0.15, // 15% - E-E-A-T + word count
+  performance: 0.10, // 10% - Response time, size, compression
+  navigation: 0.05, // 5% - Links + breadcrumbs
+  security: 0.05, // 5% - HTTPS + headers + trust
 };
 ```
 

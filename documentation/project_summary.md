@@ -39,7 +39,6 @@ automatic schema injection for answer engines, and predictive AI crawler analyti
 
 ## Positioning Statement
 
-
 **"Get Cited in ChatGPT Answers—Without Rebuilding Your Site"**
 
 **Profile** :
@@ -137,7 +136,6 @@ Missing citations in AI developer tool answers
 ## vs Prerender.io
 
 ## vs DIY Puppeteer/SSR
-
 
 **Overages** : $0.50/1,000 renders (vs Prerender's $0.75-1.50)
 **Annual Discount** : 20% off
@@ -466,7 +464,6 @@ SoftwareApplication Schema (for product pages)
 
 ## Market Risks
 
-
 **VALIDATION CRITERIA** : 10 paying customers + $500-1,000 revenue before building automated
 product
 
@@ -509,7 +506,6 @@ product
 
 ## 1. Validate First
 
-
 ✓ MVP in 3 months max
 ✓ No perfectionism - ship 80% solution
 ✓ Iterate based on real usage
@@ -531,7 +527,7 @@ growth in AI search traffic. Your indie hacker advantage is:
 
 **Next Step** : Build the landing page THIS WEEK and start pre-selling.
 
-Good luck! 
+Good luck!
 
 ## 2. Ship Fast
 
@@ -547,5 +543,3 @@ Good luck!
 2. **Focus** : AI-first positioning (not general SEO)
 3. **Differentiation** : Unique features (citation tracking, schema injection)
 4. **Lower costs** : Bootstrap-friendly with pre-validation
-
-
