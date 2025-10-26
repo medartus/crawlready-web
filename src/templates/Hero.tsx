@@ -20,7 +20,7 @@ export const Hero = () => {
           >
             <Sparkles className="mr-2 size-4 text-indigo-600 dark:text-indigo-400" />
             <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text font-semibold text-transparent dark:bg-none dark:!text-white">
-              Phase 0: Early Access Now Open
+              Early Access Now Open
             </span>
             <ArrowRight className="ml-2 size-4 text-indigo-600 dark:text-indigo-400" />
           </a>

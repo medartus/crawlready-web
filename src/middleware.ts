@@ -15,6 +15,7 @@ const publicApiRoutes = [
   '/api/check-crawler',
   '/api/check-schema',
   '/api/waitlist',
+  '/api/waitlist/count',
 ];
 
 const isProtectedRoute = createRouteMatcher([

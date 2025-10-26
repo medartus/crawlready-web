@@ -176,7 +176,7 @@
     "get_early_access": "Get Early Access"
   },
   "LandingHero": {
-    "badge_text": "Phase 0 Early Access - First 100 Users Get 50% Off Forever",
+    "badge_text": "Early Access - First 100 Users Get 50% Off Forever",
     "title": "Get Cited in ChatGPT Answers",
     "title_highlight": "Without Rebuilding Your Site",
     "description": "98.9% of websites use JavaScript. Only 31% of AI crawlers can render it. Make your content visible to ChatGPT, Perplexity, and Claude in 5 minutes.",
@@ -359,7 +359,7 @@
     "cta_button": "Claim Your Spot Now"
   },
   "LandingPricing": {
-    "subtitle": "Phase 0 Early Access",
+    "subtitle": "Early Access",
     "title": "Join the First 100 Users",
     "description": "Lock in lifetime 50% discount. Cancel anytime. No credit card required.",
     "plan1_name": "Starter",
@@ -378,14 +378,14 @@
     "per_month": "/month",
     "discount_badge": "50% OFF",
     "cta_button": "Get Started",
-    "bottom_notice": "🎉 Lifetime 50% discount for Phase 0 users • ✓ No credit card required • ✓ Cancel anytime"
+    "bottom_notice": "🎉 Lifetime 50% discount for Early Access users • ✓ No credit card required • ✓ Cancel anytime"
   },
   "LandingFAQ": {
     "title": "Frequently Asked Questions",
     "description": "Everything you need to know about CrawlReady and AI crawler optimization"
   },
   "LandingCTA": {
-    "badge_text": "Limited Time: Phase 0 Early Access",
+    "badge_text": "Limited Time: Early Access",
     "title": "Join the First 100 Users",
     "description": "Get lifetime 50% discount, priority support, and help shape the future of AI crawler optimization.",
     "benefit1_title": "50% Off Forever",

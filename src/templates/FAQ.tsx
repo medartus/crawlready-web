@@ -74,7 +74,7 @@ export const FAQ = () => {
 
             <AccordionItem value="item-5">
               <AccordionTrigger className="text-left">
-                What's included in the Phase 0 early access?
+                What's included in the early access?
               </AccordionTrigger>
               <AccordionContent className="text-gray-600 dark:text-gray-400">
                 Early access users get:

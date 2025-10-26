@@ -7,7 +7,7 @@ export const Pricing = () => {
   return (
     <div id="pricing">
       <Section
-        subtitle="Phase 0 Early Access"
+        subtitle="Early Access"
         title="Join the First 100 Users"
         description="Get lifetime 50% discount. Help shape the product. Priority support. Limited spots available."
       >

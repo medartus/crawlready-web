@@ -176,7 +176,7 @@
     "get_early_access": "Accès Anticipé"
   },
   "LandingHero": {
-    "badge_text": "Phase 0 Accès Anticipé - Les 100 Premiers Utilisateurs Obtiennent 50% de Réduction à Vie",
+    "badge_text": "Accès Anticipé - Les 100 Premiers Utilisateurs Obtiennent 50% de Réduction à Vie",
     "title": "Soyez Cité dans les Réponses ChatGPT",
     "title_highlight": "Sans Reconstruire Votre Site",
     "description": "98,9% des sites web utilisent JavaScript. Seulement 31% des crawlers IA peuvent le rendre. Rendez votre contenu visible à ChatGPT, Perplexity et Claude en 5 minutes.",
@@ -359,7 +359,7 @@
     "cta_button": "Réserver Votre Place Maintenant"
   },
   "LandingPricing": {
-    "subtitle": "Phase 0 Accès Anticipé",
+    "subtitle": "Accès Anticipé",
     "title": "Rejoignez les 100 Premiers Utilisateurs",
     "description": "Verrouillez une réduction à vie de 50%. Annulez à tout moment. Aucune carte de crédit requise.",
     "plan1_name": "Starter",
@@ -378,14 +378,14 @@
     "per_month": "/mois",
     "discount_badge": "50% DE RÉDUCTION",
     "cta_button": "Commencer",
-    "bottom_notice": "🎉 Réduction à vie de 50% pour les utilisateurs Phase 0 • ✓ Aucune carte de crédit requise • ✓ Annulez à tout moment"
+    "bottom_notice": "🎉 Réduction à vie de 50% pour les utilisateurs de l'accès anticipé • ✓ Aucune carte de crédit requise • ✓ Annulez à tout moment"
   },
   "LandingFAQ": {
     "title": "Questions Fréquemment Posées",
     "description": "Tout ce que vous devez savoir sur CrawlReady et l'optimisation des crawlers IA"
   },
   "LandingCTA": {
-    "badge_text": "Offre Limitée : Phase 0 Accès Anticipé",
+    "badge_text": "Offre Limitée : Accès Anticipé",
     "title": "Rejoignez les 100 Premiers Utilisateurs",
     "description": "Obtenez une réduction à vie de 50%, un support prioritaire et aidez à façonner l'avenir de l'optimisation des crawlers IA.",
     "benefit1_title": "50% de Réduction à Vie",
