@@ -26,6 +26,8 @@ export default antfu({
     'migrations/**/*',
     'next-env.d.ts',
     'documentation/**/*.md',
+    'vitest.config.mts',
+    'vitest-setup.ts',
   ],
 }, ...tailwind.configs['flat/recommended'], jsxA11y.flatConfigs.recommended, {
   plugins: {
