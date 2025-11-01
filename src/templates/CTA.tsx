@@ -1,12 +1,14 @@
 'use client';
 
 import { ArrowRight, CheckCircle2, Clock, Sparkles, Users } from 'lucide-react';
+import { usePostHog } from 'posthog-js/react';
 import { useEffect, useState } from 'react';
 
 import { buttonVariants } from '@/components/ui/buttonVariants';
 import { Section } from '@/features/landing/Section';
 
 export const CTA = () => {
+  const posthog = usePostHog();
   const [email, setEmail] = useState('');
   const [website, setWebsite] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,21 @@ export const CTA = () => {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to join waitlist');
       }
+
+      // Identify user by email for waitlist registrations
+      posthog?.identify(email, {
+        email,
+        website,
+        source: 'waitlist',
+      });
+
+      // Track successful waitlist registration
+      posthog?.capture('waitlist_registration', {
+        email,
+        website,
+        spots_left: spotsLeft,
+        timestamp: new Date().toISOString(),
+      });
 
       setSuccess(true);
       setEmail('');

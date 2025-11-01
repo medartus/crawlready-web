@@ -5,6 +5,7 @@ import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { unstable_setRequestLocale } from 'next-intl/server';
 
 import { routing } from '@/libs/i18n/routing';
+import { PostHogPageView, PostHogProvider } from '@/libs/posthog';
 
 export const metadata: Metadata = {
   icons: [
@@ -52,13 +53,16 @@ export default function RootLayout(props: {
   return (
     <html lang={props.params.locale} suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased" suppressHydrationWarning>
-        {/* PRO: Dark mode support for Shadcn UI */}
-        <NextIntlClientProvider
-          locale={props.params.locale}
-          messages={messages}
-        >
-          {props.children}
-        </NextIntlClientProvider>
+        <PostHogProvider>
+          <PostHogPageView />
+          {/* PRO: Dark mode support for Shadcn UI */}
+          <NextIntlClientProvider
+            locale={props.params.locale}
+            messages={messages}
+          >
+            {props.children}
+          </NextIntlClientProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
