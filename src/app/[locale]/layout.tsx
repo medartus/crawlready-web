@@ -3,6 +3,7 @@ import '@/styles/global.css';
 import type { Metadata } from 'next';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
 import { unstable_setRequestLocale } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import { routing } from '@/libs/i18n/routing';
 import { PostHogPageView, PostHogProvider } from '@/libs/posthog';
@@ -54,7 +55,9 @@ export default function RootLayout(props: {
     <html lang={props.params.locale} suppressHydrationWarning>
       <body className="bg-background text-foreground antialiased" suppressHydrationWarning>
         <PostHogProvider>
-          <PostHogPageView />
+          <Suspense fallback={null}>
+            <PostHogPageView />
+          </Suspense>
           {/* PRO: Dark mode support for Shadcn UI */}
           <NextIntlClientProvider
             locale={props.params.locale}
