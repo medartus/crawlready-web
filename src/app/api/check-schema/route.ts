@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { analyzeSchema } from '@/libs/crawler-checker/utils/schema-analyzer';
+import { trackServerEvent } from '@/libs/posthog';
 
 // Configure route to run on Node.js runtime
 export const runtime = 'nodejs';
@@ -8,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
-    const { url } = await request.json();
+    const { url } = await request.json() as { url: string };
 
     if (!url) {
       return NextResponse.json(
@@ -52,6 +53,19 @@ export async function POST(request: Request) {
 
     // Analyze schema
     const analysis = analyzeSchema(html, validUrl.toString());
+
+    // Track tool usage with distinct ID from header
+    // Falls back to IP address if header not provided
+    const distinctId = request.headers.get('x-posthog-distinct-id');
+    const trackingId = distinctId || request.headers.get('x-forwarded-for') || 'anonymous';
+    await trackServerEvent(trackingId, 'tool_usage_schema_checker', {
+      url: validUrl.toString(),
+      overall_score: analysis.overallScore,
+      schema_count: analysis.schemaCount,
+      issues_count: analysis.issues.length,
+      recommendations_count: analysis.recommendations.length,
+      timestamp: new Date().toISOString(),
+    });
 
     return NextResponse.json({
       success: true,

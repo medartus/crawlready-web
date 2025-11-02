@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { crawlerCheckerService } from '@/libs/CrawlerCheckerService';
+import { trackServerEvent } from '@/libs/posthog';
 import type { CheckCrawlerRequest, CheckCrawlerResponse } from '@/types/crawler-checker';
 
 export const runtime = 'nodejs';
@@ -46,6 +47,18 @@ export async function POST(request: Request) {
 
     // Check the URL
     const report = await crawlerCheckerService.checkUrl(url);
+
+    // Track tool usage with distinct ID from header
+    // Falls back to IP address if header not provided
+    const distinctId = request.headers.get('x-posthog-distinct-id');
+    const trackingId = distinctId || request.headers.get('x-forwarded-for') || 'anonymous';
+    await trackServerEvent(trackingId, 'tool_usage_crawler_checker', {
+      url,
+      score: report.score,
+      total_issues: report.issues.length,
+      total_recommendations: report.recommendations.length,
+      timestamp: new Date().toISOString(),
+    });
 
     return NextResponse.json<CheckCrawlerResponse>({
       success: true,

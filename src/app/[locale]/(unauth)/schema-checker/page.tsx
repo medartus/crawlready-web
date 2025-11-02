@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { badgeVariants } from '@/components/ui/badgeVariants';
 import { buttonVariants } from '@/components/ui/buttonVariants';
 import { Section } from '@/features/landing/Section';
+import { api } from '@/libs/api-client';
 import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 
@@ -33,12 +34,8 @@ export default function SchemaCheckerPage() {
 
       setLoading(true);
 
-      // Fetch and analyze
-      const response = await fetch('/api/check-schema', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: normalizedUrl }),
-      });
+      // Fetch and analyze (distinct ID automatically included in header)
+      const response = await api.post('/api/check-schema', { url: normalizedUrl });
 
       // Check if response is JSON
       const contentType = response.headers.get('content-type');

@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { api } from '@/libs/api-client';
+
 type CrawlerCheckerFormProps = {
   className?: string;
 };
@@ -42,14 +44,8 @@ export function CrawlerCheckerForm({ className = '' }: CrawlerCheckerFormProps) 
         return;
       }
 
-      // Call API
-      const response = await fetch('/api/check-crawler', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: fullUrl }),
-      });
+      // Call API (distinct ID automatically included in header)
+      const response = await api.post('/api/check-crawler', { url: fullUrl });
 
       const data = await response.json();
 
