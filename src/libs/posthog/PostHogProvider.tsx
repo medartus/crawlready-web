@@ -11,7 +11,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 
     if (posthogKey && posthogHost) {
       posthog.init(posthogKey, {
-        api_host: '/ingest',
+        // api_host: '/ingest',
         ui_host: posthogHost,
         person_profiles: 'identified_only',
         capture_pageview: false, // We'll handle this manually
