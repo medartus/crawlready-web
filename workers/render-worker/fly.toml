@@ -1,56 +1,44 @@
-# Fly.io configuration for CrawlReady Render Worker
+# fly.toml app configuration file generated for crawlready-worker on 2025-12-29T00:03:41+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "crawlready-render-worker"
-primary_region = "iad" # US East
+app = 'crawlready-worker'
+primary_region = 'iad'
 
 [build]
-dockerfile = "Dockerfile"
+dockerfile = 'Dockerfile'
 
 [env]
-NODE_ENV = "production"
-WORKER_CONCURRENCY = "3"
-HEALTH_PORT = "8080"
+HEALTH_PORT = '8080'
+NODE_ENV = 'production'
+WORKER_CONCURRENCY = '3'
 
 [[services]]
+protocol = 'tcp'
 internal_port = 8080
-protocol = "tcp"
 
 [[services.ports]]
 port = 80
-handlers = [ "http" ]
+handlers = [ 'http' ]
 
 [[services.ports]]
 port = 443
 handlers = [
-  "tls",
-  "http"
+  'tls',
+  'http'
 ]
 
 [services.concurrency]
-type = "connections"
+type = 'connections'
 hard_limit = 25
 soft_limit = 20
 
 [[services.tcp_checks]]
-interval = "15s"
-timeout = "2s"
-grace_period = "5s"
+interval = '15s'
+timeout = '2s'
+grace_period = '5s'
 
-# Resources
-[vm]
-size = "shared-cpu-2x" # 2 vCPUs, 512MB RAM
-memory = "512mb"
-
-# Auto-scaling
-[auto_scaling]
-min_machines_running = 1
-max_machines_running = 5
-
-# Secrets (set via fly secrets set)
-# - DATABASE_URL
-# - UPSTASH_REDIS_HOST
-# - UPSTASH_REDIS_PORT
-# - UPSTASH_REDIS_PASSWORD
-# - UPSTASH_REDIS_TLS
-# - SUPABASE_URL
-# - SUPABASE_KEY
+[[vm]]
+size = 'shared-cpu-2x'
+memory = '512mb'
