@@ -61,7 +61,8 @@
     "**/*.test.tsx",
     "**/*.e2e.ts",
     "vitest.config.mts",
-    "vitest-setup.ts"
+    "vitest-setup.ts",
+    "workers/**/*"
   ],
   "include": [
     "next-env.d.ts",

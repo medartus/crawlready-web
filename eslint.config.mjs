@@ -26,6 +26,7 @@ export default antfu({
     'migrations/**/*',
     'next-env.d.ts',
     'documentation/**/*.md',
+    '*.md',
     'vitest.config.mts',
     'vitest-setup.ts',
   ],

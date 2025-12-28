@@ -1,27 +1,34 @@
-import logtail from '@logtail/pino';
-import pino, { type DestinationStream } from 'pino';
-import pretty from 'pino-pretty';
+import pino from 'pino';
 
-import { Env } from './Env';
+/**
+ * Centralized logger for CrawlReady
+ * Uses pino for structured logging with performance
+ */
 
-let stream: DestinationStream;
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
-if (Env.LOGTAIL_SOURCE_TOKEN) {
-  stream = pino.multistream([
-    await logtail({
-      sourceToken: Env.LOGTAIL_SOURCE_TOKEN,
-      options: {
-        sendLogsToBetterStack: true,
-      },
-    }),
-    {
-      stream: pretty(), // Prints logs to the console
+export const logger = pino({
+  level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
+  transport: isDevelopment
+    ? {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          translateTime: 'HH:MM:ss',
+          ignore: 'pid,hostname',
+        },
+      }
+    : undefined,
+  formatters: {
+    level: (label) => {
+      return { level: label };
     },
-  ]);
-} else {
-  stream = pretty({
-    colorize: true,
-  });
-}
+  },
+});
 
-export const logger = pino({ base: undefined }, stream);
+/**
+ * Create a child logger with context
+ */
+export function createLogger(context: Record<string, unknown>) {
+  return logger.child(context);
+}
