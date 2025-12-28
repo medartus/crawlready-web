@@ -18,6 +18,7 @@
     "commit": "cz",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "dotenv -c production -- drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
     "db:studio": "dotenv -c production -- drizzle-kit studio",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build",

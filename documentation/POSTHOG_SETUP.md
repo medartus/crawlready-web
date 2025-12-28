@@ -187,7 +187,7 @@ export function MyComponent() {
 To track events in API routes or server components:
 
 ```tsx
-import { trackServerEvent } from '@/libs/posthog';
+import { trackServerEvent } from '@/libs/posthog/server';
 
 export async function POST(request: Request) {
   // Your API logic here

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { crawlerCheckerService } from '@/libs/CrawlerCheckerService';
-import { trackServerEvent } from '@/libs/posthog';
+import { trackServerEvent } from '@/libs/posthog/server';
 import type { CheckCrawlerRequest, CheckCrawlerResponse } from '@/types/crawler-checker';
 
 export const runtime = 'nodejs';

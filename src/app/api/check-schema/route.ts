@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { analyzeSchema } from '@/libs/crawler-checker/utils/schema-analyzer';
-import { trackServerEvent } from '@/libs/posthog';
+import { trackServerEvent } from '@/libs/posthog/server';
 
 // Configure route to run on Node.js runtime
 export const runtime = 'nodejs';
