@@ -16,6 +16,9 @@ const publicApiRoutes = [
   '/api/check-schema',
   '/api/waitlist',
   '/api/waitlist/count',
+  '/api/render', // Handles dual auth internally
+  '/api/status', // Handles dual auth internally
+  '/api/cache', // Handles dual auth internally
 ];
 
 const isProtectedRoute = createRouteMatcher([
@@ -23,8 +26,10 @@ const isProtectedRoute = createRouteMatcher([
   '/:locale/dashboard(.*)',
   '/onboarding(.*)',
   '/:locale/onboarding(.*)',
-  '/api(.*)',
-  '/:locale/api(.*)',
+  '/api/admin(.*)', // Only protect admin APIs
+  '/:locale/api/admin(.*)',
+  '/api/user(.*)', // Protect user APIs (require Clerk session)
+  '/:locale/api/user(.*)',
 ]);
 
 export default function middleware(

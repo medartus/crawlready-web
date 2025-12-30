@@ -2,128 +2,94 @@
  * GET /api/cache/status?url={encoded_url}
  *
  * Check if a URL is cached and where (hot/cold/none).
+ * Supports dual authentication: API key OR Clerk session.
  */
 
-import { type NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-import { extractApiKey } from '@/libs/api-key-utils';
+import { withErrorHandler } from '@/libs/api-error-handler';
+import { badRequest, success, unauthorized } from '@/libs/api-response-helpers';
 import { db } from '@/libs/DB';
-import { apiKeyQueries, renderedPageQueries, renderJobQueries } from '@/libs/db-queries';
+import { renderedPageQueries, renderJobQueries } from '@/libs/db-queries';
+import { authenticateRequest } from '@/libs/dual-auth';
 import { cache } from '@/libs/redis-client';
 import { getCacheKey, normalizeUrl } from '@/libs/url-utils';
 
-export async function GET(request: NextRequest) {
-  try {
-    // 1. Authenticate
-    const authHeader = request.headers.get('authorization');
-    const apiKey = extractApiKey(authHeader);
+export const GET = withErrorHandler(async (request: NextRequest) => {
+  // 1. Dual authentication
+  const authContext = await authenticateRequest(request);
 
-    if (!apiKey) {
-      return NextResponse.json(
-        {
-          error: 'Unauthorized',
-          message: 'Invalid or missing API key',
-        },
-        { status: 401 },
-      );
-    }
+  if (!authContext) {
+    return unauthorized('Provide API key in Authorization header OR sign in with Clerk');
+  }
 
-    const customer = await apiKeyQueries.findByKey(db, apiKey);
+  // 2. Get URL from query params
+  const url = request.nextUrl.searchParams.get('url');
 
-    if (!customer) {
-      return NextResponse.json(
-        {
-          error: 'Unauthorized',
-          message: 'Invalid API key',
-        },
-        { status: 401 },
-      );
-    }
+  if (!url) {
+    return badRequest('Missing url parameter');
+  }
 
-    // 2. Get URL from query params
-    const url = request.nextUrl.searchParams.get('url');
+  // 3. Normalize URL and check cache
+  const normalizedUrl = normalizeUrl(url);
+  const cacheKey = getCacheKey(normalizedUrl);
 
-    if (!url) {
-      return NextResponse.json(
-        {
-          error: 'Bad request',
-          message: 'Missing url parameter',
-        },
-        { status: 400 },
-      );
-    }
+  // Check hot cache (Redis)
+  const hotCached = await cache.exists(cacheKey);
 
-    // 3. Normalize URL and check cache
-    const normalizedUrl = normalizeUrl(url);
-    const cacheKey = getCacheKey(normalizedUrl);
-
-    // Check hot cache (Redis)
-    const hotCached = await cache.exists(cacheKey);
-
-    if (hotCached) {
-      const metadata = await renderedPageQueries.findByUrl(db, normalizedUrl);
-
-      return NextResponse.json({
-        cached: true,
-        location: 'hot',
-        normalizedUrl,
-        lastRendered: metadata?.firstRenderedAt.toISOString(),
-        age: metadata ? Math.floor((Date.now() - metadata.firstRenderedAt.getTime()) / 1000) : 0,
-        size: metadata?.htmlSizeBytes,
-        accessCount: metadata?.accessCount,
-        rendering: false,
-      });
-    }
-
-    // Check cold storage metadata
+  if (hotCached) {
     const metadata = await renderedPageQueries.findByUrl(db, normalizedUrl);
 
-    if (metadata) {
-      // TODO: Verify file exists in Supabase Storage when cold storage is implemented
-      return NextResponse.json({
-        cached: true,
-        location: 'cold',
-        normalizedUrl,
-        lastRendered: metadata.firstRenderedAt.toISOString(),
-        age: Math.floor((Date.now() - metadata.firstRenderedAt.getTime()) / 1000),
-        size: metadata.htmlSizeBytes,
-        accessCount: metadata.accessCount,
-        rendering: false,
-      });
-    }
+    return success({
+      cached: true,
+      location: 'hot',
+      normalizedUrl,
+      lastRendered: metadata?.firstRenderedAt.toISOString(),
+      age: metadata ? Math.floor((Date.now() - metadata.firstRenderedAt.getTime()) / 1000) : 0,
+      size: metadata?.htmlSizeBytes,
+      accessCount: metadata?.accessCount,
+      rendering: false,
+    });
+  }
 
-    // Check if currently rendering
-    const job = await renderJobQueries.findInProgressByUrl(db, normalizedUrl);
+  // Check cold storage metadata
+  const metadata = await renderedPageQueries.findByUrl(db, normalizedUrl);
 
-    if (job) {
-      return NextResponse.json({
-        cached: false,
-        location: 'none',
-        normalizedUrl,
-        rendering: true,
-        jobId: job.id,
-        statusUrl: `/api/status/${job.id}`,
-        message: 'Render job in progress',
-      });
-    }
+  if (metadata) {
+    // TODO: Verify file exists in Supabase Storage when cold storage is implemented
+    return success({
+      cached: true,
+      location: 'cold',
+      normalizedUrl,
+      lastRendered: metadata.firstRenderedAt.toISOString(),
+      age: Math.floor((Date.now() - metadata.firstRenderedAt.getTime()) / 1000),
+      size: metadata.htmlSizeBytes,
+      accessCount: metadata.accessCount,
+      rendering: false,
+    });
+  }
 
-    // Not cached
-    return NextResponse.json({
+  // Check if currently rendering
+  const job = await renderJobQueries.findInProgressByUrl(db, normalizedUrl);
+
+  if (job) {
+    return success({
       cached: false,
       location: 'none',
       normalizedUrl,
-      rendering: false,
-      message: 'URL has not been rendered yet',
+      rendering: true,
+      jobId: job.id,
+      statusUrl: `/api/status/${job.id}`,
+      message: 'Render job in progress',
     });
-  } catch (error) {
-    console.error('[/api/cache/status] Error:', error);
-
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 },
-    );
   }
-}
+
+  // Not cached
+  return success({
+    cached: false,
+    location: 'none',
+    normalizedUrl,
+    rendering: false,
+    message: 'URL has not been rendered yet',
+  });
+});

@@ -78,6 +78,8 @@ export const cacheLocationEnum = pgEnum('cache_location', ['hot', 'cold', 'none'
 // API Keys Table
 export const apiKeys = pgTable('api_keys', {
   id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull(), // Clerk user ID
+  orgId: text('org_id'), // Clerk organization ID (optional)
   customerEmail: varchar('customer_email', { length: 255 }).notNull(),
   keyHash: varchar('key_hash', { length: 64 }).notNull().unique(),
   keyPrefix: varchar('key_prefix', { length: 20 }).notNull(),
@@ -90,6 +92,8 @@ export const apiKeys = pgTable('api_keys', {
   keyHashIdx: index('idx_api_keys_key_hash').on(table.keyHash),
   customerEmailIdx: index('idx_api_keys_customer_email').on(table.customerEmail),
   isActiveIdx: index('idx_api_keys_is_active').on(table.isActive),
+  userIdIdx: index('idx_api_keys_user_id').on(table.userId),
+  orgIdIdx: index('idx_api_keys_org_id').on(table.orgId),
 }));
 
 // Render Jobs Table
@@ -154,6 +158,8 @@ export const renderedPages = pgTable('rendered_pages', {
   id: uuid('id').primaryKey().defaultRandom(),
   normalizedUrl: text('normalized_url').notNull().unique(),
   storageKey: text('storage_key').notNull(),
+  storageLocation: cacheLocationEnum('storage_location').notNull().default('hot'),
+  apiKeyId: uuid('api_key_id').references(() => apiKeys.id, { onDelete: 'set null' }),
   htmlSizeBytes: integer('html_size_bytes').notNull(),
   firstRenderedAt: timestamp('first_rendered_at', { withTimezone: true }).notNull().defaultNow(),
   lastAccessedAt: timestamp('last_accessed_at', { withTimezone: true }).notNull().defaultNow(),
@@ -164,6 +170,7 @@ export const renderedPages = pgTable('rendered_pages', {
   lastAccessedIdx: index('idx_rendered_pages_last_accessed').on(table.lastAccessedAt),
   accessCountIdx: index('idx_rendered_pages_access_count').on(table.accessCount),
   inRedisIdx: index('idx_rendered_pages_in_redis').on(table.inRedis),
+  apiKeyIdIdx: index('idx_rendered_pages_api_key_id').on(table.apiKeyId),
 }));
 
 // Type exports for TypeScript

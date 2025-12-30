@@ -1,25 +1,57 @@
+/**
+ * User Usage Statistics
+ *
+ * GET /api/user/usage - Get aggregate usage statistics for the authenticated user
+ */
+
 import { sql } from 'drizzle-orm';
 
 import { withErrorHandler } from '@/libs/api-error-handler';
 import { success } from '@/libs/api-response-helpers';
-import { requireAdminRole } from '@/libs/clerk-auth';
+import { requireAuth } from '@/libs/clerk-auth';
 import { db } from '@/libs/DB';
-import { cacheAccesses, renderJobs } from '@/models/Schema';
+import { apiKeys, cacheAccesses, renderJobs } from '@/models/Schema';
 
 /**
- * GET /api/admin/stats
- *
- * Get aggregate usage statistics (Admin only)
+ * GET /api/user/usage
+ * Get usage statistics for the authenticated user
  */
 export const GET = withErrorHandler(async () => {
-  // Verify admin role
-  await requireAdminRole();
+  // Require authentication
+  const { userId } = await requireAuth();
+
+  // Get user's API keys
+  const userApiKeys = await db
+    .select({ id: apiKeys.id })
+    .from(apiKeys)
+    .where(sql`${apiKeys.userId} = ${userId}`);
+
+  const apiKeyIds = userApiKeys.map(k => k.id);
+
+  if (apiKeyIds.length === 0) {
+    // User has no API keys yet
+    return success({
+      totalRenders: 0,
+      totalCacheHits: 0,
+      totalCacheMisses: 0,
+      cacheHitRate: 0,
+      averageRenderTime: 0,
+      last24Hours: {
+        renders: 0,
+        cacheHits: 0,
+        cacheMisses: 0,
+      },
+      dailyStats: [],
+    });
+  }
 
   // Get total renders (completed jobs)
   const totalRendersResult = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(renderJobs)
-    .where(sql`${renderJobs.status} = 'completed'`);
+    .where(
+      sql`${renderJobs.status} = 'completed' AND ${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
+    );
 
   const totalRenders = totalRendersResult[0]?.count || 0;
 
@@ -30,6 +62,7 @@ export const GET = withErrorHandler(async () => {
       count: sql<number>`count(*)::int`,
     })
     .from(cacheAccesses)
+    .where(sql`${cacheAccesses.apiKeyId} = ANY(${apiKeyIds})`)
     .groupBy(cacheAccesses.cacheLocation);
 
   let totalCacheHits = 0;
@@ -44,9 +77,9 @@ export const GET = withErrorHandler(async () => {
   }
 
   const cacheHitRate
-      = totalCacheHits + totalCacheMisses > 0
-        ? (totalCacheHits / (totalCacheHits + totalCacheMisses)) * 100
-        : 0;
+    = totalCacheHits + totalCacheMisses > 0
+      ? (totalCacheHits / (totalCacheHits + totalCacheMisses)) * 100
+      : 0;
 
   // Get average render time (completed jobs only)
   const avgRenderTimeResult = await db
@@ -54,7 +87,9 @@ export const GET = withErrorHandler(async () => {
       avg: sql<number>`avg(${renderJobs.renderDurationMs})::int`,
     })
     .from(renderJobs)
-    .where(sql`${renderJobs.status} = 'completed' AND ${renderJobs.renderDurationMs} IS NOT NULL`);
+    .where(
+      sql`${renderJobs.status} = 'completed' AND ${renderJobs.renderDurationMs} IS NOT NULL AND ${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
+    );
 
   const averageRenderTime = avgRenderTimeResult[0]?.avg || 0;
 
@@ -63,7 +98,7 @@ export const GET = withErrorHandler(async () => {
     .select({ count: sql<number>`count(*)::int` })
     .from(renderJobs)
     .where(
-      sql`${renderJobs.status} = 'completed' AND ${renderJobs.completedAt} > NOW() - INTERVAL '24 hours'`,
+      sql`${renderJobs.status} = 'completed' AND ${renderJobs.completedAt} > NOW() - INTERVAL '24 hours' AND ${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
     );
 
   const last24HoursCacheResult = await db
@@ -72,7 +107,9 @@ export const GET = withErrorHandler(async () => {
       count: sql<number>`count(*)::int`,
     })
     .from(cacheAccesses)
-    .where(sql`${cacheAccesses.accessedAt} > NOW() - INTERVAL '24 hours'`)
+    .where(
+      sql`${cacheAccesses.accessedAt} > NOW() - INTERVAL '24 hours' AND ${cacheAccesses.apiKeyId} = ANY(${apiKeyIds})`,
+    )
     .groupBy(cacheAccesses.cacheLocation);
 
   let last24HoursCacheHits = 0;
@@ -88,16 +125,17 @@ export const GET = withErrorHandler(async () => {
 
   // Get daily stats for last 7 days
   const dailyStatsResult = await db.execute(sql`
-      SELECT
-        DATE(accessed_at) as date,
-        COUNT(*) as total_accesses,
-        SUM(CASE WHEN cache_location IN ('hot', 'cold') THEN 1 ELSE 0 END) as cache_hits,
-        SUM(CASE WHEN cache_location = 'none' THEN 1 ELSE 0 END) as cache_misses
-      FROM ${cacheAccesses}
-      WHERE accessed_at > NOW() - INTERVAL '7 days'
-      GROUP BY DATE(accessed_at)
-      ORDER BY DATE(accessed_at) DESC
-    `);
+    SELECT
+      DATE(accessed_at) as date,
+      COUNT(*) as total_accesses,
+      SUM(CASE WHEN cache_location IN ('hot', 'cold') THEN 1 ELSE 0 END) as cache_hits,
+      SUM(CASE WHEN cache_location = 'none' THEN 1 ELSE 0 END) as cache_misses
+    FROM ${cacheAccesses}
+    WHERE accessed_at > NOW() - INTERVAL '7 days'
+      AND api_key_id = ANY(${apiKeyIds})
+    GROUP BY DATE(accessed_at)
+    ORDER BY DATE(accessed_at) DESC
+  `);
 
   const dailyStats = (dailyStatsResult.rows as any[]).map(row => ({
     date: row.date,
