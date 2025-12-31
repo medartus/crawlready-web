@@ -10,6 +10,11 @@ import { routing } from './libs/i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
 
+// Helper function to check if a path is an API route
+const isApiRoute = (pathname: string) => {
+  return pathname.startsWith('/api/');
+};
+
 // Public API routes that don't require authentication
 const publicApiRoutes = [
   '/api/check-crawler',
@@ -73,6 +78,11 @@ export default function middleware(
         );
 
         return NextResponse.redirect(orgSelection);
+      }
+
+      // Skip intl middleware for API routes (they don't need localization)
+      if (isApiRoute(req.nextUrl.pathname)) {
+        return NextResponse.next();
       }
 
       return intlMiddleware(req);
