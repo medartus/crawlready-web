@@ -1,5 +1,6 @@
 {
   "name": "crawlready-render-worker",
+  "type": "module",
   "version": "1.0.0",
   "description": "CrawlReady render worker - Puppeteer + BullMQ",
   "main": "index.ts",
