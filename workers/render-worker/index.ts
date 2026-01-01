@@ -101,7 +101,7 @@ const worker = new Worker<RenderJobData>(
       // 7. Update or create rendered_pages metadata
       await renderedPageQueries.upsert(db, {
         normalizedUrl,
-        storageKey: `rendered/${normalizedUrl.replace(/[^a-z0-9]/gi, '_')}.html`,
+        storageKey,
         htmlSizeBytes,
         apiKeyId,
         firstRenderedAt: new Date(),

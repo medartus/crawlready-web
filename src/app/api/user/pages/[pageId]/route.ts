@@ -14,6 +14,7 @@ import { requireAuth } from '@/libs/clerk-auth';
 import { db } from '@/libs/DB';
 import { renderedPageQueries } from '@/libs/db-queries';
 import { cache } from '@/libs/redis-client';
+import { deleteRenderedPage, isStorageConfigured } from '@/libs/supabase-storage';
 import { getCacheKey } from '@/libs/url-utils';
 import { apiKeys, renderedPages } from '@/models/Schema';
 
@@ -136,7 +137,12 @@ export const DELETE = withErrorHandler(
     const cacheKey = getCacheKey(page.normalizedUrl);
     await cache.del(cacheKey);
 
-    // TODO: Remove from Supabase Storage when implemented
+    // Remove from Supabase cold storage
+    if (isStorageConfigured() && page.storageKey) {
+      await deleteRenderedPage(page.storageKey);
+      // Note: We don't fail the request if storage deletion fails
+      // The database record will be deleted anyway
+    }
 
     // Remove metadata from database
     await renderedPageQueries.delete(db, page.normalizedUrl);
