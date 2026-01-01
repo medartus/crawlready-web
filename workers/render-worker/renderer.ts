@@ -74,7 +74,11 @@ async function getBrowser(): Promise<Browser> {
   }
 
   browserInstance = await puppeteer.launch({
-    headless: true,
+    headless: 'new',
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+
+    protocolTimeout: 180000, // 3 minutes for CDP protocol
+
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -84,6 +88,21 @@ async function getBrowser(): Promise<Browser> {
       '--disable-features=IsolateOrigins,site-per-process',
       '--no-first-run',
       '--no-zygote',
+      '--single-process',
+      '--disable-background-networking',
+      '--disable-background-timer-throttling',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-breakpad',
+      '--disable-component-extensions-with-background-pages',
+      '--disable-extensions',
+      '--disable-features=TranslateUI',
+      '--disable-ipc-flooding-protection',
+      '--disable-renderer-backgrounding',
+      '--enable-features=NetworkService,NetworkServiceInProcess',
+      '--force-color-profile=srgb',
+      '--hide-scrollbars',
+      '--metrics-recording-only',
+      '--mute-audio',
     ],
   });
 
@@ -123,11 +142,50 @@ export async function renderPage(
 ): Promise<RenderResult> {
   const {
     waitForSelector,
-    timeout = 30000,
+    timeout = 60000, // Increased from 30s to 60s for Fly.io
     blockResources = true,
     autoScroll: shouldScroll = true,
   } = options;
 
+  let retries = 0;
+  const maxRetries = 2;
+
+  while (retries <= maxRetries) {
+    try {
+      return await renderPageInternal(url, options, timeout, blockResources, shouldScroll, waitForSelector);
+    } catch (error) {
+      retries++;
+      if (retries > maxRetries) {
+        throw error;
+      }
+
+      // Log retry attempt
+      console.error(`Render attempt ${retries} failed, retrying... Error:`, error instanceof Error ? error.message : 'Unknown error');
+
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * retries));
+
+      // Close and recreate browser on protocol timeout errors
+      if (error instanceof Error && error.message.includes('timed out')) {
+        await closeBrowser();
+      }
+    }
+  }
+
+  throw new Error('Render failed after max retries');
+}
+
+/**
+ * Internal render implementation (wrapped with retry logic)
+ */
+async function renderPageInternal(
+  url: string,
+  options: RenderOptions,
+  timeout: number,
+  blockResources: boolean,
+  shouldScroll: boolean,
+  waitForSelector?: string,
+): Promise<RenderResult> {
   const browser = await getBrowser();
   const page = await browser.newPage();
 
