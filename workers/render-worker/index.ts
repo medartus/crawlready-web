@@ -1,15 +1,15 @@
 import type { Job } from 'bullmq';
 import { Worker } from 'bullmq';
 
-import { db } from '../../src/libs/DB';
-import { renderedPageQueries, renderJobQueries } from '../../src/libs/db-queries';
-import { createLogger } from '../../src/libs/Logger';
-import { cache } from '../../src/libs/redis-client';
-import { validateUrlSecurity } from '../../src/libs/ssrf-protection';
-import { getStorageKey, isStorageConfigured, uploadRenderedPage } from '../../src/libs/supabase-storage';
-import { getCacheKey } from '../../src/libs/url-utils';
+import { db } from './db-connection';
 import { optimizeHtml } from './html-optimizer';
 import { renderPage } from './renderer';
+import { renderedPageQueries, renderJobQueries } from './src/libs/db-queries';
+import { createLogger } from './src/libs/logger';
+import { cache } from './src/libs/redis-client';
+import { validateUrlSecurity } from './src/libs/ssrf-protection';
+import { getStorageKey, isStorageConfigured, uploadRenderedPage } from './src/libs/supabase-storage';
+import { getCacheKey } from './src/libs/url-utils';
 
 const logger = createLogger({ service: 'render-worker' });
 
@@ -33,7 +33,7 @@ type RenderJobData = {
 };
 
 const REDIS_CONNECTION = {
-  host: process.env.UPSTASH_REDIS_HOST!,
+  host: (process.env.UPSTASH_REDIS_HOST || '').replace(/^https?:\/\//, ''),
   port: Number.parseInt(process.env.UPSTASH_REDIS_PORT || '6379'),
   password: process.env.UPSTASH_REDIS_PASSWORD,
   tls: process.env.UPSTASH_REDIS_TLS === 'true' ? {} : undefined,

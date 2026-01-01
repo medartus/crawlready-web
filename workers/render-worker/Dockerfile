@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Set working directory for worker
 WORKDIR /app
 
 # Set Puppeteer environment BEFORE npm install to skip Chromium download
@@ -45,15 +45,13 @@ COPY workers/render-worker/package*.json ./
 # Install worker dependencies
 RUN npm install --production
 
-# Copy shared source code from repository root
-COPY src ../../src
-COPY migrations ../../migrations
-
-# Copy worker code
+# Copy worker code (includes local src/, migrations/, and all dependencies)
 COPY workers/render-worker/ ./
 
 # Set environment
 ENV NODE_ENV=production
+ENV NODE_OPTIONS="--es-module-specifier-resolution=node"
+ENV TSX_TSCONFIG_PATH=/app/tsconfig.json
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

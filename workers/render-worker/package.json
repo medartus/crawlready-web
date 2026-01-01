@@ -18,9 +18,12 @@
     "@upstash/redis": "^1.28.0",
     "bullmq": "^5.0.0",
     "drizzle-orm": "^0.30.0",
-    "postgres": "^3.4.0",
+    "pg": "^8.11.3",
+    "pino": "^9.14.0",
+    "pino-pretty": "^11.3.0",
     "puppeteer": "^21.0.0",
-    "tsx": "^4.0.0"
+    "tsx": "^4.0.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
