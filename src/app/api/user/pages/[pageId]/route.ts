@@ -5,7 +5,7 @@
  * DELETE /api/user/pages/:pageId - Invalidate cache for page
  */
 
-import { sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { withErrorHandler } from '@/libs/api-error-handler';
@@ -50,7 +50,10 @@ export const GET = withErrorHandler(
 
     // Find page and verify ownership
     const page = await db.query.renderedPages.findFirst({
-      where: sql`${renderedPages.id} = ${pageId} AND ${renderedPages.apiKeyId} = ANY(${apiKeyIds})`,
+      where: and(
+        eq(renderedPages.id, pageId),
+        inArray(renderedPages.apiKeyId, apiKeyIds),
+      ),
     });
 
     if (!page) {
@@ -117,7 +120,10 @@ export const DELETE = withErrorHandler(
 
     // Find page and verify ownership
     const page = await db.query.renderedPages.findFirst({
-      where: sql`${renderedPages.id} = ${pageId} AND ${renderedPages.apiKeyId} = ANY(${apiKeyIds})`,
+      where: and(
+        eq(renderedPages.id, pageId),
+        inArray(renderedPages.apiKeyId, apiKeyIds),
+      ),
     });
 
     if (!page) {
