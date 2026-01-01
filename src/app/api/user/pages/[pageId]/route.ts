@@ -13,6 +13,7 @@ import { noContent, notFound, success } from '@/libs/api-response-helpers';
 import { requireAuth } from '@/libs/clerk-auth';
 import { db } from '@/libs/DB';
 import { renderedPageQueries } from '@/libs/db-queries';
+import { logger } from '@/libs/Logger';
 import { cache } from '@/libs/redis-client';
 import { deleteRenderedPage, isStorageConfigured } from '@/libs/supabase-storage';
 import { getCacheKey } from '@/libs/url-utils';
@@ -139,13 +140,22 @@ export const DELETE = withErrorHandler(
 
     // Remove from Supabase cold storage
     if (isStorageConfigured() && page.storageKey) {
-      await deleteRenderedPage(page.storageKey);
-      // Note: We don't fail the request if storage deletion fails
-      // The database record will be deleted anyway
+      const deleteResult = await deleteRenderedPage(page.storageKey);
+
+      if (!deleteResult.success) {
+        // Log warning but don't fail the request
+        logger.warn({
+          storageKey: page.storageKey,
+          pageId,
+          error: deleteResult.error,
+        }, 'Failed to delete from cold storage');
+      }
     }
 
     // Remove metadata from database
     await renderedPageQueries.delete(db, page.normalizedUrl);
+
+    logger.info({ pageId, url: page.normalizedUrl }, 'Page deleted successfully');
 
     return noContent();
   },

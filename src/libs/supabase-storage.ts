@@ -152,7 +152,11 @@ export async function downloadRenderedPage(
  * Useful for graceful degradation
  */
 export function isStorageConfigured(): boolean {
-  return !!(Env.SUPABASE_URL && Env.SUPABASE_SERVICE_KEY);
+  return !!(
+    Env.SUPABASE_URL
+    && Env.SUPABASE_SERVICE_KEY
+    && Env.SUPABASE_STORAGE_BUCKET
+  );
 }
 
 /**
@@ -174,7 +178,7 @@ export async function deleteRenderedPage(
     if (error) {
       return {
         success: false,
-        error: error.message,
+        error: `${error.message} (key: ${storageKey})`,
       };
     }
 
