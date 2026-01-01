@@ -35,17 +35,18 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY ../../package*.json ../../
-COPY ../../src ./../../src
-COPY ../../migrations ./../../migrations
+# Copy worker package files
+COPY workers/render-worker/package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install worker dependencies
+RUN npm install --production
+
+# Copy shared source code from repository root
+COPY src ../../src
+COPY migrations ../../migrations
 
 # Copy worker code
-COPY . .
+COPY workers/render-worker/ ./
 
 # Set Puppeteer to use installed Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
