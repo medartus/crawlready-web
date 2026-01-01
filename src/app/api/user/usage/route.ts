@@ -4,7 +4,7 @@
  * GET /api/user/usage - Get aggregate usage statistics for the authenticated user
  */
 
-import { sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, sql } from 'drizzle-orm';
 
 import { withErrorHandler } from '@/libs/api-error-handler';
 import { success } from '@/libs/api-response-helpers';
@@ -50,7 +50,10 @@ export const GET = withErrorHandler(async () => {
     .select({ count: sql<number>`count(*)::int` })
     .from(renderJobs)
     .where(
-      sql`${renderJobs.status} = 'completed' AND ${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
+      and(
+        eq(renderJobs.status, 'completed'),
+        inArray(renderJobs.apiKeyId, apiKeyIds),
+      ),
     );
 
   const totalRenders = totalRendersResult[0]?.count || 0;
@@ -62,7 +65,7 @@ export const GET = withErrorHandler(async () => {
       count: sql<number>`count(*)::int`,
     })
     .from(cacheAccesses)
-    .where(sql`${cacheAccesses.apiKeyId} = ANY(${apiKeyIds})`)
+    .where(inArray(cacheAccesses.apiKeyId, apiKeyIds))
     .groupBy(cacheAccesses.cacheLocation);
 
   let totalCacheHits = 0;
@@ -88,7 +91,11 @@ export const GET = withErrorHandler(async () => {
     })
     .from(renderJobs)
     .where(
-      sql`${renderJobs.status} = 'completed' AND ${renderJobs.renderDurationMs} IS NOT NULL AND ${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
+      and(
+        eq(renderJobs.status, 'completed'),
+        isNotNull(renderJobs.renderDurationMs),
+        inArray(renderJobs.apiKeyId, apiKeyIds),
+      ),
     );
 
   const averageRenderTime = avgRenderTimeResult[0]?.avg || 0;
@@ -98,7 +105,11 @@ export const GET = withErrorHandler(async () => {
     .select({ count: sql<number>`count(*)::int` })
     .from(renderJobs)
     .where(
-      sql`${renderJobs.status} = 'completed' AND ${renderJobs.completedAt} > NOW() - INTERVAL '24 hours' AND ${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
+      and(
+        eq(renderJobs.status, 'completed'),
+        sql`${renderJobs.completedAt} > NOW() - INTERVAL '24 hours'`,
+        inArray(renderJobs.apiKeyId, apiKeyIds),
+      ),
     );
 
   const last24HoursCacheResult = await db
@@ -108,7 +119,10 @@ export const GET = withErrorHandler(async () => {
     })
     .from(cacheAccesses)
     .where(
-      sql`${cacheAccesses.accessedAt} > NOW() - INTERVAL '24 hours' AND ${cacheAccesses.apiKeyId} = ANY(${apiKeyIds})`,
+      and(
+        sql`${cacheAccesses.accessedAt} > NOW() - INTERVAL '24 hours'`,
+        inArray(cacheAccesses.apiKeyId, apiKeyIds),
+      ),
     )
     .groupBy(cacheAccesses.cacheLocation);
 
@@ -124,6 +138,7 @@ export const GET = withErrorHandler(async () => {
   }
 
   // Get daily stats for last 7 days
+  // Format array for PostgreSQL ANY() - need to use ARRAY constructor
   const dailyStatsResult = await db.execute(sql`
     SELECT
       DATE(accessed_at) as date,
@@ -132,7 +147,7 @@ export const GET = withErrorHandler(async () => {
       SUM(CASE WHEN cache_location = 'none' THEN 1 ELSE 0 END) as cache_misses
     FROM ${cacheAccesses}
     WHERE accessed_at > NOW() - INTERVAL '7 days'
-      AND api_key_id = ANY(${apiKeyIds})
+      AND api_key_id = ANY(${sql.raw(`ARRAY['${apiKeyIds.join('\',\'')}']::uuid[]`)})
     GROUP BY DATE(accessed_at)
     ORDER BY DATE(accessed_at) DESC
   `);

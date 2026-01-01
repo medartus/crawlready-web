@@ -4,7 +4,7 @@
  * GET /api/user/pages - List user's rendered pages
  */
 
-import { sql } from 'drizzle-orm';
+import { desc, inArray, sql } from 'drizzle-orm';
 
 import { withErrorHandler } from '@/libs/api-error-handler';
 import { success } from '@/libs/api-response-helpers';
@@ -48,8 +48,8 @@ export const GET = withErrorHandler(async () => {
       storageLocation: renderedPages.storageLocation,
     })
     .from(renderedPages)
-    .where(sql`${renderedPages.apiKeyId} = ANY(${apiKeyIds})`)
-    .orderBy(sql`${renderedPages.lastAccessedAt} DESC`)
+    .where(inArray(renderedPages.apiKeyId, apiKeyIds))
+    .orderBy(desc(renderedPages.lastAccessedAt))
     .limit(100); // Limit to 100 most recent pages
 
   return success({
