@@ -35,6 +35,10 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
+# Set Puppeteer environment BEFORE npm install to skip Chromium download
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 # Copy worker package files
 COPY workers/render-worker/package*.json ./
 
@@ -47,10 +51,6 @@ COPY migrations ../../migrations
 
 # Copy worker code
 COPY workers/render-worker/ ./
-
-# Set Puppeteer to use installed Chromium
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Set environment
 ENV NODE_ENV=production
