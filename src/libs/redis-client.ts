@@ -164,6 +164,7 @@ type RenderJobData = {
   jobId: string;
   url: string;
   normalizedUrl: string;
+  apiKeyId: string;
   waitForSelector?: string;
   timeout?: number;
 };

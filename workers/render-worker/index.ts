@@ -28,6 +28,7 @@ type RenderJobData = {
   jobId: string;
   url: string;
   normalizedUrl: string;
+  apiKeyId: string;
   waitForSelector?: string;
   timeout?: number;
 };
@@ -42,7 +43,7 @@ const REDIS_CONNECTION = {
 const worker = new Worker<RenderJobData>(
   'render-queue',
   async (job: Job<RenderJobData>) => {
-    const { jobId, url, normalizedUrl, waitForSelector, timeout } = job.data;
+    const { jobId, url, normalizedUrl, apiKeyId, waitForSelector, timeout } = job.data;
     const startTime = Date.now();
 
     logger.info({ jobId, url }, 'Processing render job');
@@ -102,6 +103,7 @@ const worker = new Worker<RenderJobData>(
         normalizedUrl,
         storageKey: `rendered/${normalizedUrl.replace(/[^a-z0-9]/gi, '_')}.html`,
         htmlSizeBytes,
+        apiKeyId,
         firstRenderedAt: new Date(),
         inRedis: true,
         accessCount: 0,

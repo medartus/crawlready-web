@@ -183,6 +183,7 @@ export const POST = withErrorHandler(async (request: NextRequest): Promise<NextR
     jobId: job.id,
     url,
     normalizedUrl,
+    apiKeyId: authContext.apiKeyId,
     waitForSelector: parseResult.data.waitForSelector,
     timeout: parseResult.data.timeout,
   });
