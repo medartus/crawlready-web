@@ -17,6 +17,7 @@ import { authenticateRequest } from '@/libs/dual-auth';
 import { checkRateLimit } from '@/libs/rate-limit-helper';
 import { cache, getRenderQueue } from '@/libs/redis-client';
 import { SSRFError, validateUrlSecurity } from '@/libs/ssrf-protection';
+import { downloadRenderedPage, getStorageKey, isStorageConfigured } from '@/libs/supabase-storage';
 import { getCacheKey, normalizeUrl } from '@/libs/url-utils';
 
 // Request body schema
@@ -107,33 +108,43 @@ export const POST = withErrorHandler(async (request: NextRequest): Promise<NextR
     });
   }
 
-  // TODO: Check cold storage (Supabase) - will implement after Supabase setup
-  // const { data } = await supabase.storage
-  //   .from('rendered-pages')
-  //   .download(`rendered/${hashUrl(normalizedUrl)}.html`);
-  //
-  // if (data) {
-  //   const html = await data.text();
-  //   // Promote to hot cache (async)
-  //   cache.set(cacheKey, html).catch(console.error);
-  //
-  //   if (authContext.apiKeyId) {
-  //     cacheAccessQueries.log(db, {
-  //       apiKeyId: authContext.apiKeyId,
-  //       normalizedUrl,
-  //       cacheLocation: 'cold',
-  //       responseTimeMs: Date.now() - startTime,
-  //     }).catch(console.error);
-  //   }
-  //
-  //   return new Response(html, {
-  //     headers: {
-  //       'Content-Type': 'text/html',
-  //       'X-Cache': 'COLD',
-  //       'X-Cache-Location': 'cold',
-  //     },
-  //   });
-  // }
+  // Check cold storage (Supabase)
+  if (isStorageConfigured()) {
+    const storageKey = getStorageKey(normalizedUrl);
+    const { html, error } = await downloadRenderedPage(storageKey);
+
+    if (html) {
+      const responseTime = Date.now() - startTime;
+
+      // Promote to hot cache (async, don't block response)
+      cache.set(cacheKey, html).catch(console.error);
+
+      // Log cache access (async)
+      if (authContext.apiKeyId) {
+        cacheAccessQueries.log(db, {
+          apiKeyId: authContext.apiKeyId,
+          normalizedUrl,
+          cacheLocation: 'cold',
+          responseTimeMs: responseTime,
+        }).catch(console.error);
+      }
+
+      return new NextResponse(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html',
+          'X-Cache': 'COLD',
+          'X-Cache-Location': 'cold',
+          'X-Response-Time': `${responseTime}ms`,
+        },
+      });
+    }
+
+    // Log error if download failed (but continue to queue job)
+    if (error) {
+      console.error('[Render API] Cold storage download error:', error);
+    }
+  }
 
   // 6. Check if job already in progress for this URL
   const existingJob = await renderJobQueries.findInProgressByUrl(db, normalizedUrl);

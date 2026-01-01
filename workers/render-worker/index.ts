@@ -6,6 +6,7 @@ import { renderedPageQueries, renderJobQueries } from '../../src/libs/db-queries
 import { createLogger } from '../../src/libs/Logger';
 import { cache } from '../../src/libs/redis-client';
 import { validateUrlSecurity } from '../../src/libs/ssrf-protection';
+import { getStorageKey, isStorageConfigured, uploadRenderedPage } from '../../src/libs/supabase-storage';
 import { getCacheKey } from '../../src/libs/url-utils';
 import { optimizeHtml } from './html-optimizer';
 import { renderPage } from './renderer';
@@ -82,15 +83,19 @@ const worker = new Worker<RenderJobData>(
       await cache.set(cacheKey, optimizedHtml);
       logger.debug({ cacheKey }, 'Stored in Redis cache');
 
-      // 6. TODO: Store in Supabase Storage (cold storage)
-      // const storageKey = `rendered/${hashUrl(normalizedUrl)}.html`;
-      // await supabase.storage
-      //   .from('rendered-pages')
-      //   .upload(storageKey, optimizedHtml, {
-      //     contentType: 'text/html',
-      //     upsert: true,
-      //   });
-      // console.log(`[Worker] Stored in Supabase Storage: ${storageKey}`);
+      // 6. Store in Supabase Storage (cold storage)
+      const storageKey = getStorageKey(normalizedUrl);
+      if (isStorageConfigured()) {
+        const uploadResult = await uploadRenderedPage(storageKey, optimizedHtml);
+        if (uploadResult.success) {
+          logger.info({ storageKey }, 'Stored in Supabase cold storage');
+        } else {
+          // Don't fail job if cold storage fails - Redis is primary
+          logger.warn({ storageKey, error: uploadResult.error }, 'Failed to store in cold storage');
+        }
+      } else {
+        logger.debug('Cold storage not configured, skipping Supabase upload');
+      }
 
       // 7. Update or create rendered_pages metadata
       await renderedPageQueries.upsert(db, {
