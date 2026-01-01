@@ -11,9 +11,23 @@ import { Client } from 'pg';
 import * as schema from '@/models/Schema';
 
 import { Env } from './Env';
+import { logger } from './Logger';
 
 let client;
 let drizzle;
+
+/**
+ * AUTO_MIGRATE controls whether migrations run automatically on app startup.
+ *
+ * Development workflow:
+ * - Local dev (PGlite): Set AUTO_MIGRATE=true (default) - migrations run automatically
+ * - Supabase: Set AUTO_MIGRATE=false - use `supabase db push` instead
+ *
+ * Production workflow:
+ * - Use `supabase db push` or run migrations manually before deployment
+ * - Set AUTO_MIGRATE=false in production environment variables
+ */
+const AUTO_MIGRATE = process.env.AUTO_MIGRATE !== 'false';
 
 // Need a database for production? Check out https://www.prisma.io/?via=saasboilerplatesrc
 // Tested and compatible with Next.js Boilerplate
@@ -24,9 +38,26 @@ if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && Env.DATABASE_URL) {
   await client.connect();
 
   drizzle = drizzlePg(client, { schema });
-  await migratePg(drizzle, {
-    migrationsFolder: path.join(process.cwd(), 'migrations'),
-  });
+
+  // Run migrations only if AUTO_MIGRATE is enabled
+  if (AUTO_MIGRATE) {
+    try {
+      await migratePg(drizzle, {
+        migrationsFolder: path.join(process.cwd(), 'migrations'),
+      });
+      logger.info('✓ Database migrations completed successfully');
+    } catch (error) {
+      // Ignore "already exists" errors (migrations already applied)
+      if (error instanceof Error && error.message.includes('already exists')) {
+        logger.info('ℹ Database schema already up to date');
+      } else {
+        logger.error({ error }, '✗ Migration error');
+        throw error;
+      }
+    }
+  } else {
+    logger.info('ℹ AUTO_MIGRATE=false - Skipping automatic migrations');
+  }
 } else {
   // Stores the db connection in the global scope to prevent multiple instances due to hot reloading with Next.js
   const global = globalThis as unknown as { client: PGlite; drizzle: PgliteDatabase<typeof schema> };
@@ -39,9 +70,19 @@ if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && Env.DATABASE_URL) {
   }
 
   drizzle = global.drizzle;
-  await migratePglite(global.drizzle, {
-    migrationsFolder: path.join(process.cwd(), 'migrations'),
-  });
+
+  // PGlite always runs migrations (in-memory database, no persistence issues)
+  try {
+    await migratePglite(global.drizzle, {
+      migrationsFolder: path.join(process.cwd(), 'migrations'),
+    });
+  } catch (error) {
+    // Ignore "already exists" errors for PGlite too (hot reload scenario)
+    if (!(error instanceof Error && error.message.includes('already exists'))) {
+      logger.error({ error }, '✗ PGlite migration error');
+      throw error;
+    }
+  }
 }
 
 export const db = drizzle;
