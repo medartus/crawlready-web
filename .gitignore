@@ -39,8 +39,8 @@ storybook-static
 /playwright/.cache/
 
 # next.js
-/.next
-/out
+apps/*/.next
+apps/*/out
 
 # cache
 .swc/

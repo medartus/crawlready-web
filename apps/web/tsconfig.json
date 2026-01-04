@@ -1,0 +1,71 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "incremental": true,
+    "jsx": "preserve",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@/public/*": [
+        "./public/*"
+      ],
+      "@crawlready/types": [
+        "../../packages/types/src"
+      ],
+      "@crawlready/logger": [
+        "../../packages/logger/src"
+      ],
+      "@crawlready/database": [
+        "../../packages/database/src"
+      ],
+      "@crawlready/cache": [
+        "../../packages/cache/src"
+      ],
+      "@crawlready/queue": [
+        "../../packages/queue/src"
+      ],
+      "@crawlready/storage": [
+        "../../packages/storage/src"
+      ],
+      "@crawlready/security": [
+        "../../packages/security/src"
+      ]
+    },
+    "types": [
+      "vitest/globals"
+    ],
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "allowJs": true,
+    "noEmit": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".storybook/*.ts",
+    ".next/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": [
+    "./out/**/*",
+    "./node_modules/**/*",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.e2e.ts",
+    "vitest.config.mts",
+    "vitest-setup.ts"
+  ]
+}
