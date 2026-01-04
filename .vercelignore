@@ -1,0 +1,36 @@
+# Monorepo - Vercel ignore patterns
+
+# Worker apps
+/apps/workers
+
+# Package build outputs
+/packages/*/dist
+/packages/*/.turbo
+
+# Tests
+/packages/*/__tests__
+/apps/web/tests
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Development files
+.env.local
+.env.development
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Misc
+.DS_Store
+Thumbs.db
+
