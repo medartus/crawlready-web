@@ -89,11 +89,26 @@ pnpm test:packages        # Test packages only
 pnpm test:web             # Test web app
 ```
 
+## Deployment
+
+### Vercel (Web App)
+See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for monorepo-specific Vercel configuration.
+
+**Quick setup:**
+1. Set Root Directory to `apps/web` in Vercel Dashboard
+2. Add environment variables (DATABASE_URL, Redis, Clerk, etc.)
+3. Deploy - the `vercel.json` handles monorepo build automatically
+
+### Fly.io (Render Worker)
+See [DEPLOYMENT.md](DEPLOYMENT.md) for worker deployment.
+
 ## Quick Links
 
 - **Quick Start:** [README_MONOREPO.md](README_MONOREPO.md)
 - **Architecture:** [ARCHITECTURE_UPDATE.md](ARCHITECTURE_UPDATE.md)
 - **Full Summary:** [MONOREPO_IMPLEMENTATION_COMPLETE.md](MONOREPO_IMPLEMENTATION_COMPLETE.md)
+- **Vercel Deployment:** [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md)
+- **Full Deployment Guide:** [DEPLOYMENT.md](DEPLOYMENT.md)
 - **Original Plan:** [documentation/architecture/monorepo-refactor-plan.md](documentation/architecture/monorepo-refactor-plan.md)
 
 ---
