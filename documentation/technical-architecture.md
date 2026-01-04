@@ -793,40 +793,83 @@ alerts:
 
 ## Appendix: Code Repository Structure
 
+**Note:** The project has been refactored into a monorepo structure for better code organization and reusability.
+
 ```
-crawlready-web/
-├── src/
-│   ├── app/              # Next.js App Router
-│   │   ├── (auth)/       # Authenticated routes
-│   │   ├── (unauth)/     # Public routes
-│   │   ├── api/          # API routes
+crawlready-web/                    # Monorepo root
+├── packages/                      # Shared packages
+│   ├── types/                     # @crawlready/types
+│   │   └── src/
+│   │       ├── common.ts
+│   │       ├── database.ts
+│   │       ├── api.ts
+│   │       └── render-job.ts
+│   ├── logger/                    # @crawlready/logger
+│   │   └── src/
+│   │       └── index.ts          # Pino logger
+│   ├── database/                  # @crawlready/database
+│   │   └── src/
+│   │       ├── schema/           # Drizzle schema
+│   │       ├── queries/          # Database queries
+│   │       ├── connection.ts     # Clean Postgres connection
+│   │       └── utils.ts
+│   ├── cache/                     # @crawlready/cache
+│   │   └── src/
+│   │       ├── redis-client.ts   # Upstash Redis
+│   │       └── url-utils.ts
+│   ├── queue/                     # @crawlready/queue
+│   │   └── src/
+│   │       └── index.ts          # BullMQ queue
+│   ├── storage/                   # @crawlready/storage
+│   │   └── src/
+│   │       └── index.ts          # Supabase Storage
+│   └── security/                  # @crawlready/security
+│       └── src/
+│           ├── ssrf-protection.ts
+│           └── rate-limiting.ts
+├── apps/
+│   └── worker/                    # @crawlready/worker
+│       ├── index.ts              # BullMQ worker
+│       ├── renderer.ts           # Puppeteer renderer
+│       ├── html-optimizer.ts
+│       ├── Dockerfile            # Optimized build
+│       └── fly.toml
+├── src/                          # Web app (to be moved to apps/web)
+│   ├── app/                      # Next.js App Router
+│   │   ├── (auth)/              # Authenticated routes
+│   │   ├── (unauth)/            # Public routes
+│   │   ├── api/                 # API routes
 │   │   │   ├── render/
 │   │   │   ├── check-crawler/
 │   │   │   └── analytics/
 │   │   └── dashboard/
 │   ├── components/
-│   │   ├── ui/           # shadcn/ui components
+│   │   ├── ui/                  # shadcn/ui components
 │   │   └── charts/
-│   ├── lib/
-│   │   ├── crawler-detection.ts
-│   │   ├── cache.ts
-│   │   └── analytics.ts
-│   └── services/
-│       └── renderer/
-│           ├── render-engine.ts
-│           ├── schema-injector.ts
-│           └── html-optimizer.ts
-├── workers/              # Rendering workers
-│   ├── render-worker.ts
-│   └── citation-tracker.ts
+│   └── libs/                    # Main app utilities
 ├── documentation/
 │   ├── technical-architecture.md (this file)
-│   ├── api-reference.md
-│   └── deployment-guide.md
+│   ├── architecture/
+│   │   └── monorepo-refactor-plan.md
+│   ├── MONOREPO_MIGRATION_SUMMARY.md
+│   └── README_MONOREPO.md
+├── pnpm-workspace.yaml          # Workspace configuration
+├── turbo.json                   # Build orchestration
+├── tsconfig.base.json           # Shared TypeScript config
 └── tests/
     ├── e2e/
     └── unit/
 ```
+
+### Monorepo Benefits
+
+1. **Zero Code Duplication**: Worker and web app share the same packages
+2. **Type-Safe Imports**: `@crawlready/*` instead of relative paths
+3. **Independent Deployment**: Worker can be deployed separately
+4. **Optimized Dependencies**: Worker doesn't need Next.js/PGlite
+5. **Better Testing**: Packages can be tested in isolation
+
+See [`README_MONOREPO.md`](../README_MONOREPO.md) for developer guide.
 
 ---
 

@@ -1,0 +1,32 @@
+{
+  "name": "@crawlready/render-worker",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "CrawlReady render worker - Puppeteer + BullMQ",
+  "main": "index.ts",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts",
+    "build": "echo 'Worker runs with tsx - no build needed'",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@crawlready/cache": "workspace:*",
+    "@crawlready/database": "workspace:*",
+    "@crawlready/logger": "workspace:*",
+    "@crawlready/queue": "workspace:*",
+    "@crawlready/security": "workspace:*",
+    "@crawlready/storage": "workspace:*",
+    "@crawlready/types": "workspace:*",
+    "bullmq": "^5.0.0",
+    "puppeteer": "^21.0.0",
+    "tsx": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

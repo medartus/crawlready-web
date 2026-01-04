@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "paths": {
+      "@crawlready/types": ["./packages/types/src"],
+      "@crawlready/logger": ["./packages/logger/src"],
+      "@crawlready/database": ["./packages/database/src"],
+      "@crawlready/cache": ["./packages/cache/src"],
+      "@crawlready/queue": ["./packages/queue/src"],
+      "@crawlready/storage": ["./packages/storage/src"],
+      "@crawlready/security": ["./packages/security/src"]
+    },
+    "resolveJsonModule": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  }
+}

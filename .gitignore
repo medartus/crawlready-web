@@ -4,12 +4,30 @@
 /node_modules
 /.pnp
 .pnp.js
+.pnpm-store/
+
+# Monorepo - workspace node_modules
+/packages/**/*/node_modules
+/apps/**/*/node_modules
+
+# Monorepo - build outputs
+/packages/*/dist
+/packages/*/.turbo
+/apps/*/dist
+/apps/*/.turbo
+.turbo
+
+# Monorepo - compiled JS files in package source (packages should stay as .ts)
+/packages/*/src/**/*.js
+/packages/*/src/**/*.js.map
 
 # Database
 *.db
 
 # testing
 /coverage
+/packages/*/coverage
+/apps/*/coverage
 
 # storybook
 storybook-static
@@ -52,3 +70,11 @@ local
 
 # supabase
 supabase/
+
+# TypeScript
+*.tsbuildinfo
+/packages/*/tsconfig.tsbuildinfo
+/apps/*/tsconfig.tsbuildinfo
+
+# Worker specific
+/apps/workers/*/.puppeteer
