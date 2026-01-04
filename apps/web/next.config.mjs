@@ -1,6 +1,5 @@
 import { fileURLToPath } from 'node:url';
 
-import withBundleAnalyzer from '@next/bundle-analyzer';
 import { withSentryConfig } from '@sentry/nextjs';
 import createJiti from 'jiti';
 import createNextIntlPlugin from 'next-intl/plugin';
@@ -11,9 +10,17 @@ jiti('./src/libs/Env');
 
 const withNextIntl = createNextIntlPlugin('./src/libs/i18n/request.ts');
 
-const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-});
+// Conditionally use bundle analyzer - only import if ANALYZE is enabled
+let bundleAnalyzer = config => config; // No-op by default
+
+if (process.env.ANALYZE === 'true') {
+  try {
+    const { default: withBundleAnalyzer } = await import('@next/bundle-analyzer');
+    bundleAnalyzer = withBundleAnalyzer({ enabled: true });
+  } catch (e) {
+    console.warn('Bundle analyzer not available:', e.message);
+  }
+}
 
 /** @type {import('next').NextConfig} */
 export default withSentryConfig(
