@@ -27,16 +27,15 @@ The `apps/web/vercel.json` configuration handles the build:
 
 ```json
 {
-  "buildCommand": "pnpm build --filter=@crawlready/web",
+  "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
-  "framework": "nextjs",
-  "outputDirectory": "apps/web/.next"
+  "framework": "nextjs"
 }
 ```
 
 - `pnpm install` runs from the root and installs all workspace dependencies
-- `pnpm build --filter=@crawlready/web` builds only the web app and its dependencies
-- `outputDirectory` tells Vercel where to find the built Next.js app
+- `pnpm build` runs the build script in `apps/web/package.json` which executes `next build`
+- Vercel auto-detects the Next.js output directory (`.next`)
 
 ### Required Environment Variables
 
