@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "turbo run build --filter @crawlready/web...",
+  "buildCommand": "turbo run build",
   "installCommand": "pnpm install",
   "framework": "nextjs"
 }
