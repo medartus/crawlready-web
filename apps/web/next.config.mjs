@@ -10,10 +10,10 @@ jiti('./src/libs/Env');
 
 const withNextIntl = createNextIntlPlugin('./src/libs/i18n/request.ts');
 
-// Conditionally use bundle analyzer - only import if ANALYZE is enabled
+// Conditionally use bundle analyzer - only import if ANALYZE is enabled and NODE_ENV is not production
 let bundleAnalyzer = config => config; // No-op by default
 
-if (process.env.ANALYZE === 'true') {
+if (process.env.ANALYZE === 'true' && process.env.NODE_ENV !== 'production') {
   try {
     const { default: withBundleAnalyzer } = await import('@next/bundle-analyzer');
     bundleAnalyzer = withBundleAnalyzer({ enabled: true });
