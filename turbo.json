@@ -14,5 +14,17 @@
     "test": {
       "dependsOn": ["^build"]
     }
-  }
+  },
+  "globalEnv": [
+    "CLERK_SECRET_KEY",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "BILLING_PLAN_ENV",
+    "DATABASE_URL",
+    "GOOGLE_SHEETS_WEBHOOK_URL",
+    "UPSTASH_*",
+    "SUPABASE_*",
+    "NODE_ENV",
+    "AUTO_MIGRATE"
+  ]
 }
