@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { withSentryConfig } from '@sentry/nextjs';
@@ -22,6 +23,8 @@ if (process.env.ANALYZE === 'true' && process.env.NODE_ENV !== 'production') {
   }
 }
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 export default withSentryConfig(
   bundleAnalyzer(
@@ -33,6 +36,14 @@ export default withSentryConfig(
       reactStrictMode: true,
       experimental: {
         serverComponentsExternalPackages: ['@electric-sql/pglite'],
+      },
+      webpack: (config) => {
+        // Ensure proper resolution of TypeScript path aliases
+        config.resolve.alias = {
+          ...config.resolve.alias,
+          '@': path.resolve(__dirname, 'src'),
+        };
+        return config;
       },
       async rewrites() {
         return [
