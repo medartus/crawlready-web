@@ -2,13 +2,24 @@
 
 ## Important Notes
 
+### Monorepo Structure
+This worker is part of a pnpm monorepo. The Dockerfile needs access to:
+- Workspace root files (`pnpm-workspace.yaml`, `package.json`, `tsconfig.base.json`)
+- Shared packages (`packages/types`, `packages/database`, etc.)
+- Worker code (`apps/workers/render-worker/`)
+
 ### Build Context
-The worker Dockerfile needs access to files from the repository root (`src/`, `migrations/`). Therefore:
-- **CLI Deployment:** Run from repository root with `--config workers/render-worker/fly.toml`
-- **UI Deployment:** Set build context to repository root, not `workers/render-worker/`
+- **CLI Deployment:** Run from workspace root with `-c apps/workers/render-worker/fly.toml`
+- **Build context is always the workspace root** (for monorepo access)
+
+### Optimized Docker Image
+The Dockerfile uses **minimal dependencies** (7 packages) for headless Chromium:
+- ✅ 33% smaller than full desktop Chrome dependencies
+- ✅ Faster builds and deploys
+- ✅ Puppeteer skips Chrome download (uses system Chromium)
 
 ### Deployment Method
-**We recommend using the CLI** over the Fly.io UI for more reliable deployments.
+**Use the CLI** for reliable deployments.
 
 ## Prerequisites
 
@@ -26,9 +37,9 @@ The worker Dockerfile needs access to files from the repository root (`src/`, `m
 
 ### First Time Deployment
 
-1. **Navigate to repository root:**
+1. **Navigate to workspace root:**
    ```bash
-   cd /path/to/crawlready-web  # Repository root, NOT workers/render-worker
+   cd /path/to/crawlready-web  # Workspace root (monorepo root)
    ```
 
 2. **Set environment secrets:**
@@ -48,9 +59,9 @@ The worker Dockerfile needs access to files from the repository root (`src/`, `m
    flyctl secrets set -a crawlready-worker SUPABASE_STORAGE_BUCKET="rendered-pages"
    ```
 
-3. **Deploy (from repository root):**
+3. **Deploy (from workspace root):**
    ```bash
-   flyctl deploy --config workers/render-worker/fly.toml
+   flyctl deploy -c apps/workers/render-worker/fly.toml --dockerfile apps/workers/render-worker/Dockerfile
    ```
 
 ### Updating Deployment
@@ -58,10 +69,12 @@ The worker Dockerfile needs access to files from the repository root (`src/`, `m
 After making code changes:
 
 ```bash
-# From repository root
+# From workspace root
 cd /path/to/crawlready-web
-flyctl deploy --config workers/render-worker/fly.toml
+flyctl deploy -c apps/workers/render-worker/fly.toml --dockerfile apps/workers/render-worker/Dockerfile
 ```
+
+**Note:** The `-c` flag specifies the config, `--dockerfile` specifies the Dockerfile path. Build context is always the workspace root.
 
 ## Verify Deployment
 
@@ -111,10 +124,11 @@ flyctl ssh console
 
 ## Troubleshooting
 
-### Build fails with "Dockerfile not found" or "/src: not found"
-Make sure you're in the **repository root** (not `workers/render-worker/`) when running:
+### Build fails with "Dockerfile not found"
+Make sure you're in the **workspace root** and specify both config and dockerfile:
 ```bash
-flyctl deploy --config workers/render-worker/fly.toml
+cd /path/to/crawlready-web  # Workspace root
+flyctl deploy -c apps/workers/render-worker/fly.toml --dockerfile apps/workers/render-worker/Dockerfile
 ```
 
 ### Worker can't connect to Redis

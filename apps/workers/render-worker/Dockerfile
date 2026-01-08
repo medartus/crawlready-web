@@ -1,13 +1,38 @@
-# Multi-stage build for CrawlReady Render Worker
-# Optimized for monorepo with pnpm workspaces
+# CrawlReady Render Worker - Monorepo Edition
+# Optimized for Fly.io deployment with minimal Puppeteer dependencies
+# This uses ONLY the essential dependencies for headless Chromium
 
-# Stage 1: Dependencies
-FROM node:20-slim AS deps
-RUN npm install -g pnpm
+FROM node:20-slim
+
+# Install ONLY the minimal dependencies for headless Chromium
+# Each package is necessary:
+# - chromium: The browser binary
+# - ca-certificates: SSL/TLS certificate validation
+# - fonts-liberation: Basic font rendering
+# - libnss3, libnspr4: Security/crypto libraries for SSL
+# - libgbm1: Graphics buffer management (required for GPU rendering)
+# - libasound2: Audio library (even headless needs this)
+RUN apt-get update && apt-get install -y \
+    chromium \
+    ca-certificates \
+    fonts-liberation \
+    libnss3 \
+    libnspr4 \
+    libgbm1 \
+    libasound2 \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy workspace configuration
+# Set Puppeteer environment BEFORE pnpm install to skip Chromium download
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy workspace configuration files
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 
 # Copy all package.json files for dependency resolution
@@ -20,55 +45,19 @@ COPY packages/storage/package.json packages/storage/
 COPY packages/security/package.json packages/security/
 COPY apps/workers/render-worker/package.json apps/workers/render-worker/
 
-# Install only render-worker dependencies (with workspace packages)
+# Install dependencies (Puppeteer will skip Chrome download)
 RUN pnpm install --frozen-lockfile --filter @crawlready/render-worker...
 
-# Stage 2: Runner (no build step needed, tsx runs TypeScript directly)
-FROM node:20-slim AS runner
-
-# Install Chromium and dependencies for Puppeteer
-RUN apt-get update && apt-get install -y \
-    chromium \
-    fonts-liberation \
-    libappindicator3-1 \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libx11-xcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    xdg-utils \
-    && rm -rf /var/lib/apt/lists/*
-
-# Set Puppeteer to use system Chromium
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
-
-WORKDIR /app
-
-# Copy all source code (workspace packages + worker)
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages ./packages
-COPY --from=deps /app/apps/workers/render-worker/node_modules ./apps/workers/render-worker/node_modules
-
-# Copy workspace config
-COPY pnpm-workspace.yaml tsconfig.base.json ./
-
-# Copy package source files
+# Copy workspace config and all source code
+COPY tsconfig.base.json ./
 COPY packages/ packages/
 COPY apps/workers/render-worker/ apps/workers/render-worker/
 
+# Set working directory to worker
 WORKDIR /app/apps/workers/render-worker
 
+# Set environment
 ENV NODE_ENV=production
 
-# Run with tsx (TypeScript execution)
+# Start worker with tsx (runs TypeScript directly)
 CMD ["npx", "tsx", "index.ts"]
