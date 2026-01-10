@@ -85,6 +85,13 @@ This keeps the build fast by only uploading necessary files.
 - ✅ Verify `.vercelignore` is excluding `apps/workers` and heavy dependencies
 - ✅ Consider using Vercel's build cache (enabled by default)
 
+**If you see database connection errors (`ENOTFOUND db.xxx.supabase.co`):**
+- ✅ **Use connection pooler URL** for Vercel: `pooler.xxx.supabase.co:6543` (not `db.xxx.supabase.co:5432`)
+- ✅ Ensure `DATABASE_URL` is set correctly in Vercel environment variables
+- ✅ The connection pooler is **required** for serverless functions to avoid connection limits
+- ✅ Direct connections will fail in Vercel's serverless environment
+- ✅ Get pooler URL from Supabase Dashboard → Settings → Database → Connection String → Connection Pooling
+
 ## Summary
 
 ✅ **Root Directory:** `/`  

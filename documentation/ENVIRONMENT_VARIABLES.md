@@ -6,11 +6,30 @@ Complete guide to configuring CrawlReady's environment variables for local devel
 
 ### Database (Supabase PostgreSQL)
 
+**Connection Pooler (Recommended for Vercel/Serverless):**
+```bash
+DATABASE_URL=postgresql://postgres:password@pooler.xxxxxxxxxxxxx.supabase.co:6543/postgres?pgbouncer=true
+```
+
+**Direct Connection (For Workers/Long-running processes):**
 ```bash
 DATABASE_URL=postgresql://postgres:password@db.xxxxxxxxxxxxx.supabase.co:5432/postgres
 ```
 
 **Get from:** [Supabase Dashboard](https://app.supabase.com/project/_/settings/database) → Settings → Database → Connection String
+
+**When to use each:**
+
+| Use Case | Connection Type | Why |
+|----------|----------------|-----|
+| **Vercel/Serverless** (Next.js API routes) | **Pooler** (`pooler.xxx:6543`) | Required - serverless functions need connection pooling to avoid connection limits |
+| **Workers** (Fly.io, long-running) | **Direct** (`db.xxx:5432`) | Better performance, full PostgreSQL features, persistent connections |
+| **Local Development** | Either (Direct is simpler) | Both work, direct connection has lower latency |
+
+**Important Notes:**
+- ⚠️ **Vercel deployments MUST use pooler URL** - Direct connections will fail with `ENOTFOUND` errors
+- ✅ **Workers can use direct connections** - Better for long-running processes with persistent connections
+- 🔄 **You can use different URLs** for different environments (web app vs workers)
 
 **Used for:**
 - Storing API keys, render jobs, and metadata

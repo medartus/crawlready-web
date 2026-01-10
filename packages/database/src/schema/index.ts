@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   bigint,
   boolean,
@@ -180,3 +181,59 @@ export type NewUsageDaily = typeof usageDaily.$inferInsert;
 
 export type RenderedPage = typeof renderedPages.$inferSelect;
 export type NewRenderedPage = typeof renderedPages.$inferInsert;
+
+// ==========================================
+// RELATIONS
+// ==========================================
+
+export const apiKeysRelations = relations(apiKeys, ({ many }) => ({
+  renderedPages: many(renderedPages),
+  renderJobs: many(renderJobs),
+  cacheAccesses: many(cacheAccesses),
+  usageDaily: many(usageDaily),
+}));
+
+export const renderedPagesRelations = relations(renderedPages, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [renderedPages.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
+export const renderJobsRelations = relations(renderJobs, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [renderJobs.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
+export const cacheAccessesRelations = relations(cacheAccesses, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [cacheAccesses.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
+export const usageDailyRelations = relations(usageDaily, ({ one }) => ({
+  apiKey: one(apiKeys, {
+    fields: [usageDaily.apiKeyId],
+    references: [apiKeys.id],
+  }),
+}));
+
+// Export schema object with all tables and relations for proper type inference
+// This ensures Drizzle can properly infer types for db.query API
+export const schema = {
+  organizationSchema,
+  todoSchema,
+  apiKeys,
+  renderJobs,
+  cacheAccesses,
+  usageDaily,
+  renderedPages,
+  apiKeysRelations,
+  renderedPagesRelations,
+  renderJobsRelations,
+  cacheAccessesRelations,
+  usageDailyRelations,
+};

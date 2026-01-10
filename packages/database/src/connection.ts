@@ -9,7 +9,7 @@ import { logger } from '@crawlready/logger';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Client } from 'pg';
 
-import * as schema from './schema';
+import { schema } from './schema';
 
 let client: Client | null = null;
 let drizzleDb: ReturnType<typeof drizzle> | null = null;
