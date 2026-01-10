@@ -14,6 +14,9 @@ import { badRequest, success, unauthorized } from '@/libs/api-response-helpers';
 import { db } from '@/libs/DB';
 import { authenticateRequest } from '@/libs/dual-auth';
 
+// Force dynamic rendering - this route uses request.headers for authentication
+export const dynamic = 'force-dynamic';
+
 export const GET = withErrorHandler(async (request: NextRequest) => {
   // 1. Dual authentication
   const authContext = await authenticateRequest(request);

@@ -8,6 +8,9 @@ import { created, validationError } from '@/libs/api-response-helpers';
 import { requireAdminRole } from '@/libs/clerk-auth';
 import { db } from '@/libs/DB';
 
+// Force dynamic rendering - this route uses headers for authentication
+export const dynamic = 'force-dynamic';
+
 /**
  * POST /api/admin/keys
  *

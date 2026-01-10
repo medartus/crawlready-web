@@ -12,6 +12,9 @@ import { success } from '@/libs/api-response-helpers';
 import { requireAuth } from '@/libs/clerk-auth';
 import { db } from '@/libs/DB';
 
+// Force dynamic rendering - this route uses headers for authentication
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/user/usage
  * Get usage statistics for the authenticated user

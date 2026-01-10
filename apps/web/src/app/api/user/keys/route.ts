@@ -20,6 +20,9 @@ import {
 import { requireAuth } from '@/libs/clerk-auth';
 import { db } from '@/libs/DB';
 
+// Force dynamic rendering - this route uses headers for authentication
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/user/keys
  * List all API keys for the authenticated user

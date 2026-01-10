@@ -20,6 +20,9 @@ import { db } from '@/libs/DB';
 import { authenticateRequest } from '@/libs/dual-auth';
 import { checkRateLimit } from '@/libs/rate-limit-helper';
 
+// Force dynamic rendering - this route uses request.headers for authentication
+export const dynamic = 'force-dynamic';
+
 // Request body schema
 const renderRequestSchema = z.object({
   url: z.string().url(),
