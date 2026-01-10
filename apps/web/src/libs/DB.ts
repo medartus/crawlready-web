@@ -32,6 +32,25 @@ const AUTO_MIGRATE = process.env.AUTO_MIGRATE !== 'false';
 if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && Env.DATABASE_URL) {
   const connectionString = Env.DATABASE_URL;
 
+  // Validate Supabase connection string format for Vercel/serverless
+  if (connectionString.includes('supabase.co')) {
+    const isVercel = process.env.VERCEL === '1';
+    const isDirectConnection = connectionString.includes('@db.') && !connectionString.includes('pooler');
+
+    if (isVercel && isDirectConnection) {
+      logger.error(
+        {
+          connectionString: connectionString.replace(/:[^:@]+@/, ':****@'),
+        },
+        '❌ Invalid DATABASE_URL for Vercel: Direct database connections (db.xxx.supabase.co) are not supported in serverless environments. Use the connection pooler URL (pooler.xxx.supabase.co:6543 or aws-0-xxx.pooler.supabase.com:6543) instead.',
+      );
+      throw new Error(
+        'Invalid DATABASE_URL for Vercel. Use connection pooler URL. '
+        + 'Get it from: https://app.supabase.com/project/_/settings/database → Connection Pooling → Connection String',
+      );
+    }
+  }
+
   // Use Pool instead of Client for connection pooling (required for Vercel serverless)
   // Pool handles connection lifecycle better in serverless environments
   pool = new Pool({
