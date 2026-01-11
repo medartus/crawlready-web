@@ -6,6 +6,16 @@
 
 ---
 
+> ⚠️ **Document Status Note (January 2026)**
+> 
+> This playbook includes messaging for both current and planned features. When selling:
+> - ✅ **Available Now:** AI crawler detection, JavaScript rendering (<200ms), usage analytics, dashboard
+> - 🔜 **Coming in Phase 2:** Citation tracking, schema injection, content optimization
+> 
+> Be honest with prospects about what's available today vs. what's on the roadmap. Position Phase 2 features as "coming soon" or "on our roadmap" rather than current capabilities.
+
+---
+
 ## Sales Philosophy
 
 ### Product-Led, Sales-Assisted

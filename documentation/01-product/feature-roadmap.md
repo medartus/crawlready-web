@@ -23,6 +23,11 @@ We don't build minimum viable products. We build the smallest product that users
 - **Improvements:** Weekly
 - **Bug Fixes:** Daily as needed
 
+### Strategic Principles
+- **JS-First Focus:** We exclusively target JavaScript-powered applications (React, Vue, Angular, Next.js, etc.) until we have business-value features beyond rendering (like AI Citation analytics)
+- **Validate Before Building:** Features requiring new personas (agencies, e-commerce) require customer signals before development
+- **Architecture for Flexibility:** System design should not block future expansion even if features aren't planned
+
 ---
 
 ## Current State
@@ -36,6 +41,12 @@ We don't build minimum viable products. We build the smallest product that users
 | Dashboard v1 | In Progress | Basic analytics |
 | Authentication | Complete | Clerk integration |
 | Payments | Complete | Stripe integration |
+
+### What's NOT Built Yet
+| Feature | Status | Notes |
+|---------|--------|-------|
+| AI Citation Tracking | **Planned (Phase 2)** | Key differentiator, not yet implemented |
+| Schema Injection | **Planned (Phase 2)** | Requires rendering engine first |
 
 ### Technical Foundation
 - Next.js 14 (App Router)
@@ -71,6 +82,7 @@ We don't build minimum viable products. We build the smallest product that users
 | Status Page | Public uptime metrics | 6.5 | Instills trust |
 | Error Alerts | Email on render failures | 6.0 | Proactive support |
 | Multi-Domain | 3+ domains per account | 5.5 | Growth tier feature |
+| **Basic Team Support** | Invite 1-2 team members | 6.5 | Primary persona works in 5-30 person teams |
 
 ### Phase 1 Success Criteria
 - [ ] 50+ paying customers
@@ -109,8 +121,10 @@ We don't build minimum viable products. We build the smallest product that users
 |---------|-------------|-----|
 | Advanced Analytics | Crawler patterns, trends | 7.0 |
 | Multi-Domain | Unlimited domains (Scale tier) | 6.5 |
-| Team Management | Invite team members | 6.0 |
+| **Full Team Management** | Roles, permissions, unlimited members | 7.0 |
 | Audit Logs | Activity history | 5.5 |
+
+> **Note:** Basic team support (1-2 members) should be available in Phase 1. Full team management with roles and permissions expands in Phase 2.
 
 ### Phase 2 Success Criteria
 - [ ] 150+ paying customers
@@ -137,12 +151,23 @@ We don't build minimum viable products. We build the smallest product that users
 
 ### Platform Integrations (P0)
 
-| Feature | Description | ICE |
-|---------|-------------|-----|
-| Vercel Integration | One-click from Vercel | 8.0 |
-| Netlify Integration | One-click from Netlify | 7.5 |
-| Shopify App | E-commerce focus | 7.0 |
-| WordPress Plugin | Broader market | 6.5 |
+| Feature | Description | ICE | Notes |
+|---------|-------------|-----|-------|
+| Vercel Integration | One-click from Vercel | 8.0 | Primary target: JS apps |
+| Netlify Integration | One-click from Netlify | 7.5 | Primary target: JS apps |
+
+### Platform Integrations - Conditional (P2)
+
+> **Strategic Note:** E-commerce and WordPress integrations are **not planned** until we have:
+> 1. Clear customer signals from these markets
+> 2. Business-value features beyond rendering (AI Citation Analytics, Content Optimization)
+> 
+> Our core value prop (JS rendering) has limited value for server-rendered platforms.
+
+| Feature | Description | ICE | Prerequisite |
+|---------|-------------|-----|--------------|
+| Shopify App | E-commerce focus | 7.0 | First e-commerce customers, AI Citation Analytics live |
+| WordPress Plugin | JS-heavy WordPress sites only | 5.0 | AI Citation Analytics + Content Optimization live |
 
 ### Advanced AI Features (P1)
 
@@ -151,15 +176,32 @@ We don't build minimum viable products. We build the smallest product that users
 | Visual Diff Tool | See crawler vs user view | 7.0 |
 | Prompt Simulator | Test AI answers | 6.5 |
 | Content Recommendations | AI-powered suggestions | 6.0 |
-| Predictive Crawling | Forecast crawler visits | 5.5 |
 
-### White-Label (P2)
+### Features Requiring Clarification ⚠️
 
-| Feature | Description | ICE |
-|---------|-------------|-----|
-| Agency Branding | Custom branding | 5.5 |
-| Reseller Program | Revenue sharing | 5.0 |
-| API Whitelisting | Private label API | 5.0 |
+> The following features need clearer problem definition before prioritization. They are **parked** until we validate the use case with customers.
+
+| Feature | Current Description | Questions to Answer |
+|---------|---------------------|---------------------|
+| **Predictive Crawling** | Forecast crawler visits | What action can users take based on predictions? Is there a business value beyond "interesting data"? What pain point does this solve? |
+| **A/B Testing Renders** | Test different render configurations | What scenarios require A/B testing renders? Is this for debugging, optimization, or something else? Who would use this and why? |
+| **Custom User-Agents** | Allow custom user-agent strings | Why would users need this? What's the use case beyond our default crawler detection? Is this an edge case or common need? |
+
+### White-Label / Agency (P2) - Conditional
+
+> **Strategic Position:** We will **NOT** build white-label features until we have clear, validated demand from agencies.
+> 
+> **Current Approach:**
+> - ✅ Landing page / interest capture only (if demand signals emerge)
+> - ✅ Architecture should accommodate multi-tenant/white-label to not block future development
+> - ❌ No product development until validated customer need
+> - ❌ No dedicated agency sales or marketing
+
+| Feature | Description | ICE | Status |
+|---------|-------------|-----|--------|
+| Agency Branding | Custom branding | 5.5 | **Blocked** - awaiting demand validation |
+| Reseller Program | Revenue sharing | 5.0 | **Blocked** - awaiting demand validation |
+| API Whitelisting | Private label API | 5.0 | **Blocked** - awaiting demand validation |
 
 ### Phase 3 Success Criteria
 - [ ] 300+ paying customers
@@ -196,33 +238,41 @@ We don't build minimum viable products. We build the smallest product that users
 
 ### High Priority (Next Up)
 
-| # | Feature | Category | ICE |
-|---|---------|----------|-----|
-| 1 | Render speed optimization | Core | 9.0 |
-| 2 | Citation tracking v1 | Differentiation | 9.0 |
-| 3 | Advanced cache rules | Core | 8.5 |
-| 4 | Schema injection v1 | Differentiation | 8.5 |
-| 5 | Slack integration | Platform | 8.0 |
+| # | Feature | Category | ICE | Notes |
+|---|---------|----------|-----|-------|
+| 1 | Render speed optimization | Core | 9.0 | |
+| 2 | Citation tracking v1 | Differentiation | 9.0 | **Key differentiator** |
+| 3 | Advanced cache rules | Core | 8.5 | |
+| 4 | Schema injection v1 | Differentiation | 8.5 | |
+| 5 | Slack integration | Platform | 8.0 | |
+| 6 | Basic team support | Platform | 7.5 | Enable 1-2 team members early |
 
 ### Medium Priority (Soon)
 
-| # | Feature | Category | ICE |
-|---|---------|----------|-----|
-| 6 | GraphQL API | Platform | 7.5 |
-| 7 | Custom user-agents | Core | 7.0 |
-| 8 | A/B testing renders | Advanced | 7.0 |
-| 9 | Bulk operations | Platform | 6.5 |
-| 10 | Data export | Platform | 6.5 |
+| # | Feature | Category | ICE | Notes |
+|---|---------|----------|-----|-------|
+| 7 | GraphQL API | Platform | 7.5 | |
+| 8 | Bulk operations | Platform | 6.5 | |
+| 9 | Data export | Platform | 6.5 | |
+| 10 | Full team management | Platform | 7.0 | Roles, permissions |
 
 ### Lower Priority (Later)
 
-| # | Feature | Category | ICE |
-|---|---------|----------|-----|
-| 11 | Mobile app | Platform | 5.5 |
-| 12 | AI content scoring | Advanced | 5.5 |
-| 13 | Competitive alerts | Advanced | 5.0 |
-| 14 | Custom render rules | Advanced | 5.0 |
-| 15 | Geographic routing | Scale | 4.5 |
+| # | Feature | Category | ICE | Notes |
+|---|---------|----------|-----|-------|
+| 11 | AI content scoring | Advanced | 5.5 | |
+| 12 | Competitive alerts | Advanced | 5.0 | |
+| 13 | Custom render rules | Advanced | 5.0 | |
+| 14 | Geographic routing | Scale | 4.5 | |
+
+### Removed / Deprioritized
+
+| Feature | Previous ICE | Reason |
+|---------|--------------|--------|
+| Mobile app | 5.5 | No clear use case; dashboard is desktop-first |
+| Custom user-agents | 7.0 | **Parked** - needs use case clarification |
+| A/B testing renders | 7.0 | **Parked** - needs use case clarification |
+| Predictive crawling | 5.5 | **Parked** - needs use case clarification |
 
 ---
 

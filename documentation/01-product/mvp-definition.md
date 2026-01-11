@@ -15,7 +15,18 @@ We're not building a minimum viable product—we're building the smallest produc
 **The Test:** Would a user recommend this to a colleague?
 
 ### Core Principle
-> "If it doesn't help users get cited in AI answers, it's not in the MVP."
+> "If it doesn't help users become visible to AI crawlers, it's not in the MVP."
+
+### What MVP Does vs. Doesn't Do
+
+| MVP Does | MVP Does NOT |
+|----------|--------------|
+| ✅ Make JavaScript sites visible to AI crawlers | ❌ Track AI citations (Phase 2) |
+| ✅ Detect 15+ AI crawlers | ❌ Inject schema markup (Phase 2) |
+| ✅ Provide usage analytics | ❌ Provide content optimization guidance (Phase 2) |
+| ✅ Enable fast <200ms rendering | ❌ Compare against competitors (Phase 2) |
+
+> **Important:** Citation tracking and content optimization are key differentiators planned for **Phase 2**, not MVP. MVP focuses on the foundational problem: making JavaScript content visible to AI crawlers.
 
 ---
 
@@ -264,10 +275,13 @@ We're not building a minimum viable product—we're building the smallest produc
 ### Product
 | Limitation | Workaround | Fix In |
 |------------|------------|--------|
-| No citation tracking | Manual checking | Phase 2 |
-| No schema injection | Manual implementation | Phase 2 |
-| Single user per account | Share credentials | Phase 2 |
+| **No citation tracking** | Manual checking via ChatGPT/Perplexity | **Phase 2 (key differentiator)** |
+| **No schema injection** | Manual implementation by users | **Phase 2 (key differentiator)** |
+| **No content optimization guidance** | General best practices documentation | **Phase 2 (key differentiator)** |
+| Limited team support | Share credentials or basic invite (P1) | Phase 2 (full team mgmt) |
 | 3 domains max (starter) | Upgrade to Growth | Phase 2 |
+
+> **Strategic Note:** The "limitations" above (citation tracking, schema injection, content optimization) are actually our **planned differentiators**. MVP focuses on the foundation; Phase 2 builds the moat.
 
 ---
 

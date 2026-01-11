@@ -21,8 +21,10 @@ We envision a world where every website—regardless of technology—can be disc
 We accomplish this by:
 - Detecting AI crawlers automatically
 - Rendering JavaScript content instantly
-- Tracking AI citations in real-time
-- Optimizing content for LLM comprehension
+- **[Planned]** Tracking AI citations in real-time
+- **[Planned]** Optimizing content for LLM comprehension
+
+> **Current State (January 2026):** We have infrastructure for AI crawler detection and JavaScript rendering. Citation tracking and content optimization are key differentiators planned for Phase 2.
 
 ---
 
@@ -147,36 +149,38 @@ We accomplish this by:
 
 ## Feature Categories
 
-### Core Features (Table Stakes)
+### Core Features (Table Stakes) - MVP
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Crawler Detection | Identify 15+ AI crawlers | MVP |
-| JavaScript Rendering | <200ms headless Chrome | MVP |
-| Smart Caching | Redis + CDN layer | MVP |
-| Usage Analytics | Render counts, cache hits | MVP |
-| API Access | REST API for programmatic use | MVP |
+| Feature | Description | Status | Built? |
+|---------|-------------|--------|--------|
+| Crawler Detection | Identify 15+ AI crawlers | MVP | ✅ In Progress |
+| JavaScript Rendering | <200ms headless Chrome | MVP | ✅ In Progress |
+| Smart Caching | Redis + CDN layer | MVP | ✅ In Progress |
+| Usage Analytics | Render counts, cache hits | MVP | ✅ In Progress |
+| API Access | REST API for programmatic use | MVP | 🔜 Planned |
 
-### Differentiation Features (Moat)
+### Differentiation Features (Moat) - Phase 2+
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| AI Citation Tracking | Monitor ChatGPT/Perplexity citations | Growth |
-| LLM Schema Injection | Auto-add FAQ, HowTo, Article schemas | Growth |
-| Visual Diff Tool | See crawler vs user view | Growth |
-| Competitor Tracking | Compare citations vs competitors | Scale |
-| Predictive Analytics | Forecast crawler behavior | Scale |
+> **Important:** These features are our key differentiators but are **not yet built**. They are planned for Phase 2.
+
+| Feature | Description | Status | Built? |
+|---------|-------------|--------|--------|
+| AI Citation Tracking | Monitor ChatGPT/Perplexity citations | Growth | ❌ **Planned** |
+| LLM Schema Injection | Auto-add FAQ, HowTo, Article schemas | Growth | ❌ **Planned** |
+| Visual Diff Tool | See crawler vs user view | Growth | ❌ **Planned** |
+| Competitor Tracking | Compare citations vs competitors | Scale | ❌ **Planned** |
+| Content Optimization Guidance | Help users optimize for AI comprehension | Growth | ❌ **Planned** |
 
 ### Platform Features (Scale)
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Dashboard | Real-time analytics UI | MVP |
-| Webhooks | Event notifications | MVP |
-| Multi-Domain | Multiple sites per account | Growth |
-| Team Management | Invite team members | Growth |
-| White-Label | Agency branding | Scale |
-| Integrations | Vercel, Netlify, Shopify | Scale |
+| Feature | Description | Status | Built? |
+|---------|-------------|--------|--------|
+| Dashboard | Real-time analytics UI | MVP | ✅ In Progress |
+| Webhooks | Event notifications | MVP | 🔜 Planned |
+| Multi-Domain | Multiple sites per account | Growth | 🔜 Planned |
+| Team Management | Invite team members | Growth (basic in MVP) | 🔜 Planned |
+| White-Label | Agency branding | Scale | ❌ **Blocked** (needs demand validation) |
+| Integrations | Vercel, Netlify | Scale | 🔜 Planned |
 
 ---
 
@@ -252,20 +256,96 @@ We accomplish this by:
 - Basic analytics
 - Dashboard v1
 - Stripe integration
+- Basic team support (1-2 members)
 
 ### Phase 2: Growth
 - Citation tracking
 - Schema injection
 - Advanced analytics
 - Multi-domain support
+- Full team management
+- **Content Optimization Guidance**
 
 ### Phase 3: Scale
 - Enterprise features
-- Platform integrations
-- White-label
+- Platform integrations (Vercel, Netlify)
 - Advanced AI features
 
+> **Note:** White-label/Agency features and E-commerce integrations (Shopify, WordPress) are **not planned** until we have validated demand.
+
 *See [Feature Roadmap](./feature-roadmap.md) for details.*
+
+---
+
+## Content Optimization Guidance (Planned Feature)
+
+### The Gap
+
+Currently, CrawlReady focuses on **making content visible** to AI crawlers through JavaScript rendering. However, visibility alone doesn't guarantee AI platforms will **understand, cite, or recommend** the content.
+
+Users need guidance on **how to optimize their content** for better AI comprehension—not just rendering.
+
+### Proposed Approach
+
+#### Phase 2A: Passive Analysis & Recommendations
+
+**What:** Analyze rendered pages and provide actionable recommendations.
+
+| Analysis Area | What We Check | Recommendation Example |
+|--------------|---------------|------------------------|
+| **Content Structure** | Heading hierarchy, paragraph length, content organization | "Your page lacks clear H2/H3 structure. AI models use headings to understand content hierarchy." |
+| **Schema Markup** | Missing or incomplete structured data | "Add FAQ schema to your /pricing page. Pages with FAQ schema are 2.3x more likely to be cited." |
+| **Answer-Ready Content** | Does content directly answer common questions? | "Consider adding a direct answer to 'What is [product]?' in the first paragraph." |
+| **Readability** | Complex sentences, jargon, passive voice | "Simplify sentences in section 3. AI models prefer clear, direct language." |
+| **Entity Clarity** | Are key entities (brand, product, concepts) clearly defined? | "Define 'CrawlReady' explicitly on this page. AI models need clear entity definitions." |
+
+**Implementation:**
+1. Run analysis post-render as background job
+2. Store recommendations in database
+3. Display in dashboard with severity levels (Critical/Important/Suggestion)
+4. Provide "AI Readiness Score" per page
+
+#### Phase 2B: Schema Injection (Automated)
+
+**What:** Automatically inject structured data based on content analysis.
+
+| Content Type | Auto-Detected Schema | Value |
+|-------------|---------------------|-------|
+| FAQ sections | FAQPage schema | Higher likelihood of appearing in AI Q&A |
+| How-to guides | HowTo schema | Step-by-step instructions for AI assistants |
+| Product pages | Product schema | Product recommendations in AI shopping |
+| Articles/Blog | Article schema | News/content citations |
+| Company info | Organization schema | Brand knowledge in AI models |
+
+**User Control:**
+- Enable/disable auto-injection per domain
+- Preview injected schema before going live
+- Override detected schema with custom markup
+
+#### Phase 3: Content Recommendations (AI-Powered)
+
+**What:** Use AI to suggest content improvements based on:
+- What AI models are being asked about in your industry
+- Gap analysis: Topics your competitors are cited for that you're not
+- Trending questions in your domain
+
+**Example Output:**
+> "Users are asking AI about 'JavaScript rendering for SEO' but your content doesn't address this. Consider adding a page targeting this topic."
+
+### Success Metrics for Content Optimization
+
+| Metric | Target | How Measured |
+|--------|--------|--------------|
+| AI Readiness Score adoption | 60%+ of users check score | Dashboard analytics |
+| Recommendation implementation | 30%+ of critical recommendations implemented | Before/after page analysis |
+| Citation improvement | 20%+ lift in citations for optimized pages | Citation tracking (Phase 2) |
+
+### Why This Matters
+
+1. **Completes the value chain:** Render → Analyze → Optimize → Track Citations
+2. **Deepens moat:** Competitors can copy rendering; content intelligence is harder
+3. **Increases stickiness:** Users return to dashboard for ongoing optimization
+4. **Aligns with vision:** "Thrive in AI search" requires more than just visibility
 
 ---
 
@@ -276,20 +356,25 @@ We accomplish this by:
 | Dimension | CrawlReady | Prerender.io |
 |-----------|-----------|--------------|
 | Focus | AI crawlers | SEO (Google) |
-| Citation Tracking | Yes | No |
-| Schema Injection | Yes | No |
+| Citation Tracking | **Planned (Phase 2)** | No |
+| Schema Injection | **Planned (Phase 2)** | No |
 | Render Speed | <200ms | ~300ms |
 | Price | $49/mo | $49/mo |
 | Overages | $0.50/1K | $0.75-1.50/1K |
 
-### Product Moat
+> **Honest Assessment:** At MVP launch, our differentiation is positioning (AI-first vs SEO-first) and price parity with better focus. Feature moats (citation tracking, schema injection) will be built in Phase 2.
 
-What competitors can't easily replicate:
+### Product Moat (Planned Differentiators)
 
-1. **AI Citation Tracking** - Requires LLM API integration, parsing, ongoing costs
-2. **LLM Schema Injection** - Requires AI/ML expertise for content analysis
-3. **AI Crawler Behavioral Analytics** - Requires specialized detection algorithms
-4. **AI-First Positioning** - Requires repositioning entire brand
+What competitors can't easily replicate (planned for Phase 2+):
+
+1. **AI Citation Tracking** - Requires LLM API integration, parsing, ongoing costs *(Planned: Phase 2)*
+2. **LLM Schema Injection** - Requires AI/ML expertise for content analysis *(Planned: Phase 2)*
+3. **AI Crawler Behavioral Analytics** - Requires specialized detection algorithms *(Planned: Phase 2)*
+4. **Content Optimization Guidance** - Actionable recommendations to improve AI comprehension *(Planned: Phase 2)*
+5. **AI-First Positioning** - Requires repositioning entire brand *(Active now)*
+
+> **Current Competitive Advantage:** AI-first positioning and focus on AI crawlers (vs. SEO-first competitors). Feature moats will be built in Phase 2.
 
 ---
 

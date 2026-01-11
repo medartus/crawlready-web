@@ -6,6 +6,16 @@
 
 ---
 
+> ⚠️ **Document Status Note (January 2026)**
+> 
+> This positioning document describes our **target positioning**. Currently:
+> - ✅ **Available:** AI crawler detection, JavaScript rendering (<200ms), usage analytics, caching
+> - 🔜 **Phase 2 (Planned):** Citation tracking, LLM schema injection, content optimization
+> 
+> Update messaging materials based on actual feature availability. See [Product Strategy](../01-product/product-strategy.md) for current status.
+
+---
+
 ## Positioning Statement
 
 **For** JavaScript-heavy SaaS companies, e-commerce stores, and content publishers

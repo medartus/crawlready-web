@@ -227,6 +227,12 @@ Developer tools require convincing two distinct buyers:
 
 ## Tertiary Persona: E-Commerce Director "Emma"
 
+> **Strategic Note (January 2026):** E-commerce is a **future market**. We currently have no direct connection with this segment. E-commerce features (Shopify integration, Product Schema) are planned only after:
+> 1. We have first customers from this market showing interest
+> 2. Core differentiators (Citation Tracking, Content Optimization) are live
+> 
+> **Current Focus:** SaaS startups and technical founders (Tom persona).
+
 ### Demographics
 | Attribute | Detail |
 |-----------|--------|

@@ -134,12 +134,15 @@ Most SEO tools are built for marketers. We're building for developers—with API
 
 ### Build Features Competitors Can't/Won't
 
-| Unique Feature | What It Does | Why Competitors Don't Have It |
-|----------------|--------------|-------------------------------|
-| **AI Citation Tracking** | Monitor when ChatGPT/Perplexity cite your content | Requires LLM API costs, complex parsing |
-| **LLM-Optimized Schema** | Auto-inject FAQ, HowTo, Article schemas for LLMs | Requires AI/ML expertise |
-| **AI Crawler Analytics** | Real-time GPTBot, PerplexityBot tracking | Requires specialized detection |
-| **Visual Diff Tool** | See what AI crawlers see vs users | Integration complexity |
+> **Note:** These features are our **planned differentiators** for Phase 2+. MVP focuses on core rendering.
+
+| Unique Feature | What It Does | Why Competitors Don't Have It | Status |
+|----------------|--------------|-------------------------------|--------|
+| **AI Citation Tracking** | Monitor when ChatGPT/Perplexity cite your content | Requires LLM API costs, complex parsing | *Planned: Phase 2* |
+| **LLM-Optimized Schema** | Auto-inject FAQ, HowTo, Article schemas for LLMs | Requires AI/ML expertise | *Planned: Phase 2* |
+| **AI Crawler Analytics** | Real-time GPTBot, PerplexityBot tracking | Requires specialized detection | *MVP: Basic / Phase 2: Advanced* |
+| **Content Optimization Guidance** | Actionable recommendations for AI comprehension | Requires AI analysis expertise | *Planned: Phase 2* |
+| **Visual Diff Tool** | See what AI crawlers see vs users | Integration complexity | *Planned: Phase 2* |
 
 ---
 
