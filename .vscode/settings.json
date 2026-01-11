@@ -26,17 +26,17 @@
   ],
   "i18n-ally.keystyle": "nested",
 
-  // Disable the default formatter, use ESLint instead
+  // Disable Prettier, use ESLint for formatting instead
   "prettier.enable": false,
   "editor.formatOnSave": false,
 
   // Auto fix with ESLint on save
-  "editor.codeActionsOnSave": [
-    "source.addMissingImports",
-    "source.fixAll.eslint"
-  ],
+  "editor.codeActionsOnSave": {
+    "source.addMissingImports": "explicit",
+    "source.fixAll.eslint": "explicit"
+  },
 
-  // Enable eslint for all supported languages
+  // Enable ESLint for all supported languages
   "eslint.format.enable": true,
   "eslint.validate": [
     "javascript",
