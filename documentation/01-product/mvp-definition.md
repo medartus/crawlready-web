@@ -43,16 +43,30 @@ We're not building a minimum viable product—we're building the smallest produc
 | Cache Hit Rate | Cached responses | >70% |
 | Uptime | Availability | 99.9% |
 
-#### 2. Customer Dashboard
+#### 2. Onboarding Experience (NEW - P0)
+
 | Feature | Description | Priority |
 |---------|-------------|----------|
+| 4-Step Wizard | Guided setup in < 5 minutes | **P0** |
+| Problem Visualization | Side-by-side "what crawlers see" | **P0** |
+| Auto Framework Detection | Detect Next.js, React, Vue, etc. | **P0** |
+| Integration Verification | Automated verification with retry | **P0** |
+| API Key Generation | Auto-generated, copy-paste ready | **P0** |
+
+> **Rationale:** Onboarding is the critical path to activation. A user who doesn't complete setup in 5 minutes is unlikely to convert. This feature directly impacts our 70% wizard completion target.
+
+#### 3. Customer Dashboard
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| Dashboard Overview | At-a-glance site health & activity | **P0** |
 | Site Management | Add/remove domains | P0 |
 | Usage Analytics | Render counts, cache hits | P0 |
 | Crawler Activity | Which AI crawlers visited | P0 |
 | Settings | Cache TTL, user-agent config | P0 |
 | Account Management | Plan, billing, team (v2) | P0 |
+| Test Render Tool | Preview what crawlers see | P0 |
 
-#### 3. Developer Tools
+#### 4. Developer Tools
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | REST API | Programmatic render control | P0 |
@@ -61,7 +75,7 @@ We're not building a minimum viable product—we're building the smallest produc
 | Documentation | Setup guides, API reference | P0 |
 | SDKs | Node.js (Python, Go in v2) | P1 |
 
-#### 4. Billing & Accounts
+#### 5. Billing & Accounts
 | Feature | Description | Priority |
 |---------|-------------|----------|
 | Free Tier | 1,000 renders/month | P0 |
@@ -127,14 +141,16 @@ We're not building a minimum viable product—we're building the smallest produc
 
 ### As a Technical Founder...
 
-**Story 1: Quick Setup**
-> "I can integrate CrawlReady with my React site in under 5 minutes without modifying my codebase."
+**Story 1: Quick Setup (via Onboarding Wizard)**
+> "I can integrate CrawlReady with my React site in under 5 minutes using the guided setup wizard."
 
 **Acceptance Criteria:**
-- [ ] Single middleware/proxy setup
-- [ ] Copy-paste configuration
-- [ ] Works without code changes
+- [ ] 4-step onboarding wizard guides me through setup
+- [ ] I see what AI crawlers currently see (problem visualization)
+- [ ] Code snippets are auto-generated for my framework
+- [ ] Integration is verified automatically
 - [ ] Time to first render <5 minutes
+- [ ] 70%+ wizard completion rate
 
 **Story 2: See Results**
 > "I can see which AI crawlers are visiting my site and verify they're getting rendered content."
@@ -189,11 +205,13 @@ We're not building a minimum viable product—we're building the smallest produc
 - [ ] Security audit passed
 
 #### Product
-- [ ] Dashboard functional
+- [ ] Dashboard functional (Overview, Sites, Activity, Analytics)
+- [ ] Onboarding wizard complete (4 steps)
+- [ ] Test render tool working
 - [ ] API documented
 - [ ] Webhooks working
 - [ ] Documentation complete
-- [ ] Onboarding flow tested
+- [ ] 70%+ wizard completion rate in testing
 
 #### Business
 - [ ] Pricing live in Stripe
@@ -214,10 +232,13 @@ We're not building a minimum viable product—we're building the smallest produc
 | Metric | 30-Day Target | 90-Day Target |
 |--------|---------------|---------------|
 | Signups | 200 | 500 |
+| **Wizard Completion Rate** | **70%** | **75%** |
+| **Median Time to Complete** | **< 5 min** | **< 4 min** |
 | Trial→Paid | 10% | 12% |
 | Paying Customers | 20 | 50 |
 | MRR | $1K | $3K |
 | NPS | 40+ | 50+ |
+| Day-1 Return Rate | 50% | 60% |
 | Churn | <10% | <5% |
 
 ---
@@ -236,11 +257,13 @@ We're not building a minimum viable product—we're building the smallest produc
 - [ ] Monitoring/alerting
 - [ ] Load testing
 
-### Week 5-6: Dashboard
+### Week 5-6: Onboarding & Dashboard
+- [ ] 4-step onboarding wizard
+- [ ] Dashboard Overview page
 - [ ] Site management UI
+- [ ] Test render tool
 - [ ] Usage analytics
 - [ ] Settings pages
-- [ ] Account management
 
 ### Week 7-8: Developer Tools
 - [ ] API endpoints
@@ -268,7 +291,6 @@ We're not building a minimum viable product—we're building the smallest produc
 | Limitation | Workaround | Fix In |
 |------------|------------|--------|
 | Single region | CloudFlare caching | Phase 2 |
-| No render preview | Manual testing | Phase 2 |
 | Basic error messages | Documentation | Phase 2 |
 | Limited customization | Default configs work well | Phase 2 |
 

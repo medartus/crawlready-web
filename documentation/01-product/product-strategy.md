@@ -159,6 +159,21 @@ We accomplish this by:
 | Usage Analytics | Render counts, cache hits | MVP | ✅ In Progress |
 | API Access | REST API for programmatic use | MVP | 🔜 Planned |
 
+### Onboarding & Activation Features - MVP (NEW)
+
+| Feature | Description | Status | Built? |
+|---------|-------------|--------|--------|
+| **4-Step Wizard** | Guided setup in < 5 minutes | MVP | 🔜 Planned |
+| **Problem Visualization** | Side-by-side crawler view comparison | MVP | 🔜 Planned |
+| **Framework Detection** | Auto-detect Next.js, React, Vue, etc. | MVP | 🔜 Planned |
+| **Integration Verification** | Automated test with retry | MVP | 🔜 Planned |
+| **Dashboard Overview** | At-a-glance health & activity | MVP | 🔜 Planned |
+| **Sites Management** | Multi-domain configuration | MVP | 🔜 Planned |
+| **Test Render Tool** | Preview what crawlers see | MVP | 🔜 Planned |
+| **Crawler Activity Feed** | Real-time crawler visit log | MVP | 🔜 Planned |
+
+> **Rationale:** These features directly impact Time-to-Value metrics. A user who doesn't complete setup quickly is unlikely to convert.
+
 ### Differentiation Features (Moat) - Phase 2+
 
 > **Important:** These features are our key differentiators but are **not yet built**. They are planned for Phase 2.
@@ -182,6 +197,26 @@ We accomplish this by:
 | White-Label | Agency branding | Scale | ❌ **Blocked** (needs demand validation) |
 | Integrations | Vercel, Netlify | Scale | 🔜 Planned |
 
+### Dashboard Navigation Structure
+
+**Current Navigation:**
+```
+Home | API Keys | Usage | Pages | Members | Settings
+```
+
+**New Navigation (MVP):**
+```
+Overview | Sites | Pages | Analytics | Settings
+```
+
+| Section | Purpose |
+|---------|---------|
+| Overview | At-a-glance health, activity feed, quick stats |
+| Sites | Add/manage domains, configure settings |
+| Pages | Browse rendered pages, cache management |
+| Analytics | Usage metrics, trends, insights |
+| Settings | Profile, Team Members, API Keys, Billing, Notifications |
+
 ---
 
 ## Success Metrics
@@ -195,11 +230,32 @@ We accomplish this by:
 | Cache Hit Rate | 70%+ | Cost efficiency |
 | Error Rate | <0.1% | Quality |
 
+### Time-to-Value Metrics (NEW)
+
+These metrics measure how quickly users realize value from CrawlReady. They are critical to our "5-minute promise."
+
+| Metric | Target | Why It Matters |
+|--------|--------|----------------|
+| **Wizard Completion Rate** | **70%+** | Users who complete setup / Started |
+| **Median Time to Complete** | **< 5 min** | 5-minute promise delivery |
+| **Time to First Render** | **< 5 min** | First value realization |
+| **Verification Success Rate** | **80%+** | Integration works on first try |
+| **Day-1 Return Rate** | **50%+** | Users return within 24 hours |
+| **First Crawler Activity** | **< 7 days** | Real-world value confirmation |
+
+**Funnel Breakdown:**
+| Step | Target | Calculation |
+|------|--------|-------------|
+| Step 1 → Step 2 | 95% | URL analysis succeeds |
+| Step 2 → Step 3 | 90% | User proceeds after seeing problem |
+| Step 3 → Step 4 | 80% | User attempts verification |
+| Step 4 → Complete | 88% | Verification succeeds (80% of 80%) |
+| **Overall** | **70%** | End-to-end completion |
+
 ### User Success
 
 | Metric | Target | Why It Matters |
 |--------|--------|----------------|
-| Time to First Render | <5 min | Activation |
 | Activation Rate | 40%+ | Trial effectiveness |
 | Feature Adoption | 60%+ | Value realization |
 | NPS | 50+ | Customer satisfaction |
@@ -253,8 +309,11 @@ We accomplish this by:
 
 ### Phase 1: Foundation (MVP)
 - Core rendering engine
+- **4-step onboarding wizard** (5-minute promise)
+- **Dashboard Overview with health score**
+- **Sites management & test render tool**
+- **Crawler activity feed**
 - Basic analytics
-- Dashboard v1
 - Stripe integration
 - Basic team support (1-2 members)
 

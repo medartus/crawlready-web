@@ -1,9 +1,9 @@
 # CrawlReady: Integration Guide
 
-**Version**: 1.0  
-**Date**: December 28, 2024  
-**Status**: Draft - Pending Approval  
-**Dependencies**: Functional Specification v1.0
+**Version**: 1.1  
+**Date**: January 2026  
+**Status**: Active  
+**Dependencies**: Functional Specification v1.0, Onboarding Wizard Spec
 
 ---
 
@@ -21,34 +21,70 @@ This guide provides step-by-step instructions for integrating CrawlReady pre-ren
 ### 1.2 Prerequisites
 
 Before integrating CrawlReady, you need:
-- ✅ API key from CrawlReady (contact admin or sign up at crawlready.com)
+- ✅ CrawlReady account (sign up at crawlready.com)
 - ✅ Node.js 18+ (for JavaScript/TypeScript examples)
 - ✅ Basic understanding of server-side middleware
 - ✅ HTTPS-enabled production site (required for AI bots to crawl)
 
 ---
 
-## 2. Quick Start (5 Minutes)
+## 2. Quick Start (Recommended)
 
-### 2.1 Get Your API Key
+### 2.1 Use the In-App Setup Wizard
 
-1. Sign up at `https://crawlready.com` or contact admin
-2. Receive API key via email (format: `sk_live_...` or `sk_test_...`)
-3. Store securely in environment variables:
+**The fastest way to integrate CrawlReady is through our guided setup wizard.**
+
+1. Sign in to [dashboard.crawlready.com](https://dashboard.crawlready.com)
+2. Click **"Add Site"** or start the onboarding wizard
+3. Follow the 4-step process:
+   - **Step 1:** Enter your website URL
+   - **Step 2:** See what AI crawlers currently see
+   - **Step 3:** Copy the integration code (auto-generated for your framework)
+   - **Step 4:** Verify your integration
+
+**Time to complete: < 5 minutes**
+
+The wizard automatically:
+- ✅ Detects your framework (Next.js, React, Vue, etc.)
+- ✅ Generates your API key
+- ✅ Provides copy-paste code snippets
+- ✅ Verifies your integration works
+
+**[Launch Setup Wizard →](https://dashboard.crawlready.com/onboarding/add-site)**
+
+---
+
+## 3. Manual Integration
+
+For advanced users or custom implementations, follow the steps below.
+
+### 3.1 Get Your API Key
+
+**Option A: Via Dashboard (Recommended)**
+1. Go to [dashboard.crawlready.com](https://dashboard.crawlready.com)
+2. Navigate to **Sites** → Your site → **Settings**
+3. Copy your API key from the API Key section
+
+**Option B: Via Setup Wizard**
+Your API key is automatically generated during the setup wizard (Step 3).
+
+### 3.2 Configure Environment Variables
+
+Store your API key securely in environment variables:
 
 ```bash
 # .env.local (Next.js)
-CRAWLREADY_API_KEY=sk_live_abc123...
+CRAWLREADY_API_KEY=cr_live_abc123...
 
 # .env (Express)
-CRAWLREADY_API_KEY=sk_live_abc123...
+CRAWLREADY_API_KEY=cr_live_abc123...
 ```
 
 **⚠️ Security**: Never commit API keys to version control. Use `.gitignore` for `.env` files.
 
 ---
 
-### 2.2 Test API Access
+### 3.3 Test API Access
 
 ```bash
 curl -X POST https://api.crawlready.com/api/render \
@@ -84,9 +120,9 @@ Wait 5-10 seconds, then make the same request again.
 
 ---
 
-## 3. Bot Detection
+## 4. Bot Detection
 
-### 3.1 AI Bot User-Agent Patterns
+### 4.1 AI Bot User-Agent Patterns
 
 CrawlReady is optimized for AI crawler bots. Detect them using these patterns:
 
@@ -137,7 +173,7 @@ console.log(isAIBot('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0'
 
 ---
 
-### 3.2 Testing Bot Detection Locally
+### 4.2 Testing Bot Detection Locally
 
 Use browser dev tools to spoof user-agent:
 
@@ -156,9 +192,9 @@ curl -H "User-Agent: Mozilla/5.0 (compatible; GPTBot/1.0)" \
 
 ---
 
-## 4. Framework Integration
+## 5. Framework Integration
 
-### 4.1 Next.js (App Router)
+### 5.1 Next.js (App Router)
 
 #### Implementation: Middleware
 
@@ -316,7 +352,7 @@ export async function middleware(req: NextRequest) {
 
 ---
 
-### 4.2 Next.js (Pages Router)
+### 5.2 Next.js (Pages Router)
 
 **File**: `pages/_middleware.ts` (or `middleware.ts` in root)
 
@@ -367,7 +403,7 @@ if (isAIBot(userAgent)) {
 
 ---
 
-### 4.3 Express.js
+### 5.3 Express.js
 
 **File**: `middleware/crawlready.js`
 
@@ -458,7 +494,7 @@ curl -H "User-Agent: GPTBot/1.0" http://localhost:3000/
 
 ---
 
-### 4.4 Ruby on Rails
+### 5.4 Ruby on Rails
 
 **File**: `config/initializers/crawlready.rb`
 
@@ -542,7 +578,7 @@ curl -H "User-Agent: GPTBot/1.0" http://localhost:3000/
 
 ---
 
-### 4.5 PHP (Laravel/Symfony/Vanilla)
+### 5.5 PHP (Laravel/Symfony/Vanilla)
 
 **File**: `CrawlReadyMiddleware.php`
 
@@ -634,9 +670,9 @@ CRAWLREADY_API_KEY=sk_live_your_key_here
 
 ---
 
-## 5. Advanced Patterns
+## 6. Advanced Patterns
 
-### 5.1 Cache Warming (Bulk Pre-Render)
+### 6.1 Cache Warming (Bulk Pre-Render)
 
 Pre-render important pages before AI bots visit:
 
@@ -727,7 +763,7 @@ jobs:
 
 ---
 
-### 5.2 Cache Invalidation on Deploy
+### 6.2 Cache Invalidation on Deploy
 
 Purge cache when you deploy updates:
 
@@ -776,7 +812,7 @@ invalidateCache().catch(console.error);
 
 ---
 
-### 5.3 Monitoring Integration
+### 6.3 Monitoring Integration
 
 Track CrawlReady usage with analytics:
 
@@ -818,9 +854,9 @@ export async function renderWithCrawlReady(url: string) {
 
 ---
 
-## 6. Testing & Debugging
+## 7. Testing & Debugging
 
-### 6.1 Local Testing Checklist
+### 7.1 Local Testing Checklist
 
 ✅ **Step 1**: Verify API key works
 ```bash
@@ -854,7 +890,7 @@ curl -X DELETE "https://api.crawlready.com/api/cache?url=https://your-site.com/t
 
 ---
 
-### 6.2 Debugging Common Issues
+### 7.2 Debugging Common Issues
 
 #### Issue: "401 Unauthorized"
 
@@ -931,9 +967,9 @@ curl https://api.crawlready.com/api/render \
 
 ---
 
-## 7. Best Practices
+## 8. Best Practices
 
-### 7.1 Performance
+### 8.1 Performance
 
 ✅ **Cache Check Before Render**: Check `/api/cache/status` to avoid unnecessary renders
 ✅ **Async Rendering**: Use 202 responses (queue), don't block page load
@@ -942,7 +978,7 @@ curl https://api.crawlready.com/api/render \
 
 ---
 
-### 7.2 Security
+### 8.2 Security
 
 ✅ **Environment Variables**: Never hard-code API keys
 ✅ **Rate Limiting**: Implement client-side rate limiting to avoid 429 errors
@@ -951,7 +987,7 @@ curl https://api.crawlready.com/api/render \
 
 ---
 
-### 7.3 SEO & UX
+### 8.3 SEO & UX
 
 ✅ **Regular Users First**: Only serve CrawlReady to AI bots, not regular users
 ✅ **Same Content**: Ensure pre-rendered HTML matches live site (no cloaking)
@@ -960,7 +996,7 @@ curl https://api.crawlready.com/api/render \
 
 ---
 
-## 8. Troubleshooting Guide
+## 9. Troubleshooting Guide
 
 | Symptom | Likely Cause | Solution |
 |---------|--------------|----------|
@@ -972,23 +1008,36 @@ curl https://api.crawlready.com/api/render \
 | Bot sees non-rendered HTML | Middleware not serving cached HTML | Add logging, verify cache status |
 | Users see pre-rendered HTML | Bot detection too broad | Tighten user-agent patterns |
 
+### 9.1 Wizard-Specific Issues
+
+If the setup wizard verification fails:
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| "Integration not detected" | Middleware not deployed | Redeploy your site after adding middleware |
+| "API key invalid" | Wrong API key in .env | Copy API key from wizard (Step 3) again |
+| "Site not responding" | Deployment not complete | Wait for deployment to finish, then retry |
+| "Timeout" | Slow page load | Check your site's performance, retry |
+
+**Still stuck?** Click "Skip for Now" in the wizard to complete setup. You can verify later from Dashboard → Sites → Your Site → "Test Connection".
+
 ---
 
-## 9. Support & Resources
+## 10. Support & Resources
 
-### 9.1 Documentation
+### 10.1 Documentation
 
 - **API Reference**: https://docs.crawlready.com/api
 - **Bot Detection Guide**: https://docs.crawlready.com/bot-detection
 - **Troubleshooting**: https://docs.crawlready.com/troubleshooting
 
-### 9.2 Contact Support
+### 10.2 Contact Support
 
 - **Email**: support@crawlready.com
 - **Response Time**: 24 hours (email), 2 hours (Pro tier), 1 hour (Enterprise)
 - **Status Page**: https://status.crawlready.com
 
-### 9.3 Community
+### 10.3 Community
 
 - **GitHub Discussions**: https://github.com/crawlready/community
 - **Discord**: https://discord.gg/crawlready
@@ -996,13 +1045,22 @@ curl https://api.crawlready.com/api/render \
 
 ---
 
-## 10. Change Log
+## 11. Change Log
 
 | Date | Version | Author | Changes |
 |------|---------|--------|---------|
+| 2026-01-11 | 1.1 | System | Added in-app wizard references, restructured quick start |
 | 2024-12-28 | 1.0 | System | Initial integration guide |
 
 ---
 
-**Document Status**: DRAFT - Pending stakeholder review
+## Related Documents
+
+- [Onboarding Strategy](../../01-product/onboarding-strategy.md) - Onboarding philosophy
+- [Onboarding Wizard Spec](./onboarding-wizard-functional.md) - Technical wizard specification
+- [Sites Management](./dashboard-sites-functional.md) - Site configuration
+
+---
+
+**Document Status**: ACTIVE
 
