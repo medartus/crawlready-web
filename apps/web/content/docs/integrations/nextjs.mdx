@@ -1,0 +1,165 @@
+---
+title: "Next.js Integration"
+description: "Step-by-step guide to integrating CrawlReady with your Next.js application."
+order: 10
+section: "Integrations"
+---
+
+## Overview
+
+Next.js is a popular React framework that supports both client-side and server-side rendering. CrawlReady integrates seamlessly with Next.js using middleware.
+
+## Installation
+
+Install the CrawlReady middleware:
+
+```bash
+npm install @crawlready/middleware
+# or
+pnpm add @crawlready/middleware
+```
+
+## Configuration
+
+### App Router (Next.js 13+)
+
+Create or update your `middleware.ts` file in the root of your project:
+
+```typescript
+// middleware.ts
+import { crawlreadyMiddleware } from '@crawlready/middleware';
+
+export default crawlreadyMiddleware({
+  apiKey: process.env.CRAWLREADY_API_KEY,
+  // Optional: customize which paths to process
+  include: ['/', '/blog/*', '/products/*'],
+  exclude: ['/api/*', '/_next/*'],
+});
+
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};
+```
+
+### Pages Router
+
+For the Pages Router, you can also use the middleware approach or integrate at the page level:
+
+```typescript
+// pages/_middleware.ts (deprecated in Next.js 13+)
+import { crawlreadyMiddleware } from '@crawlready/middleware';
+
+export default crawlreadyMiddleware({
+  apiKey: process.env.CRAWLREADY_API_KEY,
+});
+```
+
+## Environment Variables
+
+Add your API key to your environment files:
+
+```bash
+# .env.local (for development)
+CRAWLREADY_API_KEY=cr_live_xxxxx
+
+# .env.production (for production)
+CRAWLREADY_API_KEY=cr_live_xxxxx
+```
+
+For Vercel deployments, add the environment variable in your project settings.
+
+## How It Works
+
+When a request comes in:
+
+1. The middleware checks the User-Agent header
+2. If it's an AI crawler (GPTBot, PerplexityBot, etc.), the request is proxied to CrawlReady
+3. CrawlReady renders your page with JavaScript and returns the HTML
+4. The response is cached for subsequent requests
+
+For regular browsers, your app works exactly as before.
+
+## Advanced Configuration
+
+### Custom Crawler Detection
+
+```typescript
+crawlreadyMiddleware({
+  apiKey: process.env.CRAWLREADY_API_KEY,
+  // Add custom bot patterns
+  additionalBots: [
+    /CustomBot/i,
+    /MyCompanyBot/i,
+  ],
+});
+```
+
+### Cache Control
+
+```typescript
+crawlreadyMiddleware({
+  apiKey: process.env.CRAWLREADY_API_KEY,
+  cache: {
+    ttl: 3600, // Cache for 1 hour
+    staleWhileRevalidate: true,
+  },
+});
+```
+
+### Schema Injection
+
+```typescript
+crawlreadyMiddleware({
+  apiKey: process.env.CRAWLREADY_API_KEY,
+  schema: {
+    inject: true,
+    types: ['Organization', 'WebSite', 'Article'],
+  },
+});
+```
+
+## Vercel Deployment
+
+CrawlReady works seamlessly with Vercel. No additional configuration is needed beyond setting your environment variable.
+
+### Edge Runtime Support
+
+For Edge Runtime, use our edge-compatible middleware:
+
+```typescript
+import { crawlreadyEdgeMiddleware } from '@crawlready/middleware/edge';
+
+export default crawlreadyEdgeMiddleware({
+  apiKey: process.env.CRAWLREADY_API_KEY,
+});
+
+export const config = {
+  runtime: 'edge',
+};
+```
+
+## Troubleshooting
+
+### Middleware Not Running
+
+Ensure your `middleware.ts` is in the correct location:
+- App Router: Root of project or `src/` directory
+- The file must be named `middleware.ts` or `middleware.js`
+
+### API Key Issues
+
+- Verify your API key is correctly set in environment variables
+- Check that you're using the correct key for your environment (test vs. production)
+
+### Caching Issues
+
+If you're seeing stale content, try:
+- Clearing the CrawlReady cache from your dashboard
+- Reducing the TTL in your configuration
+
+## Next Steps
+
+- Test your integration with the [Crawler Checker](/crawler-checker)
+- Set up [Citation Tracking](/docs/guides/citation-tracking) to monitor AI mentions
+- Configure [Schema Markup](/docs/guides/schema-markup) for better AI understanding
+

@@ -49,7 +49,7 @@ export const LandingFooter = () => {
                 <Twitter className="size-5" />
               </a>
               <a
-                href="https://linkedin.com/in/medartus"
+                href="https://www.linkedin.com/in/marcetiennedartus/?locale=en_US"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
@@ -58,7 +58,7 @@ export const LandingFooter = () => {
                 <Linkedin className="size-5" />
               </a>
               <a
-                href="https://github.com/crawlready"
+                href="https://github.com/medartus"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"

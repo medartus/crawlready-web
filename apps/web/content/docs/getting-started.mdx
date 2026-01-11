@@ -1,0 +1,84 @@
+---
+title: "Getting Started"
+description: "Set up CrawlReady in 5 minutes and make your JavaScript site visible to AI crawlers."
+order: 1
+section: "Introduction"
+---
+
+## Welcome to CrawlReady
+
+CrawlReady makes your JavaScript site visible to AI search engines like ChatGPT, Perplexity, and Claude. This guide will help you get set up in about 5 minutes.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- A JavaScript-based website (React, Vue, Angular, Next.js, etc.)
+- Node.js 18+ installed
+- A CrawlReady account (sign up at [crawlready.com](/sign-up))
+
+## Quick Setup
+
+### Step 1: Generate an API Key
+
+1. Sign in to your [CrawlReady dashboard](/dashboard)
+2. Navigate to **API Keys**
+3. Click **Generate New Key**
+4. Copy your API key (you won't be able to see it again)
+
+### Step 2: Install the Middleware
+
+Install our middleware package for your framework:
+
+```bash
+npm install @crawlready/middleware
+# or
+pnpm add @crawlready/middleware
+# or
+yarn add @crawlready/middleware
+```
+
+### Step 3: Configure the Middleware
+
+Add the middleware to your application. Here's an example for Next.js:
+
+```typescript
+// middleware.ts
+import { crawlreadyMiddleware } from '@crawlready/middleware';
+
+export default crawlreadyMiddleware({
+  apiKey: process.env.CRAWLREADY_API_KEY,
+});
+
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};
+```
+
+### Step 4: Set Environment Variables
+
+Add your API key to your environment:
+
+```bash
+# .env.local
+CRAWLREADY_API_KEY=your_api_key_here
+```
+
+### Step 5: Verify Your Setup
+
+Use our [free crawler checker](/crawler-checker) to verify that AI crawlers can now see your content.
+
+## What Happens Next?
+
+Once configured, CrawlReady will:
+
+1. **Detect AI crawlers** - We identify GPTBot, PerplexityBot, ClaudeBot, and others
+2. **Render your pages** - JavaScript is executed server-side in under 200ms
+3. **Serve optimized HTML** - AI crawlers receive fully-rendered content with schema markup
+
+## Need Help?
+
+- Check our [API Reference](/docs/api-reference) for detailed documentation
+- See framework-specific guides in [Integrations](/docs/integrations/nextjs)
+- Contact us at [hello@crawlready.com](mailto:hello@crawlready.com) or reach out on Twitter [@medartus](https://twitter.com/medartus)
+

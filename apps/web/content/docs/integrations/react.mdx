@@ -1,0 +1,218 @@
+---
+title: "React Integration"
+description: "How to integrate CrawlReady with your React application using various hosting setups."
+order: 11
+section: "Integrations"
+---
+
+## Overview
+
+If you're using React without a framework like Next.js, you'll need to configure CrawlReady at the server level. This guide covers common deployment scenarios.
+
+## Deployment Options
+
+### 1. Vercel
+
+For React apps deployed on Vercel, use the `vercel.json` configuration:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(GPTBot|PerplexityBot|ClaudeBot|Amazonbot).*"
+        }
+      ],
+      "destination": "https://render.crawlready.com/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+### 2. Nginx
+
+For self-hosted React apps with Nginx:
+
+```nginx
+server {
+    listen 80;
+    server_name yoursite.com;
+
+    location / {
+        # Check for AI crawlers
+        if ($http_user_agent ~* "(GPTBot|PerplexityBot|ClaudeBot|Amazonbot)") {
+            proxy_pass https://render.crawlready.com;
+            proxy_set_header X-CrawlReady-Key YOUR_API_KEY;
+            proxy_set_header X-Original-URL $scheme://$host$request_uri;
+            break;
+        }
+
+        # Serve React app
+        root /var/www/yoursite;
+        try_files $uri /index.html;
+    }
+}
+```
+
+### 3. Cloudflare Workers
+
+```javascript
+export default {
+  async fetch(request) {
+    const userAgent = request.headers.get('user-agent') || '';
+    const aiCrawlers = /GPTBot|PerplexityBot|ClaudeBot|Amazonbot/i;
+
+    if (aiCrawlers.test(userAgent)) {
+      // Proxy to CrawlReady
+      const url = new URL(request.url);
+      const renderUrl = `https://render.crawlready.com${url.pathname}${url.search}`;
+      
+      return fetch(renderUrl, {
+        headers: {
+          'X-CrawlReady-Key': 'YOUR_API_KEY',
+          'X-Original-URL': request.url,
+        },
+      });
+    }
+
+    // Serve React app normally
+    return fetch(request);
+  },
+};
+```
+
+### 4. Express.js Server
+
+If you're serving your React app with Express:
+
+```javascript
+const express = require('express');
+const { createProxyMiddleware } = require('http-proxy-middleware');
+const path = require('path');
+
+const app = express();
+
+// CrawlReady proxy for AI crawlers
+app.use((req, res, next) => {
+  const userAgent = req.get('user-agent') || '';
+  const aiCrawlers = /GPTBot|PerplexityBot|ClaudeBot|Amazonbot/i;
+
+  if (aiCrawlers.test(userAgent)) {
+    return createProxyMiddleware({
+      target: 'https://render.crawlready.com',
+      changeOrigin: true,
+      headers: {
+        'X-CrawlReady-Key': process.env.CRAWLREADY_API_KEY,
+        'X-Original-URL': `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+      },
+    })(req, res, next);
+  }
+
+  next();
+});
+
+// Serve React static files
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Handle React routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+app.listen(3000);
+```
+
+## Client-Side Integration
+
+For tracking and analytics, you can also add our client-side script:
+
+```html
+<!-- Add to your index.html -->
+<script
+  src="https://cdn.crawlready.com/tracker.js"
+  data-api-key="YOUR_PUBLIC_KEY"
+  defer
+></script>
+```
+
+This enables:
+- Citation tracking
+- AI search visibility reports
+- Performance monitoring
+
+## Schema Markup
+
+Since React apps typically don't have server-side rendering, you'll want to inject schema markup for AI crawlers. CrawlReady can do this automatically, or you can add it manually:
+
+```javascript
+// Add to your App.js or layout component
+import { Helmet } from 'react-helmet';
+
+function App() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Your Company",
+    "url": "https://yoursite.com",
+    "description": "Your company description"
+  };
+
+  return (
+    <>
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+      </Helmet>
+      {/* Your app content */}
+    </>
+  );
+}
+```
+
+## Testing Your Integration
+
+After setup, verify everything works:
+
+1. Use the [Crawler Checker](/crawler-checker) to test AI crawler visibility
+2. Test with curl simulating an AI crawler:
+
+```bash
+curl -A "GPTBot" https://yoursite.com/
+```
+
+3. Check your CrawlReady dashboard for successful render requests
+
+## Common Issues
+
+### CORS Errors
+
+If you see CORS errors, ensure your CrawlReady proxy is configured to handle preflight requests properly.
+
+### Missing Content
+
+If content is missing in the rendered version:
+- Check that your JavaScript doesn't rely on browser-specific APIs
+- Ensure data fetching completes before the render timeout
+
+### Slow Renders
+
+For better performance:
+- Use our cache effectively (default 1-hour TTL)
+- Optimize your bundle size
+- Remove unnecessary third-party scripts
+
+## Next Steps
+
+- Set up [Citation Tracking](/docs/guides/citation-tracking)
+- Learn about [Schema Markup](/docs/guides/schema-markup) best practices
+- Configure [Performance Monitoring](/docs/guides/performance)
+

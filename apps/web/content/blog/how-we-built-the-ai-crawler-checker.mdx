@@ -1,0 +1,145 @@
+---
+title: "How We Built the AI Crawler Checker"
+excerpt: "A deep dive into the technical architecture behind our free AI crawler compatibility tool. Learn how we simulate different AI crawlers and analyze JavaScript rendering."
+category: "Engineering"
+date: "2026-01-08"
+readTime: "12 min read"
+featured: false
+author: "medartus"
+---
+
+## Introduction
+
+When we launched CrawlReady, we knew we needed a way to demonstrate the JavaScript rendering problem to potential users. That's why we built the [AI Crawler Checker](/crawler-checker)—a free tool that analyzes any website's compatibility with major AI crawlers.
+
+In this post, I'll share the technical architecture behind the tool and some of the interesting challenges we solved.
+
+## The Core Problem
+
+To accurately assess AI crawler compatibility, we need to answer several questions:
+
+1. **Does the site rely on JavaScript for content?**
+2. **What content is visible without JavaScript execution?**
+3. **What structured data (Schema.org) is present?**
+4. **Are there any crawler-blocking mechanisms?**
+
+Each of these requires different analysis techniques.
+
+## Architecture Overview
+
+The crawler checker consists of three main components:
+
+1. **Dual-fetch system** - Fetches pages with and without JavaScript
+2. **Content analyzer** - Compares rendered vs. raw HTML
+3. **Schema parser** - Extracts and validates structured data
+
+### Dual-Fetch System
+
+We make two requests to each URL:
+
+```typescript
+// Simple HTTP fetch (what most AI crawlers do)
+const rawResponse = await fetch(url, {
+  headers: {
+    'User-Agent': 'PerplexityBot/1.0'
+  }
+});
+const rawHtml = await rawResponse.text();
+
+// Headless browser fetch (full JavaScript execution)
+const browser = await puppeteer.launch();
+const page = await browser.newPage();
+await page.goto(url, { waitUntil: 'networkidle0' });
+const renderedHtml = await page.content();
+```
+
+By comparing these two responses, we can determine how much content depends on JavaScript.
+
+### Content Analysis
+
+We extract text content from both versions and calculate a "content delta":
+
+```typescript
+const rawText = extractTextContent(rawHtml);
+const renderedText = extractTextContent(renderedHtml);
+
+const contentDelta = {
+  rawWordCount: rawText.split(/\s+/).length,
+  renderedWordCount: renderedText.split(/\s+/).length,
+  percentageIncrease: calculateIncrease(rawText, renderedText)
+};
+```
+
+If the rendered version has significantly more content, the site relies heavily on JavaScript.
+
+### Schema.org Analysis
+
+We parse both JSON-LD and microdata formats:
+
+```typescript
+// JSON-LD extraction
+const jsonLdScripts = document.querySelectorAll(
+  'script[type="application/ld+json"]'
+);
+
+// Microdata extraction
+const microdataItems = document.querySelectorAll('[itemscope]');
+```
+
+We then validate the schemas against Schema.org specifications and check for AI-friendly properties.
+
+## Crawler Simulation
+
+Different AI crawlers have different capabilities. We simulate each one:
+
+| Crawler | JavaScript Support | Timeout | User Agent |
+|---------|-------------------|---------|------------|
+| GPTBot | Limited | 5s | GPTBot/1.0 |
+| PerplexityBot | None | 3s | PerplexityBot |
+| ClaudeBot | Limited | 5s | ClaudeBot/1.0 |
+| GoogleBot | Full | 10s | Googlebot/2.1 |
+
+For each crawler, we adjust our simulation parameters accordingly.
+
+## Scoring Algorithm
+
+We calculate a 0-100 compatibility score based on:
+
+- **Content accessibility** (40%) - How much content is visible without JS
+- **Schema markup** (25%) - Quality and completeness of structured data
+- **Technical factors** (20%) - robots.txt, meta tags, response times
+- **Security headers** (15%) - HTTPS, CSP, etc.
+
+```typescript
+const score = 
+  contentScore * 0.4 +
+  schemaScore * 0.25 +
+  technicalScore * 0.2 +
+  securityScore * 0.15;
+```
+
+## Performance Optimizations
+
+Running headless browsers is expensive. We implemented several optimizations:
+
+1. **Request queuing** - BullMQ manages concurrent browser instances
+2. **Caching** - Results cached in Redis for 24 hours
+3. **Resource blocking** - Skip images, fonts, and tracking scripts
+4. **Timeout management** - Aggressive timeouts prevent hanging
+
+## Try It Yourself
+
+The [AI Crawler Checker](/crawler-checker) is completely free and requires no signup. Enter any URL and get an instant compatibility report.
+
+If you're building something similar, I'm happy to chat about the technical details. Find me on Twitter [@medartus](https://twitter.com/medartus).
+
+## What's Next
+
+We're working on several improvements:
+
+- Historical tracking (see how your score changes over time)
+- Competitive analysis (compare against competitors)
+- Automated recommendations (specific code fixes)
+
+[Join early access](/#early-access) to be the first to try these features.
+

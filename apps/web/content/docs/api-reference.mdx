@@ -1,0 +1,142 @@
+---
+title: "API Reference"
+description: "Complete API documentation for the CrawlReady rendering service."
+order: 2
+section: "Reference"
+---
+
+## Authentication
+
+All API requests require authentication using your API key. Include it in the `Authorization` header:
+
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+You can generate API keys from your [dashboard](/dashboard/api-keys).
+
+## Base URL
+
+All API endpoints are served from:
+
+```
+https://api.crawlready.com
+```
+
+## Endpoints
+
+### POST /render
+
+Submit a URL for rendering. Returns pre-rendered HTML optimized for AI crawlers.
+
+**Request Body:**
+
+```json
+{
+  "url": "https://example.com/page",
+  "waitFor": "networkidle0",
+  "timeout": 30000,
+  "injectSchema": true
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `url` | string | Yes | The URL to render |
+| `waitFor` | string | No | Wait strategy: `load`, `domcontentloaded`, or `networkidle0` (default) |
+| `timeout` | number | No | Maximum render time in milliseconds (default: 30000) |
+| `injectSchema` | boolean | No | Auto-inject AI-friendly schema markup (default: true) |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "html": "<!DOCTYPE html>...",
+  "renderTime": 187,
+  "metadata": {
+    "title": "Page Title",
+    "description": "Page description",
+    "schemaTypes": ["Article", "Organization"]
+  }
+}
+```
+
+### GET /status
+
+Check the health and status of the API.
+
+**Response:**
+
+```json
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "uptime": 99.99
+}
+```
+
+### GET /usage
+
+Get your current usage statistics.
+
+**Response:**
+
+```json
+{
+  "plan": "pro",
+  "renders": {
+    "used": 4523,
+    "limit": 10000,
+    "period": "monthly"
+  },
+  "cacheHitRate": 0.72
+}
+```
+
+## Error Handling
+
+The API uses standard HTTP status codes:
+
+| Status | Description |
+|--------|-------------|
+| 200 | Success |
+| 400 | Bad Request - Invalid parameters |
+| 401 | Unauthorized - Invalid or missing API key |
+| 429 | Rate Limited - Too many requests |
+| 500 | Server Error - Something went wrong |
+
+**Error Response Format:**
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_URL",
+    "message": "The provided URL is not valid"
+  }
+}
+```
+
+## Rate Limits
+
+Rate limits vary by plan:
+
+| Plan | Requests/minute | Renders/month |
+|------|-----------------|---------------|
+| Free | 10 | 100 |
+| Pro | 100 | 10,000 |
+| Enterprise | Unlimited | Unlimited |
+
+## SDKs
+
+We provide official SDKs for popular languages:
+
+- **JavaScript/TypeScript**: `@crawlready/sdk`
+- **Python**: `crawlready`
+- **Go**: `github.com/crawlready/crawlready-go`
+
+See the respective package documentation for usage examples.
+
