@@ -1,5 +1,6 @@
 'use client';
 
+import { Github, Linkedin, Twitter } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -23,7 +24,7 @@ export const LandingFooter = () => {
   return (
     <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-5">
           {/* Brand Column */}
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2">
@@ -37,22 +38,22 @@ export const LandingFooter = () => {
             <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
               Make your JavaScript site visible to AI search engines. Get cited in ChatGPT answers.
             </p>
-            {/* <div className="mt-6 flex gap-4">
+            <div className="mt-6 flex gap-4">
               <a
-                href="https://twitter.com/crawlready"
+                href="https://twitter.com/medartus"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
-                aria-label="Twitter"
+                aria-label="Follow @medartus on Twitter"
               >
                 <Twitter className="size-5" />
               </a>
               <a
-                href="https://linkedin.com/company/crawlready"
+                href="https://linkedin.com/in/medartus"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
-                aria-label="LinkedIn"
+                aria-label="Connect on LinkedIn"
               >
                 <Linkedin className="size-5" />
               </a>
@@ -61,11 +62,11 @@ export const LandingFooter = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
-                aria-label="GitHub"
+                aria-label="CrawlReady on GitHub"
               >
                 <Github className="size-5" />
               </a>
-            </div> */}
+            </div>
           </div>
 
           {/* Product Column */}
@@ -83,14 +84,6 @@ export const LandingFooter = () => {
                   Features
                 </button>
               </li>
-              {/* <li>
-                <button
-                  onClick={() => scrollToSection('pricing')}
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Pricing
-                </button>
-              </li> */}
               <li>
                 <button
                   type="button"
@@ -99,6 +92,14 @@ export const LandingFooter = () => {
                 >
                   Demo
                 </button>
+              </li>
+              <li>
+                <Link
+                  href="/docs"
+                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+                >
+                  Documentation
+                </Link>
               </li>
               <li>
                 <button
@@ -138,7 +139,7 @@ export const LandingFooter = () => {
           </div>
 
           {/* Company Column */}
-          {/* <div>
+          <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">
               Company
             </h3>
@@ -167,19 +168,11 @@ export const LandingFooter = () => {
                   Contact
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/careers"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Careers
-                </Link>
-              </li>
             </ul>
-          </div> */}
+          </div>
 
           {/* Legal Column */}
-          {/* <div>
+          <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">
               Legal
             </h3>
@@ -200,16 +193,8 @@ export const LandingFooter = () => {
                   Terms of Service
                 </Link>
               </li>
-              <li>
-                <button
-                  onClick={() => scrollToSection('faq')}
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  FAQ
-                </button>
-              </li>
             </ul>
-          </div> */}
+          </div>
         </div>
 
         {/* Bottom Bar */}
@@ -222,20 +207,18 @@ export const LandingFooter = () => {
               {' '}
               CrawlReady. All rights reserved.
             </p>
-            <div className="flex gap-6">
-              {/* <Link
-                href="/sitemap"
-                className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              Built by
+              {' '}
+              <a
+                href="https://twitter.com/medartus"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
               >
-                Sitemap
-              </Link> */}
-              {/* <Link
-                href="/status"
-                className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-              >
-                Status
-              </Link> */}
-            </div>
+                @medartus
+              </a>
+            </p>
           </div>
         </div>
       </div>

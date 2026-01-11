@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { usePostHog } from 'posthog-js/react';
 import { useState } from 'react';
 
 import { api } from '@/libs/api-client';
@@ -14,6 +15,7 @@ export function CrawlerCheckerForm({ className = '' }: CrawlerCheckerFormProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const posthog = usePostHog();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +46,12 @@ export function CrawlerCheckerForm({ className = '' }: CrawlerCheckerFormProps) 
         return;
       }
 
+      // Track free tool started event
+      posthog?.capture('free_tool_started', {
+        tool_name: 'crawler_checker',
+        url: fullUrl,
+      });
+
       // Call API (distinct ID automatically included in header)
       const response = await api.post('/api/check-crawler', { url: fullUrl });
 
@@ -54,6 +62,13 @@ export function CrawlerCheckerForm({ className = '' }: CrawlerCheckerFormProps) 
         setLoading(false);
         return;
       }
+
+      // Track free tool completed event
+      posthog?.capture('free_tool_completed', {
+        tool_name: 'crawler_checker',
+        url: fullUrl,
+        score: data.report?.score,
+      });
 
       // Store result in sessionStorage and redirect to results
       sessionStorage.setItem('crawlerCheckResult', JSON.stringify(data.report));
