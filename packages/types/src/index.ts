@@ -11,3 +11,6 @@ export * from './api';
 
 // Render job types
 export * from './render-job';
+
+// Crawler detection utilities
+export * from './crawler-detection';

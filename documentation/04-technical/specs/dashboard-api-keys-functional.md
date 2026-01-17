@@ -4,6 +4,10 @@
 
 The API Keys Management page enables users to generate, view, and manage their CrawlReady API keys. This is a self-service interface allowing users to create keys for external integrations and monitor their usage.
 
+> **Navigation Location:** This page is accessible via **Settings → API Keys** in the dashboard navigation.
+> 
+> Route: `/dashboard/[tenant]/settings/api-keys`
+
 ## User Stories
 
 ### US-1: Generate New API Key

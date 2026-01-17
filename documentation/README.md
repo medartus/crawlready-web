@@ -41,7 +41,8 @@ documentation/
 │   ├── README.md                    # Section navigation
 │   ├── product-strategy.md          # Product vision & principles
 │   ├── feature-roadmap.md           # What we're building
-│   └── mvp-definition.md            # MVP scope
+│   ├── mvp-definition.md            # MVP scope
+│   └── onboarding-strategy.md       # Onboarding philosophy & flow
 │
 ├── 02-go-to-market/                 # Marketing & Sales
 │   ├── README.md                    # Section navigation
@@ -70,9 +71,18 @@ documentation/
 │       ├── functional-spec.md
 │       ├── non-functional-requirements.md
 │       ├── database-schema.md
+│       ├── sites-database-schema.md     # Sites & multi-domain schema
 │       ├── integration-guide.md
 │       ├── user-api-endpoints.md
-│       └── dashboard-*-*.md         # Dashboard specs (6 files)
+│       ├── dashboard-overview-functional.md      # Overview page
+│       ├── dashboard-sites-functional.md         # Sites management
+│       ├── dashboard-pages-functional.md         # Rendered pages browser
+│       ├── dashboard-usage-functional.md         # Analytics (renamed from Usage)
+│       ├── dashboard-api-keys-functional.md      # API keys (under Settings)
+│       ├── dashboard-members-functional.md       # Team members
+│       ├── dashboard-crawler-activity-functional.md  # Activity feed
+│       ├── onboarding-wizard-functional.md       # Onboarding wizard
+│       └── render-preview-functional.md          # Test render tool
 │
 ├── 05-reference/                    # Setup & Reference
 │   ├── README.md                    # Section navigation
@@ -140,14 +150,14 @@ documentation/
 | Section | Documents | Purpose |
 |---------|-----------|---------|
 | 00-strategy | 6 | Business foundation, market opportunity |
-| 01-product | 4 | Product vision, roadmap, MVP |
+| 01-product | 5 | Product vision, roadmap, MVP, onboarding |
 | 02-go-to-market | 4 | Marketing & sales execution |
 | 03-brand | 1 | Brand consistency |
-| 04-technical | 11 + 12 specs | Implementation details |
+| 04-technical | 11 + 17 specs | Implementation details |
 | 05-reference | 10 | Setup & deployment guides |
 | _archive | 7 | Legacy docs (consolidated) |
 
-**Total: 55 documents**
+**Total: 61 documents**
 
 ---
 

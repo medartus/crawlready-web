@@ -1,10 +1,11 @@
 import { cache, getCacheKey, getStorageKey } from '@crawlready/cache';
-import { createConnection, renderedPageQueries, renderJobQueries } from '@crawlready/database';
+import { cacheAccessQueries, createConnection, renderedPageQueries, renderJobQueries } from '@crawlready/database';
 import { createLogger } from '@crawlready/logger';
 import { REDIS_CONNECTION } from '@crawlready/queue';
 import { validateUrlSecurity } from '@crawlready/security';
 import { isStorageConfigured, uploadRenderedPage } from '@crawlready/storage';
 import type { RenderJobData } from '@crawlready/types';
+import { detectCrawler } from '@crawlready/types';
 import type { Job } from 'bullmq';
 import { Worker } from 'bullmq';
 
@@ -31,10 +32,15 @@ logger.info('Database connection initialized');
 const worker = new Worker<RenderJobData>(
   'render-queue',
   async (job: Job<RenderJobData>) => {
-    const { jobId, url, normalizedUrl, apiKeyId, waitForSelector, timeout } = job.data;
+    const { jobId, url, normalizedUrl, apiKeyId, waitForSelector, timeout, userAgent, siteId } = job.data;
     const startTime = Date.now();
 
-    logger.info({ jobId, url }, 'Processing render job');
+    // Detect crawler from user agent
+    const crawlerInfo = detectCrawler(userAgent);
+    const crawlerName = job.data.crawlerName || crawlerInfo.name;
+    const crawlerType = job.data.crawlerType || crawlerInfo.type;
+
+    logger.info({ jobId, url, crawlerName, crawlerType }, 'Processing render job');
 
     try {
       // 1. Update job status to processing
@@ -104,13 +110,33 @@ const worker = new Worker<RenderJobData>(
         htmlSizeBytes,
       });
 
-      logger.info({ jobId, renderDurationMs, htmlSizeBytes }, 'Job completed successfully');
+      // 9. Log cache access with crawler attribution
+      try {
+        await cacheAccessQueries.create(db, {
+          apiKeyId,
+          normalizedUrl,
+          cacheLocation: 'none', // Fresh render = cache miss
+          responseTimeMs: renderDurationMs,
+          siteId: siteId || null,
+          crawlerName: crawlerName || null,
+          crawlerType: crawlerType || null,
+          userAgent: userAgent || null,
+        });
+        logger.debug({ crawlerName, crawlerType }, 'Logged cache access with crawler info');
+      } catch (logError) {
+        // Don't fail the job if logging fails
+        logger.warn({ error: logError instanceof Error ? logError.message : 'Unknown' }, 'Failed to log cache access');
+      }
+
+      logger.info({ jobId, renderDurationMs, htmlSizeBytes, crawlerName }, 'Job completed successfully');
 
       return {
         success: true,
         htmlSizeBytes,
         renderDurationMs,
         cacheKey,
+        crawlerName,
+        crawlerType,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

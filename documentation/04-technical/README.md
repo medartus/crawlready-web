@@ -39,6 +39,7 @@ Detailed functional and non-functional requirements.
 | [specs/functional-spec.md](./specs/functional-spec.md) | Functional specifications |
 | [specs/non-functional-requirements.md](./specs/non-functional-requirements.md) | NFRs (performance, security, etc.) |
 | [specs/database-schema.md](./specs/database-schema.md) | Database schema design |
+| [specs/sites-database-schema.md](./specs/sites-database-schema.md) | Sites & multi-domain schema extension |
 | [specs/integration-guide.md](./specs/integration-guide.md) | Integration guide |
 | [specs/user-api-endpoints.md](./specs/user-api-endpoints.md) | API endpoint specifications |
 
@@ -46,12 +47,23 @@ Detailed functional and non-functional requirements.
 
 | Document | Description |
 |----------|-------------|
-| [specs/dashboard-pages-functional.md](./specs/dashboard-pages-functional.md) | Pages dashboard - functional spec |
-| [specs/dashboard-pages-nfr.md](./specs/dashboard-pages-nfr.md) | Pages dashboard - NFRs |
-| [specs/dashboard-usage-functional.md](./specs/dashboard-usage-functional.md) | Usage dashboard - functional spec |
-| [specs/dashboard-usage-nfr.md](./specs/dashboard-usage-nfr.md) | Usage dashboard - NFRs |
-| [specs/dashboard-api-keys-functional.md](./specs/dashboard-api-keys-functional.md) | API keys - functional spec |
+| [specs/dashboard-overview-functional.md](./specs/dashboard-overview-functional.md) | Overview page - functional spec |
+| [specs/dashboard-sites-functional.md](./specs/dashboard-sites-functional.md) | Sites management - functional spec |
+| [specs/dashboard-pages-functional.md](./specs/dashboard-pages-functional.md) | Rendered pages browser - functional spec |
+| [specs/dashboard-pages-nfr.md](./specs/dashboard-pages-nfr.md) | Rendered pages browser - NFRs |
+| [specs/dashboard-usage-functional.md](./specs/dashboard-usage-functional.md) | Analytics (formerly Usage) - functional spec |
+| [specs/dashboard-usage-nfr.md](./specs/dashboard-usage-nfr.md) | Analytics - NFRs |
+| [specs/dashboard-api-keys-functional.md](./specs/dashboard-api-keys-functional.md) | API keys (under Settings) - functional spec |
 | [specs/dashboard-api-keys-nfr.md](./specs/dashboard-api-keys-nfr.md) | API keys - NFRs |
+| [specs/dashboard-members-functional.md](./specs/dashboard-members-functional.md) | Team members - functional spec |
+| [specs/dashboard-crawler-activity-functional.md](./specs/dashboard-crawler-activity-functional.md) | Crawler activity feed - functional spec |
+
+### Onboarding & Tools
+
+| Document | Description |
+|----------|-------------|
+| [specs/onboarding-wizard-functional.md](./specs/onboarding-wizard-functional.md) | 4-step onboarding wizard - functional spec |
+| [specs/render-preview-functional.md](./specs/render-preview-functional.md) | Test render tool - functional spec |
 
 ---
 

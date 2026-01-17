@@ -1,8 +1,10 @@
-# Dashboard: Usage Statistics - Functional Specification
+# Dashboard: Analytics - Functional Specification
 
 ## Overview
 
-The Usage Statistics page provides users with insights into their CrawlReady API usage, including request counts, cache performance, rate limit consumption, and top rendered URLs. This enables users to monitor their integration performance and optimize their usage.
+The Analytics page provides users with comprehensive insights into their CrawlReady API usage, including request counts, cache performance, rate limit consumption, top rendered URLs, and **contextual recommendations** to optimize their integration. This enables users to monitor their integration performance, identify issues, and take action based on data-driven insights.
+
+> **Note:** This page was previously named "Usage Statistics" and has been enhanced with contextual insights.
 
 ## User Stories
 
@@ -101,7 +103,7 @@ The Usage Statistics page provides users with insights into their CrawlReady API
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  Usage Statistics                      [24h] [7d] [30d]          │
+│  Analytics                             [24h] [7d] [30d]          │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
@@ -115,13 +117,13 @@ The Usage Statistics page provides users with insights into their CrawlReady API
 │  │ [Line Chart: Hit Rate over Time]                        │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                  │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │ Top Rendered URLs                                       │   │
-│  │ URL                          │ Count │ Hit Rate │ Time  │   │
-│  │ example.com/page1            │  234  │   92%    │ 1.2s  │   │
-│  │ example.com/page2            │  189  │   85%    │ 1.5s  │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                                                                  │
+│  ┌───────────────────────────────────┐ ┌─────────────────────┐ │
+│  │ Top Rendered URLs               │ │ 💡 Insights         │ │
+│  │ URL           │ Count│ Hit Rate │ │                     │ │
+│  │ example/page1 │  234 │   92%    │ │ ⚠️ Cache hit rate   │ │
+│  │ example/page2 │  189 │   85%    │ │    below 50%        │ │
+│  └───────────────────────────────────┘ │ [Learn More]        │ │
+│                                         └─────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -361,6 +363,123 @@ percentChange = ((currentPeriod - previousPeriod) / previousPeriod) * 100
 3. Stats refresh to show only that key's usage
 4. User sees this key has 89% cache hit rate (better than average)
 5. Identifies this integration is well-optimized
+
+### Flow 5: Act on Contextual Insight
+1. User views Analytics page
+2. Insight panel shows: "Your cache hit rate dropped 15% this week"
+3. Recommendation appears: "Consider increasing cache TTL for frequently accessed pages"
+4. User clicks "Learn More" to see detailed documentation
+5. User adjusts cache strategy based on recommendation
+
+## Contextual Insights
+
+### Overview
+
+The Analytics page includes **contextual insights** - data-driven recommendations that help users optimize their integration based on their actual usage patterns.
+
+### US-7: View Contextual Recommendations
+**As a** logged-in user  
+**I want to** see personalized recommendations based on my usage data  
+**So that** I can optimize my CrawlReady integration without manual analysis
+
+**Acceptance Criteria:**
+- Insights panel displayed prominently on Analytics page
+- Maximum 3 insights shown at a time (prioritized by impact)
+- Each insight includes:
+  - Clear problem statement
+  - Recommendation for action
+  - "Learn More" link to relevant documentation
+  - Optional "Dismiss" to hide (remember preference)
+- Insights refresh when data changes significantly
+
+### Insight Types
+
+| Insight ID | Trigger Condition | Message | Recommendation |
+|------------|-------------------|---------|----------------|
+| LOW_CACHE_HIT | Cache hit rate < 50% | "Your cache hit rate is below 50%" | "Enable longer cache TTL or pre-warm frequently accessed pages" |
+| HIGH_ERROR_RATE | Error rate > 10% | "More than 10% of your requests are failing" | "Review error breakdown to identify root causes" |
+| RATE_LIMIT_APPROACHING | Usage > 80% of limit | "You're approaching your daily rate limit" | "Consider upgrading your plan or optimizing request patterns" |
+| CACHE_MISS_SPIKE | Cache misses increased >25% week-over-week | "Cache misses increased significantly" | "Check if new URLs are being rendered or if cache invalidation is too aggressive" |
+| RESPONSE_TIME_DEGRADATION | Avg response time increased >30% | "Response times are slower than usual" | "Heavy pages may need optimization. Review slowest URLs below." |
+| UNUSED_API_KEY | API key with 0 requests in 7+ days | "One of your API keys hasn't been used recently" | "Revoke unused keys to improve security" |
+| PEAK_USAGE_PATTERN | Consistent peak hours detected | "Your traffic peaks between 2-4 PM" | "Consider pre-warming cache during off-peak hours" |
+
+### API Response Extension
+
+Add to `/api/user/usage` response:
+
+```typescript
+{
+  // ... existing fields ...
+  insights: Array<{
+    id: string;                    // 'LOW_CACHE_HIT', 'HIGH_ERROR_RATE', etc.
+    severity: 'info' | 'warning' | 'critical';
+    title: string;                 // Human-readable title
+    message: string;               // Detailed message
+    recommendation: string;        // Action to take
+    learnMoreUrl?: string;         // Link to documentation
+    dismissible: boolean;          // Can user dismiss this?
+    data?: {                       // Relevant data for the insight
+      currentValue: number;
+      threshold: number;
+      trend?: 'up' | 'down' | 'stable';
+    };
+  }>;
+  dismissedInsights: string[];     // IDs of insights user has dismissed
+}
+```
+
+### Insights UI Wireframe
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  💡 Insights                                          [See All] │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ ⚠️  Cache hit rate below 50%                        [×]  │  │
+│  │     Your cache hit rate is 42%, below the optimal 80%.   │  │
+│  │     → Enable longer cache TTL for frequently accessed    │  │
+│  │       pages to improve performance.                      │  │
+│  │     [Learn More]                                          │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ 📈  Traffic peaks detected                          [×]  │  │
+│  │     Your usage consistently peaks between 2-4 PM.        │  │
+│  │     → Pre-warm cache during off-peak hours to ensure     │  │
+│  │       fast responses during high-traffic periods.        │  │
+│  │     [Configure Pre-warming]                               │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Dismiss Insight API
+
+#### POST /api/user/insights/dismiss
+
+**Request:**
+```typescript
+{
+  insightId: string;   // ID of the insight to dismiss
+}
+```
+
+**Response (Success - 200):**
+```typescript
+{
+  success: true;
+  dismissedAt: string;  // ISO 8601 timestamp
+}
+```
+
+### Insight Priority Logic
+
+Insights are prioritized for display:
+1. **Critical** - Blocking issues (e.g., rate limit exceeded, >50% error rate)
+2. **Warning** - Performance issues (e.g., cache degradation, slow responses)
+3. **Info** - Optimization opportunities (e.g., unused keys, traffic patterns)
+
+Within each priority level, sort by potential impact (calculated from user's data).
 
 ## Accessibility Requirements
 

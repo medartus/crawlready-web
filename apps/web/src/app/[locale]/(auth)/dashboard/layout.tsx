@@ -25,24 +25,24 @@ export default function DashboardLayout(props: { children: React.ReactNode }) {
           <DashboardHeader
             menu={[
               {
-                href: '/dashboard',
-                label: t('home'),
+                href: '/dashboard/overview',
+                label: 'Overview',
               },
               {
-                href: '/dashboard/api-keys',
-                label: 'API Keys',
-              },
-              {
-                href: '/dashboard/usage',
-                label: 'Usage',
+                href: '/dashboard/sites',
+                label: 'Sites',
               },
               {
                 href: '/dashboard/pages',
                 label: 'Pages',
               },
               {
-                href: '/dashboard/organization-profile/organization-members',
-                label: t('members'),
+                href: '/dashboard/activity',
+                label: 'Activity',
+              },
+              {
+                href: '/dashboard/usage',
+                label: 'Analytics',
               },
               {
                 href: '/dashboard/organization-profile',

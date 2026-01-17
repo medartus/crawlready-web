@@ -78,6 +78,17 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 See [documentation/05-reference/ENVIRONMENT_VARIABLES.md](./documentation/05-reference/ENVIRONMENT_VARIABLES.md) for detailed configuration.
 
+### Onboarding
+
+New users are guided through a 4-step wizard:
+
+1. **Add website URL** - Enter your site's domain
+2. **See AI visibility problems** - View side-by-side comparison of user view vs crawler view
+3. **Copy integration code** - Get framework-specific code snippets (Next.js, React, etc.)
+4. **Verify integration** - Confirm CrawlReady is working on your site
+
+See [Onboarding Strategy](./documentation/01-product/onboarding-strategy.md) for details on the user activation flow.
+
 ---
 
 ## Project Structure

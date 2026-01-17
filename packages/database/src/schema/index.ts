@@ -67,6 +67,9 @@ export const todoSchema = pgTable('todo', {
 export const apiKeyTierEnum = pgEnum('api_key_tier', ['free', 'pro', 'enterprise']);
 export const jobStatusEnum = pgEnum('job_status', ['queued', 'processing', 'completed', 'failed']);
 export const cacheLocationEnum = pgEnum('cache_location', ['hot', 'cold', 'none']);
+export const siteStatusEnum = pgEnum('site_status', ['pending', 'active', 'error', 'suspended']);
+export const verificationMethodEnum = pgEnum('verification_method', ['dns_txt', 'meta_tag', 'api_response', 'auto']);
+export const crawlerTypeEnum = pgEnum('crawler_type', ['search', 'ai', 'social', 'monitoring', 'unknown', 'direct']);
 
 // API Keys Table
 export const apiKeys = pgTable('api_keys', {
@@ -121,10 +124,17 @@ export const cacheAccesses = pgTable('cache_accesses', {
   cacheLocation: cacheLocationEnum('cache_location').notNull(),
   accessedAt: timestamp('accessed_at', { withTimezone: true }).notNull().defaultNow(),
   responseTimeMs: integer('response_time_ms').notNull(),
+  // Crawler attribution (optional - added via migration)
+  siteId: uuid('site_id'),
+  crawlerName: varchar('crawler_name', { length: 100 }),
+  crawlerType: crawlerTypeEnum('crawler_type'),
+  userAgent: text('user_agent'),
 }, table => ({
   apiKeyDateIdx: index('idx_cache_accesses_api_key_date').on(table.apiKeyId, table.accessedAt),
   normalizedUrlIdx: index('idx_cache_accesses_normalized_url').on(table.normalizedUrl),
   accessedAtIdx: index('idx_cache_accesses_accessed_at').on(table.accessedAt),
+  siteIdIdx: index('idx_cache_accesses_site_id').on(table.siteId),
+  crawlerTypeIdx: index('idx_cache_accesses_crawler_type').on(table.crawlerType),
 }));
 
 // Daily Usage Metrics Table
@@ -166,6 +176,110 @@ export const renderedPages = pgTable('rendered_pages', {
   apiKeyIdIdx: index('idx_rendered_pages_api_key_id').on(table.apiKeyId),
 }));
 
+// ==========================================
+// CRAWLREADY: Sites & Multi-Domain Support
+// ==========================================
+
+// Sites Table - Primary organizational unit
+export const sites = pgTable('sites', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: varchar('org_id', { length: 255 }).notNull(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  domain: varchar('domain', { length: 255 }).notNull(),
+  displayName: varchar('display_name', { length: 255 }),
+  status: siteStatusEnum('status').notNull().default('pending'),
+  statusReason: text('status_reason'),
+  statusChangedAt: timestamp('status_changed_at', { withTimezone: true }),
+  verificationToken: varchar('verification_token', { length: 64 }),
+  verificationMethod: verificationMethodEnum('verification_method'),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
+  frameworkDetected: varchar('framework_detected', { length: 100 }),
+  frameworkVersion: varchar('framework_version', { length: 50 }),
+  frameworkConfidence: varchar('framework_confidence', { length: 20 }),
+  settings: text('settings').notNull().default(JSON.stringify({
+    cacheTtl: 21600,
+    enabledCrawlers: ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended'],
+    excludedPaths: [],
+    notifications: {
+      emailOnError: true,
+      emailOnFirstCrawler: true,
+      emailWeeklyDigest: true,
+    },
+    rendering: {
+      waitForSelector: null,
+      timeout: 30000,
+      blockResources: ['image', 'font'],
+    },
+  })),
+  rendersCount: integer('renders_count').notNull().default(0),
+  rendersThisMonth: integer('renders_this_month').notNull().default(0),
+  rendersMonthResetAt: timestamp('renders_month_reset_at', { withTimezone: true }),
+  lastRenderAt: timestamp('last_render_at', { withTimezone: true }),
+  lastCrawlerVisitAt: timestamp('last_crawler_visit_at', { withTimezone: true }),
+  lastErrorAt: timestamp('last_error_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, table => ({
+  orgDomainUnique: unique('sites_org_domain_unique').on(table.orgId, table.domain),
+  orgIdIdx: index('idx_sites_org_id').on(table.orgId),
+  domainIdx: index('idx_sites_domain').on(table.domain),
+  statusIdx: index('idx_sites_status').on(table.status),
+  createdAtIdx: index('idx_sites_created_at').on(table.createdAt),
+}));
+
+// Site API Keys Table - Per-site API keys
+export const siteApiKeys = pgTable('site_api_keys', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
+  keyHash: varchar('key_hash', { length: 64 }).notNull(),
+  keyPrefix: varchar('key_prefix', { length: 20 }).notNull(),
+  keySuffix: varchar('key_suffix', { length: 8 }),
+  name: varchar('name', { length: 100 }),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  useCount: integer('use_count').notNull().default(0),
+  isActive: boolean('is_active').notNull().default(true),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  revokedReason: varchar('revoked_reason', { length: 255 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+}, table => ({
+  hashIdx: index('idx_site_api_keys_hash').on(table.keyHash),
+  siteIdIdx: index('idx_site_api_keys_site_id').on(table.siteId),
+}));
+
+// Site Status History Table - Audit trail
+export const siteStatusHistory = pgTable('site_status_history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
+  fromStatus: siteStatusEnum('from_status'),
+  toStatus: siteStatusEnum('to_status').notNull(),
+  reason: text('reason'),
+  changedBy: varchar('changed_by', { length: 255 }),
+  changeType: varchar('change_type', { length: 50 }).notNull(),
+  metadata: text('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => ({
+  siteIdIdx: index('idx_site_status_history_site_id').on(table.siteId),
+  createdAtIdx: index('idx_site_status_history_created').on(table.createdAt),
+}));
+
+// Site Verifications Table - Track verification attempts
+export const siteVerifications = pgTable('site_verifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
+  method: verificationMethodEnum('method').notNull(),
+  success: boolean('success').notNull(),
+  expectedValue: text('expected_value').notNull(),
+  foundValue: text('found_value'),
+  errorCode: varchar('error_code', { length: 50 }),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => ({
+  siteIdIdx: index('idx_site_verifications_site_id').on(table.siteId),
+  createdAtIdx: index('idx_site_verifications_created').on(table.createdAt),
+}));
+
 // Type exports for TypeScript
 export type ApiKey = typeof apiKeys.$inferSelect;
 export type NewApiKey = typeof apiKeys.$inferInsert;
@@ -181,6 +295,19 @@ export type NewUsageDaily = typeof usageDaily.$inferInsert;
 
 export type RenderedPage = typeof renderedPages.$inferSelect;
 export type NewRenderedPage = typeof renderedPages.$inferInsert;
+
+// Sites types
+export type Site = typeof sites.$inferSelect;
+export type NewSite = typeof sites.$inferInsert;
+
+export type SiteApiKey = typeof siteApiKeys.$inferSelect;
+export type NewSiteApiKey = typeof siteApiKeys.$inferInsert;
+
+export type SiteStatusHistory = typeof siteStatusHistory.$inferSelect;
+export type NewSiteStatusHistory = typeof siteStatusHistory.$inferInsert;
+
+export type SiteVerification = typeof siteVerifications.$inferSelect;
+export type NewSiteVerification = typeof siteVerifications.$inferInsert;
 
 // ==========================================
 // RELATIONS
@@ -221,6 +348,34 @@ export const usageDailyRelations = relations(usageDaily, ({ one }) => ({
   }),
 }));
 
+// Sites Relations
+export const sitesRelations = relations(sites, ({ many }) => ({
+  apiKeys: many(siteApiKeys),
+  statusHistory: many(siteStatusHistory),
+  verifications: many(siteVerifications),
+}));
+
+export const siteApiKeysRelations = relations(siteApiKeys, ({ one }) => ({
+  site: one(sites, {
+    fields: [siteApiKeys.siteId],
+    references: [sites.id],
+  }),
+}));
+
+export const siteStatusHistoryRelations = relations(siteStatusHistory, ({ one }) => ({
+  site: one(sites, {
+    fields: [siteStatusHistory.siteId],
+    references: [sites.id],
+  }),
+}));
+
+export const siteVerificationsRelations = relations(siteVerifications, ({ one }) => ({
+  site: one(sites, {
+    fields: [siteVerifications.siteId],
+    references: [sites.id],
+  }),
+}));
+
 // Export schema object with all tables and relations for proper type inference
 // This ensures Drizzle can properly infer types for db.query API
 export const schema = {
@@ -231,9 +386,17 @@ export const schema = {
   cacheAccesses,
   usageDaily,
   renderedPages,
+  sites,
+  siteApiKeys,
+  siteStatusHistory,
+  siteVerifications,
   apiKeysRelations,
   renderedPagesRelations,
   renderJobsRelations,
   cacheAccessesRelations,
   usageDailyRelations,
+  sitesRelations,
+  siteApiKeysRelations,
+  siteStatusHistoryRelations,
+  siteVerificationsRelations,
 };

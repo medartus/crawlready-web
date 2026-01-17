@@ -1,5 +1,13 @@
 // Render job types for BullMQ queue
 
+export type CrawlerType = 'search' | 'ai' | 'social' | 'monitoring' | 'unknown' | 'direct';
+
+export type CrawlerInfo = {
+  name: string | null;
+  type: CrawlerType;
+  userAgent: string | null;
+};
+
 export type RenderJobData = {
   jobId: string;
   url: string;
@@ -7,6 +15,11 @@ export type RenderJobData = {
   apiKeyId: string;
   waitForSelector?: string;
   timeout?: number;
+  // Crawler attribution
+  userAgent?: string;
+  crawlerName?: string;
+  crawlerType?: CrawlerType;
+  siteId?: string;
 };
 
 export type RenderJobResult = {

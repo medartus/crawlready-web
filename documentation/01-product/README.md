@@ -12,6 +12,7 @@
 | [Product Strategy](./product-strategy.md) | Product vision, principles, architecture | Understanding product direction |
 | [Feature Roadmap](./feature-roadmap.md) | Prioritized features by phase | Planning, resource allocation |
 | [MVP Definition](./mvp-definition.md) | What's in/out of MVP | Launch preparation |
+| [Onboarding Strategy](./onboarding-strategy.md) | Onboarding philosophy and flow | User activation |
 
 ---
 

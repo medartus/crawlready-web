@@ -872,15 +872,45 @@ pg_dump -h db.supabase.co -U postgres -t api_keys crawlready > api_keys.sql
 
 ---
 
-## 11. References
+## 11. Schema Extensions
+
+### 11.1 Sites & Multi-Domain Support
+
+The schema defined in this document covers the core rendering infrastructure. For multi-domain/multi-site support, see:
+
+- **[Sites Database Schema](./sites-database-schema.md)** - Adds `sites` and `site_api_keys` tables
+
+The Sites extension introduces:
+- `sites` table - Domain registration and configuration per organization
+- `site_api_keys` table - API keys scoped to individual sites (vs org-level keys in `api_keys`)
+- `site_status_history` table - Audit trail for site status changes
+
+**Relationship to Core Schema:**
+- `site_api_keys` extends the concept of `api_keys` to be per-site
+- `cache_accesses` gains optional `site_id` for site-scoped analytics
+- Existing `api_keys` table remains for backward compatibility (org-level keys)
+
+---
+
+## 12. References
 
 - Drizzle ORM Docs: https://orm.drizzle.team/
 - PostgreSQL ENUM Types: https://www.postgresql.org/docs/current/datatype-enum.html
 - Supabase Database: https://supabase.com/docs/guides/database
 - Business Requirements: `documentation/specs/business-requirements.md`
 - Functional Specification: `documentation/specs/functional-spec.md`
+- **Sites Schema Extension**: `documentation/specs/sites-database-schema.md`
 
 ---
 
-**Document Status**: DRAFT - Pending stakeholder review
+## 13. Change Log
+
+| Date | Version | Author | Changes |
+|------|---------|--------|---------|
+| 2026-01-11 | 1.1 | System | Added reference to Sites schema extension |
+| 2024-12-28 | 1.0 | System | Initial draft with proper ENUMs |
+
+---
+
+**Document Status**: ACTIVE
 

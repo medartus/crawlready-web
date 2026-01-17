@@ -18,11 +18,14 @@ The Rendered Pages Browser allows users to view, search, and manage all pages th
   - Cache Location (Hot/Cold/None)
   - Status (Cached/Expired/Failed)
   - Size (HTML byte size)
+  - **Crawler Name** (e.g., "Googlebot", "GPTBot", "Claude-Web") - NEW
+  - **Crawler Type** (e.g., "search", "ai", "social", "monitoring") - NEW
   - Actions (Preview, Invalidate)
 - Default sort: Newest first (by rendered date)
 - Pagination: 50 items per page
 - Total count shown: "Showing 1-50 of 1,234 pages"
 - Empty state if no pages rendered
+- **Site selector dropdown** to filter pages by site (links to Sites management)
 
 ### US-2: Search/Filter Pages
 **As a** logged-in user  
@@ -34,9 +37,12 @@ The Rendered Pages Browser allows users to view, search, and manage all pages th
 - Search by URL (partial match, case-insensitive)
 - Debounced search (300ms)
 - Filter dropdowns:
+  - **Site:** All Sites / [Site Name] (links to Sites management) - NEW
   - Cache Location: All / Hot / Cold / None
   - Status: All / Cached / Expired / Failed
   - Date Range: Last 24h / 7d / 30d / All time
+  - **Crawler Type:** All / Search Engines / AI Crawlers / Social / Monitoring - NEW
+  - **Crawler Name:** All / Googlebot / GPTBot / Claude-Web / etc. - NEW
 - Filters are combinable (AND logic)
 - Clear all filters button
 - Search persists in URL query params (shareable/bookmarkable)
@@ -120,27 +126,60 @@ The Rendered Pages Browser allows users to view, search, and manage all pages th
 - Combined with other filters (URL search, date range)
 - Shows count: "234 pages from sk_live_abc..."
 
+### US-8: View Crawler Attribution
+**As a** logged-in user  
+**I want to** see which crawler accessed each rendered page  
+**So that** I can understand my AI and search engine visibility
+
+**Acceptance Criteria:**
+- Each row shows crawler name and type (when available)
+- Crawler name displayed with recognizable icon:
+  - 🔍 Search Engines: Googlebot, Bingbot, etc.
+  - 🤖 AI Crawlers: GPTBot, Claude-Web, Anthropic-AI, PerplexityBot, etc.
+  - 📱 Social: TwitterBot, FacebookBot, LinkedInBot
+  - 📊 Monitoring: UptimeRobot, Pingdom
+  - ❓ Unknown: Unrecognized user agents
+- Crawler type badge: "Search", "AI", "Social", "Monitoring", "Unknown"
+- Hover tooltip shows full user-agent string
+- Filter by crawler type or specific crawler name
+- "Direct" shown when page was rendered via direct API call (no crawler)
+
+### US-9: Filter by Site
+**As a** logged-in user with multiple sites  
+**I want to** filter pages by site  
+**So that** I can focus on renders for a specific domain
+
+**Acceptance Criteria:**
+- Site selector dropdown at top of filters
+- Shows all registered sites plus "All Sites" option
+- Updates table to show only pages from selected site
+- Site name displayed with domain and optional favicon
+- Quick link: "[Manage Sites]" navigates to Sites management page
+- Combined with other filters (crawler, date range, etc.)
+
 ## UI Wireframe
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  Rendered Pages                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│  [🔍 Search by URL...]  [Cache: All ▼]  [Status: All ▼]        │
-│  [Key: All Keys ▼]      [Date: Last 7d ▼]     [Clear Filters]  │
-├─────────────────────────────────────────────────────────────────┤
-│  Showing 1-50 of 1,234 pages                                    │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │ URL                 │ Rendered  │ Cache │ Size  │ Actions  │ │
-│  ├────────────────────────────────────────────────────────────┤ │
-│  │ example.com/page1   │ 2 min ago │  🔴   │ 125KB │ [👁][🗑] │ │
-│  │ example.com/page2   │ 5 min ago │  🟢   │ 98KB  │ [👁][🗑] │ │
-│  │ test.com/article    │ 1 hour ago│  🟡   │ 156KB │ [👁][🗑] │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-│  [← Previous]  Page 1 of 25  [Next →]                           │
-└─────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  Rendered Pages                                            [Manage Sites →]  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  [Site: All Sites ▼]  [🔍 Search by URL...]  [Cache: All ▼]  [Status: All ▼]│
+│  [Crawler Type: All ▼]  [Crawler: All ▼]  [Key: All ▼]  [Date: 7d ▼]        │
+│  [Clear Filters]                                                             │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  Showing 1-50 of 1,234 pages                                                 │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │ URL             │ Crawler        │ Type   │ Rendered  │ Cache │ Actions │ │
+│  ├─────────────────────────────────────────────────────────────────────────┤ │
+│  │ example.com/p1  │ 🤖 GPTBot      │ AI     │ 2 min ago │  🔴   │ [👁][🗑]│ │
+│  │ example.com/p2  │ 🔍 Googlebot   │ Search │ 5 min ago │  🟢   │ [👁][🗑]│ │
+│  │ test.com/page   │ 📱 TwitterBot  │ Social │ 1 hr ago  │  🟡   │ [👁][🗑]│ │
+│  │ mysite.com/blog │ — Direct       │ API    │ 2 hr ago  │  🟢   │ [👁][🗑]│ │
+│  └─────────────────────────────────────────────────────────────────────────┘ │
+│                                                                               │
+│  [← Previous]  Page 1 of 25  [Next →]                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Preview Modal Wireframe
@@ -170,10 +209,13 @@ Query params:
 - `page`: number (default: 1)
 - `limit`: number (default: 50, max: 100)
 - `search`: string (URL search term)
+- `siteId`: UUID (filter by site) - NEW
 - `cacheLocation`: 'hot' | 'cold' | 'none' | 'all' (default: 'all')
 - `status`: 'cached' | 'expired' | 'failed' | 'all' (default: 'all')
 - `dateRange`: '24h' | '7d' | '30d' | 'all' (default: 'all')
 - `keyId`: UUID (filter by API key)
+- `crawlerType`: 'search' | 'ai' | 'social' | 'monitoring' | 'unknown' | 'direct' | 'all' (default: 'all') - NEW
+- `crawlerName`: string (e.g., 'Googlebot', 'GPTBot') - NEW
 
 **Response (Success - 200):**
 ```typescript
@@ -187,6 +229,13 @@ Query params:
     htmlSize: number;            // bytes
     apiKeyPrefix: string;        // Which key rendered it
     jobId: string;               // Reference to render job
+    siteId?: string;             // Site ID if associated - NEW
+    siteName?: string;           // Site display name - NEW
+    crawler: {                   // Crawler attribution - NEW
+      name: string | null;       // e.g., 'GPTBot', 'Googlebot', null for direct API
+      type: 'search' | 'ai' | 'social' | 'monitoring' | 'unknown' | 'direct';
+      userAgent?: string;        // Full user-agent string (for tooltip)
+    };
   }>;
   pagination: {
     currentPage: number;
@@ -194,6 +243,13 @@ Query params:
     totalItems: number;
     itemsPerPage: number;
   };
+  sites: Array<{                // Available sites for filter dropdown - NEW
+    id: string;
+    name: string;
+    domain: string;
+  }>;
+  crawlerTypes: string[];       // Available crawler types for filter - NEW
+  crawlerNames: string[];       // Available crawler names for filter - NEW
 }
 ```
 
@@ -272,6 +328,57 @@ Visual badges for cache locations:
 - **Cold (Supabase):** 🟡 Yellow badge, "Cold" label, tooltip: "In Supabase storage (fast)"
 - **None:** 🔵 Gray badge, "None" label, tooltip: "Not cached, will re-render"
 
+## Crawler Attribution
+
+### Crawler Type Categories
+
+| Type | Icon | Examples | Description |
+|------|------|----------|-------------|
+| Search | 🔍 | Googlebot, Bingbot, DuckDuckBot | Traditional search engine crawlers |
+| AI | 🤖 | GPTBot, Claude-Web, PerplexityBot, Anthropic-AI | AI/LLM training and retrieval crawlers |
+| Social | 📱 | TwitterBot, FacebookBot, LinkedInBot | Social media preview generators |
+| Monitoring | 📊 | UptimeRobot, Pingdom, DatadogSynthetics | Uptime and performance monitors |
+| Unknown | ❓ | (unrecognized user agents) | Unidentified crawlers |
+| Direct | — | (no user agent / API call) | Direct API requests, not from crawler |
+
+### Known AI Crawlers
+
+The system recognizes these AI-related crawlers:
+
+| Crawler Name | User-Agent Pattern | Organization |
+|--------------|-------------------|--------------|
+| GPTBot | `GPTBot/1.0` | OpenAI |
+| ChatGPT-User | `ChatGPT-User` | OpenAI |
+| Claude-Web | `Claude-Web` | Anthropic |
+| Anthropic-AI | `anthropic-ai` | Anthropic |
+| PerplexityBot | `PerplexityBot` | Perplexity |
+| Google-Extended | `Google-Extended` | Google |
+| Bytespider | `Bytespider` | ByteDance |
+| CCBot | `CCBot` | Common Crawl |
+| cohere-ai | `cohere-ai` | Cohere |
+
+### Crawler Detection Logic
+
+```typescript
+function detectCrawler(userAgent: string | null): CrawlerInfo {
+  if (!userAgent) {
+    return { name: null, type: 'direct' };
+  }
+  
+  // AI Crawlers (check first - more specific)
+  if (userAgent.includes('GPTBot')) return { name: 'GPTBot', type: 'ai' };
+  if (userAgent.includes('Claude-Web')) return { name: 'Claude-Web', type: 'ai' };
+  // ... etc.
+  
+  // Search Engines
+  if (userAgent.includes('Googlebot')) return { name: 'Googlebot', type: 'search' };
+  if (userAgent.includes('Bingbot')) return { name: 'Bingbot', type: 'search' };
+  // ... etc.
+  
+  return { name: null, type: 'unknown' };
+}
+```
+
 ## Validation Rules
 
 ### Search
@@ -285,10 +392,13 @@ Visual badges for cache locations:
 - **Default:** Page 1, limit 50
 
 ### Filters
+- **Site ID:** Must be valid UUID and belong to user's organization
 - **Cache Location:** Must be valid enum value
 - **Status:** Must be valid enum value
 - **Date Range:** Must be valid time range
 - **Key ID:** Must be valid UUID and belong to user
+- **Crawler Type:** Must be valid enum: 'search', 'ai', 'social', 'monitoring', 'unknown', 'direct', 'all'
+- **Crawler Name:** Free text, matched against known crawler names
 
 ### Invalidation
 - **Ownership:** Can only invalidate own pages
