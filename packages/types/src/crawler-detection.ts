@@ -115,7 +115,7 @@ export function isCrawler(userAgent: string | null | undefined): boolean {
  * Get list of all known AI crawler names
  */
 export function getKnownAICrawlers(): string[] {
-  return AI_CRAWLERS.map((c) => c.name);
+  return AI_CRAWLERS.map(c => c.name);
 }
 
 /**
@@ -123,10 +123,10 @@ export function getKnownAICrawlers(): string[] {
  */
 export function getKnownCrawlers(): Record<CrawlerType, string[]> {
   return {
-    ai: AI_CRAWLERS.map((c) => c.name),
-    search: SEARCH_CRAWLERS.map((c) => c.name),
-    social: SOCIAL_CRAWLERS.map((c) => c.name),
-    monitoring: MONITORING_CRAWLERS.map((c) => c.name),
+    ai: AI_CRAWLERS.map(c => c.name),
+    search: SEARCH_CRAWLERS.map(c => c.name),
+    social: SOCIAL_CRAWLERS.map(c => c.name),
+    monitoring: MONITORING_CRAWLERS.map(c => c.name),
     unknown: [],
     direct: [],
   };

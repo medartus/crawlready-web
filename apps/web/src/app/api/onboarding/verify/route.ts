@@ -7,13 +7,13 @@ const AI_CRAWLER_USER_AGENT = 'GPTBot/1.0 (+https://openai.com/gptbot)';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, orgId } = await auth();
+    const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { url, domain } = body;
+    const { url } = body;
 
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         },
       });
       html = await response.text();
-    } catch (error) {
+    } catch {
       return NextResponse.json({
         success: false,
         error: 'Failed to connect to your site',
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     // This is a simplified check - in production, you'd want more sophisticated verification
     const indicators = {
       hasContent: html.length > 500,
-      hasRenderedContent: !html.includes('Loading...') && !html.includes('__NEXT_DATA__') || html.length > 10000,
+      hasRenderedContent: (!html.includes('Loading...') && !html.includes('__NEXT_DATA__')) || html.length > 10000,
       // Check for CrawlReady response headers or markers
       hasCrawlReadyMarker: response.headers.get('x-crawlready') === 'true' || html.includes('<!-- CrawlReady -->'),
       responseTime: renderTime,

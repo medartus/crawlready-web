@@ -185,8 +185,8 @@ export default function AnalyzePage() {
         <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
           <h3 className="mb-4 text-lg font-semibold text-gray-900">Issues Found</h3>
           <div className="space-y-3">
-            {analysis.problems.map((problem, index) => (
-              <ProblemCard key={index} problem={problem} />
+            {analysis.problems.map(problem => (
+              <ProblemCard key={`${problem.type}-${problem.title}`} problem={problem} />
             ))}
           </div>
         </div>
@@ -195,6 +195,7 @@ export default function AnalyzePage() {
       {/* Side-by-Side Comparison Toggle */}
       <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <button
+          type="button"
           onClick={() => setShowComparison(!showComparison)}
           className="flex w-full items-center justify-between text-left"
         >
@@ -223,6 +224,7 @@ export default function AnalyzePage() {
                 <div className="prose prose-sm max-w-none">
                   {analysis.rendering.userViewHtml
                     ? (
+                        // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
                         <div dangerouslySetInnerHTML={{ __html: analysis.rendering.userViewHtml }} />
                       )
                     : (
@@ -240,6 +242,7 @@ export default function AnalyzePage() {
                 <div className="prose prose-sm max-w-none">
                   {analysis.rendering.crawlerViewHtml
                     ? (
+                        // eslint-disable-next-line react-dom/no-dangerously-set-innerhtml
                         <div dangerouslySetInnerHTML={{ __html: analysis.rendering.crawlerViewHtml }} />
                       )
                     : (

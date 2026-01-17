@@ -44,7 +44,8 @@ export default function TestRenderPage() {
 
     // Validate URL
     try {
-      new URL(url.startsWith('http') ? url : `https://${url}`);
+      const _parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
+      void _parsedUrl; // Validate URL format
     } catch {
       setError('Please enter a valid URL');
       return;
@@ -140,10 +141,11 @@ export default function TestRenderPage() {
 
             {/* URL Input */}
             <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="render-url" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 URL to Render
               </label>
               <input
+                id="render-url"
                 type="text"
                 value={url}
                 onChange={e => setUrl(e.target.value)}
@@ -155,13 +157,15 @@ export default function TestRenderPage() {
 
             {/* Crawler Selector */}
             <div className="mb-6">
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="crawler-select" className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Simulate Crawler
               </label>
               <select
+                id="crawler-select"
                 value={crawler}
                 onChange={e => setCrawler(e.target.value)}
                 className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                aria-label="Select crawler to simulate"
               >
                 {crawlerOptions.map(opt => (
                   <option key={opt.value} value={opt.value}>
@@ -175,6 +179,7 @@ export default function TestRenderPage() {
 
             {/* Render Button */}
             <button
+              type="button"
               onClick={handleRender}
               disabled={isLoading}
               className={`${buttonVariants({ variant: 'default' })} w-full gap-2`}
@@ -234,6 +239,7 @@ export default function TestRenderPage() {
 
               <div className="mt-4 space-y-2 border-t border-gray-100 pt-4 dark:border-gray-700">
                 <button
+                  type="button"
                   onClick={handleInvalidate}
                   disabled={isLoading}
                   className={`${buttonVariants({ variant: 'outline', size: 'sm' })} w-full`}
@@ -262,6 +268,7 @@ export default function TestRenderPage() {
             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => setViewMode('preview')}
                   className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                     viewMode === 'preview'
@@ -273,6 +280,7 @@ export default function TestRenderPage() {
                   Preview
                 </button>
                 <button
+                  type="button"
                   onClick={() => setViewMode('source')}
                   className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                     viewMode === 'source'
@@ -287,6 +295,7 @@ export default function TestRenderPage() {
 
               {result && viewMode === 'source' && (
                 <button
+                  type="button"
                   onClick={handleCopy}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
                 >

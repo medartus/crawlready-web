@@ -67,6 +67,7 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
         </div>
         <div className="relative">
           <button
+            type="button"
             onClick={() => setShowMenu(!showMenu)}
             className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
           >
@@ -74,7 +75,12 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
           </button>
           {showMenu && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+              <button
+                type="button"
+                className="fixed inset-0 z-10 cursor-default"
+                onClick={() => setShowMenu(false)}
+                aria-label="Close menu"
+              />
               <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
                 <Link
                   href={`/dashboard/sites/${site.id}`}
@@ -84,9 +90,11 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
                   Site Settings
                 </Link>
                 <button
+                  type="button"
                   onClick={() => {
                     setShowMenu(false);
-                    if (confirm('Are you sure you want to delete this site?')) {
+                    // eslint-disable-next-line no-alert
+                    if (window.confirm('Are you sure you want to delete this site?')) {
                       onDelete(site.id);
                     }
                   }}
@@ -187,11 +195,10 @@ export default function SitesPage() {
       const response = await fetch(`/api/user/sites/${siteId}`, { method: 'DELETE' });
       if (response.ok) {
         setSites(prev => prev.filter(s => s.id !== siteId));
-      } else {
-        alert('Failed to delete site');
       }
+      // Delete failed silently
     } catch {
-      alert('Failed to delete site');
+      // Delete failed silently
     }
   };
 

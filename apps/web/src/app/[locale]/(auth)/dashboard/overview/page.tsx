@@ -2,7 +2,6 @@
 
 import { Activity, AlertTriangle, ArrowRight, CheckCircle2, Globe, RefreshCw, TrendingUp, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { buttonVariants } from '@/components/ui/buttonVariants';
@@ -58,7 +57,7 @@ function HealthScoreCircle({ score }: { score: number }) {
     return { bg: 'bg-red-500', text: 'text-red-500', label: 'Poor' };
   };
 
-  const { bg, text, label } = getColor(score);
+  const { text, label } = getColor(score);
   const circumference = 2 * Math.PI * 45;
   const strokeDashoffset = circumference - (score / 100) * circumference;
 
@@ -156,7 +155,7 @@ function AlertBanner({ alert, onDismiss }: { alert: OverviewData['alerts'][0]; o
         <p className="text-sm opacity-90">{alert.message}</p>
       </div>
       {alert.dismissible && (
-        <button onClick={() => onDismiss(alert.id)} className="opacity-60 hover:opacity-100">
+        <button type="button" onClick={() => onDismiss(alert.id)} className="opacity-60 hover:opacity-100">
           ✕
         </button>
       )}
@@ -191,7 +190,6 @@ function ActivityItem({ item }: { item: OverviewData['recentActivity'][0] }) {
 }
 
 export default function DashboardOverviewPage() {
-  const t = useTranslations('DashboardIndex');
   const [data, setData] = useState<OverviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -336,6 +334,7 @@ export default function DashboardOverviewPage() {
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900 dark:text-white">AI Visibility Score</h3>
                   <button
+                    type="button"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
                     className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"

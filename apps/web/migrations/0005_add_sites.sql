@@ -139,3 +139,5 @@ CREATE TRIGGER sites_updated_at
     BEFORE UPDATE ON sites
     FOR EACH ROW
     EXECUTE FUNCTION update_sites_updated_at();
+
+

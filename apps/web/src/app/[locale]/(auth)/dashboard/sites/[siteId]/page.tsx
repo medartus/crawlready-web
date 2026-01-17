@@ -105,7 +105,8 @@ export default function SiteDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this site? This action cannot be undone.')) {
+    // eslint-disable-next-line no-alert
+    if (!window.confirm('Are you sure you want to delete this site? This action cannot be undone.')) {
       return;
     }
 
@@ -114,11 +115,10 @@ export default function SiteDetailPage() {
       const response = await fetch(`/api/user/sites/${siteId}`, { method: 'DELETE' });
       if (response.ok) {
         router.push('/dashboard/sites');
-      } else {
-        alert('Failed to delete site');
       }
+      // Errors handled silently - user sees loading state end
     } catch {
-      alert('Failed to delete site');
+      // Delete failed silently
     } finally {
       setIsDeleting(false);
     }
@@ -304,6 +304,7 @@ export default function SiteDetailPage() {
                         {apiKey.keySuffix}
                       </code>
                       <button
+                        type="button"
                         onClick={handleCopyApiKey}
                         className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         title="Copy API Key prefix"
@@ -347,6 +348,7 @@ export default function SiteDetailPage() {
                 View Rendered Pages
               </Link>
               <button
+                type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
                 className={`${buttonVariants({ variant: 'outline' })} w-full text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20`}

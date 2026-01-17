@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         },
       });
       html = await response.text();
-    } catch (error) {
+    } catch {
       return NextResponse.json({
         error: 'Failed to fetch URL',
         message: 'Could not connect to the specified URL. Please check that the URL is correct and the site is accessible.',

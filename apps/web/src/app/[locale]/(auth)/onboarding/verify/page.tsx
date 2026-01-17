@@ -76,7 +76,7 @@ export default function VerifyPage() {
           message: data.error || 'Verification failed. Please check your integration.',
         });
       }
-    } catch (error) {
+    } catch {
       setStatus('failed');
       setResult({
         success: false,
@@ -235,6 +235,7 @@ export default function VerifyPage() {
         {/* Verify Button */}
         {status !== 'success' && (
           <button
+            type="button"
             onClick={handleVerify}
             disabled={status === 'verifying'}
             className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -266,6 +267,7 @@ export default function VerifyPage() {
         {/* Success Actions */}
         {status === 'success' && (
           <button
+            type="button"
             onClick={handleComplete}
             className="w-full rounded-lg bg-green-600 px-4 py-3 font-medium text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
           >
@@ -308,6 +310,7 @@ export default function VerifyPage() {
       {status !== 'success' && (
         <div className="text-center">
           <button
+            type="button"
             onClick={handleComplete}
             className="text-sm text-gray-500 hover:text-gray-700"
           >

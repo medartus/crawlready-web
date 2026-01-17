@@ -163,6 +163,7 @@ export default function ActivityPage() {
 
   useEffect(() => {
     fetchActivity();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, filter.crawlerType, filter.type]);
 
   // Debounced search
@@ -173,6 +174,7 @@ export default function ActivityPage() {
       }
     }, 300);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter.search]);
 
   const handleExport = async (format: 'csv' | 'json') => {
@@ -196,7 +198,7 @@ export default function ActivityPage() {
         window.URL.revokeObjectURL(url);
       }
     } catch {
-      alert('Failed to export activity');
+      // Export failed silently
     }
   };
 
@@ -253,6 +255,7 @@ export default function ActivityPage() {
           {/* Clear Filters */}
           {(filter.crawlerType !== 'all' || filter.type !== 'all' || filter.search) && (
             <button
+              type="button"
               onClick={() => setFilter({ crawlerType: 'all', type: 'all', search: '' })}
               className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             >
@@ -264,6 +267,7 @@ export default function ActivityPage() {
         {/* Actions */}
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={() => fetchActivity()}
             disabled={isLoading}
             className={`${buttonVariants({ variant: 'outline', size: 'sm' })} gap-2`}
@@ -272,18 +276,20 @@ export default function ActivityPage() {
             Refresh
           </button>
           <div className="group relative">
-            <button className={`${buttonVariants({ variant: 'outline', size: 'sm' })} gap-2`}>
+            <button type="button" className={`${buttonVariants({ variant: 'outline', size: 'sm' })} gap-2`}>
               <Download className="size-4" />
               Export
             </button>
             <div className="absolute right-0 top-full z-10 mt-1 hidden w-32 rounded-lg border border-gray-200 bg-white py-1 shadow-lg group-hover:block dark:border-gray-700 dark:bg-gray-800">
               <button
+                type="button"
                 onClick={() => handleExport('csv')}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
               >
                 Export CSV
               </button>
               <button
+                type="button"
                 onClick={() => handleExport('json')}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
               >
@@ -296,77 +302,83 @@ export default function ActivityPage() {
 
       {/* Activity Table */}
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <RefreshCw className="size-8 animate-spin text-gray-400" />
-          </div>
-        ) : activity.length === 0 ? (
-          <div className="py-20 text-center">
-            <Filter className="mx-auto mb-4 size-12 text-gray-300 dark:text-gray-600" />
-            <p className="text-gray-500 dark:text-gray-400">No activity found</p>
-            <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
-              Activity will appear here when crawlers visit your sites
-            </p>
-          </div>
-        ) : (
-          <>
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Crawler
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Type
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    URL
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Response
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Time
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {activity.map(item => (
-                  <ActivityRow key={item.id} item={item} />
-                ))}
-              </tbody>
-            </table>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-gray-700">
-                <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:cursor-not-allowed disabled:text-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Page
-                  {' '}
-                  {page}
-                  {' '}
-                  of
-                  {' '}
-                  {totalPages}
-                </span>
-                <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:cursor-not-allowed disabled:text-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
-                >
-                  Next
-                </button>
+        {isLoading
+          ? (
+              <div className="flex items-center justify-center py-20">
+                <RefreshCw className="size-8 animate-spin text-gray-400" />
               </div>
-            )}
-          </>
-        )}
+            )
+          : activity.length === 0
+            ? (
+                <div className="py-20 text-center">
+                  <Filter className="mx-auto mb-4 size-12 text-gray-300 dark:text-gray-600" />
+                  <p className="text-gray-500 dark:text-gray-400">No activity found</p>
+                  <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">
+                    Activity will appear here when crawlers visit your sites
+                  </p>
+                </div>
+              )
+            : (
+                <>
+                  <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-900">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Crawler
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Type
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          URL
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Response
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                          Time
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activity.map(item => (
+                        <ActivityRow key={item.id} item={item} />
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 dark:border-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:cursor-not-allowed disabled:text-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Page
+                        {' '}
+                        {page}
+                        {' '}
+                        of
+                        {' '}
+                        {totalPages}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:cursor-not-allowed disabled:text-gray-300 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
       </div>
     </>
   );

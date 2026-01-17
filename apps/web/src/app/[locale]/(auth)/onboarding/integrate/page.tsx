@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 type Framework = 'nextjs' | 'react' | 'vue' | 'nuxt' | 'angular' | 'other';
@@ -188,7 +187,6 @@ function handleRequest(request, response) {
 };
 
 export default function IntegratePage() {
-  const router = useRouter();
   const [selectedFramework, setSelectedFramework] = useState<Framework>('nextjs');
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -268,10 +266,11 @@ export default function IntegratePage() {
 
         {/* Framework Selector */}
         <div className="mb-6">
-          <label className="mb-3 block text-sm font-medium text-gray-700">Select your framework:</label>
+          <span className="mb-3 block text-sm font-medium text-gray-700">Select your framework:</span>
           <div className="grid grid-cols-3 gap-2">
             {(Object.keys(frameworkSnippets) as Framework[]).map(fw => (
               <button
+                type="button"
                 key={fw}
                 onClick={() => setSelectedFramework(fw)}
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
@@ -291,6 +290,7 @@ export default function IntegratePage() {
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-lg font-medium text-gray-900">{currentSnippet.title}</h3>
             <button
+              type="button"
               onClick={handleCopy}
               className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
             >

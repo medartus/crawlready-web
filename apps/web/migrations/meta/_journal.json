@@ -36,6 +36,13 @@
       "when": 1767081314599,
       "tag": "0004_majestic_skin",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1736632800000,
+      "tag": "0005_add_sites",
+      "breakpoints": true
     }
   ]
 }

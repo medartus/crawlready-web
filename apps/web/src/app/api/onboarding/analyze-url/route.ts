@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
         },
       });
       userHtml = await userResponse.text();
-    } catch (error) {
+    } catch {
       return NextResponse.json({
         error: 'Failed to fetch URL',
         message: 'Could not connect to the specified URL. Please check that the URL is correct and the site is accessible.',
