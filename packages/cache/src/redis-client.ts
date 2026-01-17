@@ -6,6 +6,8 @@
  * - Rate limiting (sliding window counter)
  */
 
+import process from 'node:process';
+
 import { Redis } from '@upstash/redis';
 
 // Singleton Redis client

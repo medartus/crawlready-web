@@ -266,7 +266,7 @@ export default function IntegratePage() {
 
         {/* Framework Selector */}
         <div className="mb-6">
-          <span className="mb-3 block text-sm font-medium text-gray-700">Select your framework:</span>
+          <div className="mb-3 text-sm font-medium text-gray-700" role="heading" aria-level={3}>Select your framework:</div>
           <div className="grid grid-cols-3 gap-2">
             {(Object.keys(frameworkSnippets) as Framework[]).map(fw => (
               <button

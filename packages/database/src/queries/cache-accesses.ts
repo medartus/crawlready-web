@@ -2,7 +2,7 @@
  * Cache access logging queries
  */
 
-import type { NewCacheAccess, CacheAccess } from '../schema';
+import type { CacheAccess, NewCacheAccess } from '../schema';
 import { cacheAccesses } from '../schema';
 
 // Database type - will be inferred from connection

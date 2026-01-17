@@ -44,8 +44,11 @@ export default function TestRenderPage() {
 
     // Validate URL
     try {
-      const _parsedUrl = new URL(url.startsWith('http') ? url : `https://${url}`);
-      void _parsedUrl; // Validate URL format
+      // Validate URL format by parsing it
+      URL.parse(url.startsWith('http') ? url : `https://${url}`);
+      if (!URL.canParse(url.startsWith('http') ? url : `https://${url}`)) {
+        throw new Error('Invalid URL');
+      }
     } catch {
       setError('Please enter a valid URL');
       return;

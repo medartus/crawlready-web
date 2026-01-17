@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest';
 
 import { SSRFError, validateUrlSecurity } from '../ssrf-protection';
 
-describe('SSRF Protection Integration Tests', () => {
-  describe('Valid URLs - Should Pass', () => {
+describe('sSRF Protection Integration Tests', () => {
+  describe('valid URLs - Should Pass', () => {
     it('should allow valid public HTTP URLs', () => {
       const validUrls = [
         'http://example.com',
@@ -45,7 +45,7 @@ describe('SSRF Protection Integration Tests', () => {
     });
   });
 
-  describe('Localhost and Private IPs - Should Block', () => {
+  describe('localhost and Private IPs - Should Block', () => {
     it('should block localhost variations', () => {
       const localhostUrls = [
         'http://localhost',
@@ -92,7 +92,7 @@ describe('SSRF Protection Integration Tests', () => {
     });
   });
 
-  describe('Cloud Metadata Services - Should Block', () => {
+  describe('cloud Metadata Services - Should Block', () => {
     it('should block AWS metadata service', () => {
       const awsMetadata = [
         'http://169.254.169.254/latest/meta-data/',
@@ -116,7 +116,7 @@ describe('SSRF Protection Integration Tests', () => {
     });
   });
 
-  describe('Special Cases and Edge Cases', () => {
+  describe('special Cases and Edge Cases', () => {
     it('should block URLs with IP addresses in decimal format', () => {
       // 127.0.0.1 in decimal = 2130706433
       const decimalIp = 'http://2130706433';
@@ -147,7 +147,7 @@ describe('SSRF Protection Integration Tests', () => {
     });
   });
 
-  describe('Real-world Attack Scenarios', () => {
+  describe('real-world Attack Scenarios', () => {
     it('should prevent SSRF via localhost bypass attempts', () => {
       const bypassAttempts = [
         'http://127.0.0.1',
@@ -186,7 +186,7 @@ describe('SSRF Protection Integration Tests', () => {
     });
   });
 
-  describe('Error Messages', () => {
+  describe('error Messages', () => {
     it('should provide helpful error messages', () => {
       try {
         validateUrlSecurity('http://localhost');

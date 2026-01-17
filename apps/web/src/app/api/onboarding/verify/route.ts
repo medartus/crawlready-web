@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
     // This is a simplified check - in production, you'd want more sophisticated verification
     const indicators = {
       hasContent: html.length > 500,
-      hasRenderedContent: (!html.includes('Loading...') && !html.includes('__NEXT_DATA__')) || html.length > 10000,
+      hasRenderedContent: ((!html.includes('Loading...')) && (!html.includes('__NEXT_DATA__'))) || (html.length > 10000),
       // Check for CrawlReady response headers or markers
-      hasCrawlReadyMarker: response.headers.get('x-crawlready') === 'true' || html.includes('<!-- CrawlReady -->'),
+      hasCrawlReadyMarker: (response.headers.get('x-crawlready') === 'true') || html.includes('<!-- CrawlReady -->'),
       responseTime: renderTime,
       contentLength: html.length,
     };

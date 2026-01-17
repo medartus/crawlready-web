@@ -12,7 +12,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { apiKeyQueries, renderedPageQueries, renderJobQueries } from '../queries';
 import * as schema from '../schema';
 
-describe('Database Queries Integration Tests', () => {
+describe('database Queries Integration Tests', () => {
   let client: PGlite;
   let db: ReturnType<typeof drizzle>;
 
@@ -81,7 +81,7 @@ describe('Database Queries Integration Tests', () => {
     await client.close();
   });
 
-  describe('API Key Operations', () => {
+  describe('aPI Key Operations', () => {
     it('should find API keys by user ID', async () => {
       // Insert a test API key directly
       await client.exec(`
@@ -134,7 +134,7 @@ describe('Database Queries Integration Tests', () => {
     });
   });
 
-  describe('Render Job Operations', () => {
+  describe('render Job Operations', () => {
     let testApiKeyId: string;
 
     beforeAll(async () => {
@@ -215,7 +215,7 @@ describe('Database Queries Integration Tests', () => {
     });
   });
 
-  describe('Rendered Page Operations', () => {
+  describe('rendered Page Operations', () => {
     let testApiKeyId: string;
 
     beforeAll(async () => {
@@ -317,7 +317,7 @@ describe('Database Queries Integration Tests', () => {
     });
   });
 
-  describe('Real-world Workflow Tests', () => {
+  describe('real-world Workflow Tests', () => {
     it('should handle complete render workflow', async () => {
       // 1. Create API key
       const result = await client.query(`

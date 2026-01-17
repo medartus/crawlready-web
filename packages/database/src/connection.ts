@@ -5,6 +5,8 @@
  * Suitable for both web app (production) and worker.
  */
 
+import process from 'node:process';
+
 import { logger } from '@crawlready/logger';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Client } from 'pg';
@@ -17,7 +19,7 @@ let drizzleDb: ReturnType<typeof drizzle> | null = null;
 /**
  * Create and return database connection
  */
-export async function createConnection(connectionString: string) {
+export async function createConnection(connectionString: string): Promise<ReturnType<typeof drizzle>> {
   if (drizzleDb) {
     return drizzleDb;
   }
@@ -34,7 +36,7 @@ export async function createConnection(connectionString: string) {
 /**
  * Get database instance (must be initialized first via createConnection)
  */
-export function getDb() {
+export function getDb(): ReturnType<typeof drizzle> {
   if (!drizzleDb) {
     throw new Error('Database not initialized. Call createConnection() first.');
   }

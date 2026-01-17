@@ -9,7 +9,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 import { cache, getCacheKey, normalizeUrl } from '../index';
 
-describe('Cache Integration Tests', () => {
+describe('cache Integration Tests', () => {
   const testHtml = '<html><body><h1>Test Page</h1></body></html>';
   const testUrl = 'https://example.com/test-page?utm_source=test';
 
@@ -20,7 +20,7 @@ describe('Cache Integration Tests', () => {
     await cache.del(cacheKey);
   });
 
-  describe('URL Normalization and Caching Flow', () => {
+  describe('uRL Normalization and Caching Flow', () => {
     it('should normalize URLs consistently and cache content', async () => {
       // Test URL normalization
       const url1 = 'https://example.com/page?b=2&a=1';
@@ -95,7 +95,7 @@ describe('Cache Integration Tests', () => {
     });
   });
 
-  describe('Real-world Cache Scenarios', () => {
+  describe('real-world Cache Scenarios', () => {
     it('should handle cache miss gracefully', async () => {
       const nonExistentUrl = 'https://never-cached.example.com/page';
       const normalizedUrl = normalizeUrl(nonExistentUrl);

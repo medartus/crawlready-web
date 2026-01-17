@@ -75,10 +75,16 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
           </button>
           {showMenu && (
             <>
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={0}
                 className="fixed inset-0 z-10 cursor-default"
                 onClick={() => setShowMenu(false)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setShowMenu(false);
+                  }
+                }}
                 aria-label="Close menu"
               />
               <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
@@ -93,10 +99,7 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
                   type="button"
                   onClick={() => {
                     setShowMenu(false);
-                    // eslint-disable-next-line no-alert
-                    if (window.confirm('Are you sure you want to delete this site?')) {
-                      onDelete(site.id);
-                    }
+                    onDelete(site.id);
                   }}
                   className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700"
                 >
