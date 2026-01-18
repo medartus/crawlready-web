@@ -1,6 +1,5 @@
 'use client';
 
-import { useOrganization } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -24,7 +23,6 @@ function extractDomain(url: string): string {
 
 export default function AddSitePage() {
   const router = useRouter();
-  const { organization } = useOrganization();
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -49,31 +47,12 @@ export default function AddSitePage() {
       const domain = extractDomain(url);
       const fullUrl = url.startsWith('http') ? url : `https://${url}`;
 
-      const response = await fetch('/api/onboarding/analyze-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: fullUrl,
-          domain,
-          orgId: organization?.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to analyze URL');
-      }
-
-      const data = await response.json();
-
-      // Store analysis result in sessionStorage for the next step
-      sessionStorage.setItem('onboarding_analysis', JSON.stringify(data));
+      // Store URL in sessionStorage for the next step
       sessionStorage.setItem('onboarding_url', fullUrl);
       sessionStorage.setItem('onboarding_domain', domain);
 
-      router.push('/onboarding/analyze');
+      // Go directly to crawl step (skip analysis)
+      router.push('/onboarding/crawl');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -101,7 +80,7 @@ export default function AddSitePage() {
         </div>
         <h2 className="text-2xl font-semibold text-gray-900">Add Your Website</h2>
         <p className="mt-2 text-gray-600">
-          Enter your website URL to see how AI crawlers view your content
+          Enter your website URL to get started with AI crawler optimization
         </p>
       </div>
 
@@ -157,18 +136,18 @@ export default function AddSitePage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Analyzing...
+                  Loading...
                 </span>
               )
             : (
-                'Analyze Site'
+                'Continue'
               )}
         </button>
       </form>
 
       <div className="mt-8 border-t border-gray-200 pt-6">
         <p className="text-center text-sm text-gray-500">
-          We'll check how your site appears to AI crawlers like ChatGPT, Claude, and Perplexity.
+          Next, we&apos;ll help you pre-cache pages for instant AI crawler responses.
         </p>
       </div>
     </div>

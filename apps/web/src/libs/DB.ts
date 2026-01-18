@@ -125,3 +125,6 @@ if (pool) {
 }
 
 export const db = drizzle! as ReturnType<typeof drizzlePg<typeof schema>>;
+
+// Re-export schema for convenience
+export { schema } from '@crawlready/database';

@@ -1,8 +1,8 @@
 'use client';
 
-import { Activity, AlertTriangle, ArrowRight, CheckCircle2, Globe, RefreshCw, TrendingUp, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, ArrowRight, CheckCircle2, Globe, Key, RefreshCw, TrendingUp, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { buttonVariants } from '@/components/ui/buttonVariants';
 import { TitleBar } from '@/features/dashboard/TitleBar';
@@ -40,6 +40,11 @@ type OverviewData = {
     isConnected: boolean;
     lastCheck: string | null;
     rendersThisWeek: number;
+  };
+  apiKey?: {
+    prefix: string;
+    suffix: string;
+    lastUsed: string | null;
   };
 };
 
@@ -189,10 +194,82 @@ function ActivityItem({ item }: { item: OverviewData['recentActivity'][0] }) {
   );
 }
 
+function ApiKeyCard({
+  apiKey,
+  onCreateKey,
+  isCreating,
+}: {
+  apiKey?: OverviewData['apiKey'];
+  onCreateKey: () => void;
+  isCreating: boolean;
+}) {
+  if (apiKey) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900 dark:text-white">API Key</h3>
+          <Key className="size-5 text-gray-400" />
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 rounded-lg bg-gray-50 p-3 font-mono text-sm dark:bg-gray-900">
+            <span className="text-gray-600 dark:text-gray-400">
+              {apiKey.prefix}
+              ...
+            </span>
+            <span className="text-gray-900 dark:text-white">{apiKey.suffix}</span>
+          </div>
+          {apiKey.lastUsed && (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Last used:
+              {' '}
+              {new Date(apiKey.lastUsed).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+        <Link
+          href="/dashboard/api-keys"
+          className={`${buttonVariants({ variant: 'outline', size: 'sm' })} mt-4 w-full`}
+        >
+          Manage API Keys
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="font-semibold text-gray-900 dark:text-white">API Key</h3>
+        <Key className="size-5 text-gray-400" />
+      </div>
+      <div className="space-y-3">
+        <div className="rounded-lg border-2 border-dashed border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+            No API key yet
+          </p>
+          <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+            Create an API key to start serving pre-rendered pages to AI crawlers.
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onCreateKey}
+        disabled={isCreating}
+        className={`${buttonVariants({ variant: 'default', size: 'sm' })} mt-4 w-full`}
+      >
+        {isCreating ? 'Creating...' : 'Create API Key'}
+      </button>
+    </div>
+  );
+}
+
 export default function DashboardOverviewPage() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCreatingKey, setIsCreatingKey] = useState(false);
+  const [newApiKey, setNewApiKey] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
@@ -273,6 +350,28 @@ export default function DashboardOverviewPage() {
     }
   };
 
+  const handleCreateApiKey = useCallback(async () => {
+    setIsCreatingKey(true);
+    try {
+      const response = await fetch('/api/admin/generate-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: 'free' }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setNewApiKey(result.key);
+        // Refresh data to show new key
+        fetchData();
+      }
+    } catch {
+      // Handle error
+    } finally {
+      setIsCreatingKey(false);
+    }
+  }, []);
+
   if (isLoading) {
     return (
       <>
@@ -325,10 +424,48 @@ export default function DashboardOverviewPage() {
           </div>
         )}
 
+        {/* New API Key Modal */}
+        {newApiKey && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
+                  <CheckCircle2 className="size-5 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">API Key Created!</h3>
+              </div>
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                Save this key now - you won&apos;t be able to see it again.
+              </p>
+              <div className="mb-4 overflow-x-auto rounded-lg bg-gray-900 p-3">
+                <code className="whitespace-nowrap font-mono text-sm text-green-400">{newApiKey}</code>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(newApiKey);
+                  }}
+                  className={buttonVariants({ variant: 'outline', size: 'sm' })}
+                >
+                  Copy to Clipboard
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewApiKey(null)}
+                  className={buttonVariants({ variant: 'default', size: 'sm' })}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main Content Grid */}
         {!hasNoSites && (
           <>
-            <div className="grid gap-6 lg:grid-cols-3">
+            <div className="grid gap-6 lg:grid-cols-4">
               {/* Health Score */}
               <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <div className="mb-4 flex items-center justify-between">
@@ -387,6 +524,13 @@ export default function DashboardOverviewPage() {
                   Test Integration
                 </Link>
               </div>
+
+              {/* API Key */}
+              <ApiKeyCard
+                apiKey={data?.apiKey}
+                onCreateKey={handleCreateApiKey}
+                isCreating={isCreatingKey}
+              />
 
               {/* Recent Activity */}
               <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">

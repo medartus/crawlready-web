@@ -4,23 +4,19 @@ import { usePathname } from 'next/navigation';
 
 const steps = [
   { id: 'add-site', label: 'Add Site', number: 1 },
-  { id: 'analyze', label: 'Analyze', number: 2 },
+  { id: 'crawl', label: 'Pre-Cache', number: 2 },
   { id: 'integrate', label: 'Integrate', number: 3 },
-  { id: 'verify', label: 'Verify', number: 4 },
 ];
 
 function getCurrentStep(pathname: string): number {
   if (pathname.includes('/add-site')) {
     return 1;
   }
-  if (pathname.includes('/analyze')) {
+  if (pathname.includes('/crawl')) {
     return 2;
   }
   if (pathname.includes('/integrate')) {
     return 3;
-  }
-  if (pathname.includes('/verify')) {
-    return 4;
   }
   return 0;
 }
@@ -94,7 +90,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
           </h1>
           <p className="mt-2 text-gray-600">
             {currentStep > 0
-              ? 'Follow these steps to make your site visible to AI crawlers'
+              ? 'Pre-cache your pages for instant AI crawler responses'
               : 'Get started with your organization'}
           </p>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ArrowLeft, CheckCircle2, Clock, Copy, Globe, Key, RefreshCw, Settings, Trash2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clock, Copy, FileCode, Globe, Key, Plus, RefreshCw, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -50,6 +50,15 @@ type SiteData = {
   }>;
 };
 
+type CachedPage = {
+  id: string;
+  normalizedUrl: string;
+  htmlSizeBytes: number;
+  lastAccessedAt: string;
+  accessCount: number;
+  inRedis: boolean;
+};
+
 const statusConfig = {
   pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-100', label: 'Pending Verification' },
   active: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-100', label: 'Active' },
@@ -67,6 +76,8 @@ export default function SiteDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [cachedPages, setCachedPages] = useState<CachedPage[]>([]);
+  const [isFetchingPages, setIsFetchingPages] = useState(false);
 
   useEffect(() => {
     const fetchSite = async () => {
@@ -89,6 +100,30 @@ export default function SiteDetailPage() {
 
     fetchSite();
   }, [siteId]);
+
+  // Fetch cached pages for this site
+  useEffect(() => {
+    if (!data?.site?.domain) {
+      return;
+    }
+
+    const fetchCachedPages = async () => {
+      setIsFetchingPages(true);
+      try {
+        const response = await fetch(`/api/user/sites/${siteId}/cached-pages`);
+        if (response.ok) {
+          const result = await response.json();
+          setCachedPages(result.pages || []);
+        }
+      } catch {
+        // Silently fail - cached pages are optional
+      } finally {
+        setIsFetchingPages(false);
+      }
+    };
+
+    fetchCachedPages();
+  }, [siteId, data?.site?.domain]);
 
   const handleCopyApiKey = async () => {
     if (!data?.apiKey) {
@@ -283,6 +318,85 @@ export default function SiteDetailPage() {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Cached Pages */}
+          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileCode className="size-5 text-gray-400" />
+                <h3 className="font-semibold text-gray-900 dark:text-white">Cached Pages</h3>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                  {cachedPages.length}
+                </span>
+              </div>
+              <Link
+                href={`/onboarding/crawl?siteId=${site.id}`}
+                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+              >
+                <Plus className="size-4" />
+                Add Pages
+              </Link>
+            </div>
+            {isFetchingPages
+              ? (
+                  <div className="flex items-center justify-center py-8">
+                    <RefreshCw className="size-5 animate-spin text-gray-400" />
+                  </div>
+                )
+              : cachedPages.length > 0
+                ? (
+                    <div className="space-y-2">
+                      {cachedPages.slice(0, 5).map(page => (
+                        <div
+                          key={page.id}
+                          className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-900"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm text-gray-700 dark:text-gray-300">
+                              {page.normalizedUrl.replace(/^https?:\/\//, '')}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {Math.round(page.htmlSizeBytes / 1024)}
+                              KB
+                              {page.inRedis && (
+                                <span className="ml-2 text-green-600">Hot</span>
+                              )}
+                            </p>
+                          </div>
+                          <span className="ml-2 whitespace-nowrap text-xs text-gray-400">
+                            {page.accessCount}
+                            {' '}
+                            hits
+                          </span>
+                        </div>
+                      ))}
+                      {cachedPages.length > 5 && (
+                        <Link
+                          href={`/dashboard/pages?siteId=${site.id}`}
+                          className="block text-center text-sm text-blue-600 hover:text-blue-700"
+                        >
+                          View all
+                          {' '}
+                          {cachedPages.length}
+                          {' '}
+                          pages
+                        </Link>
+                      )}
+                    </div>
+                  )
+                : (
+                    <div className="rounded-lg border-2 border-dashed border-gray-200 py-8 text-center dark:border-gray-700">
+                      <FileCode className="mx-auto mb-2 size-8 text-gray-300 dark:text-gray-600" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No cached pages yet</p>
+                      <Link
+                        href={`/onboarding/crawl?siteId=${site.id}`}
+                        className={`${buttonVariants({ variant: 'outline', size: 'sm' })} mt-3`}
+                      >
+                        Pre-Cache Pages
+                      </Link>
+                    </div>
+                  )}
           </div>
         </div>
 
