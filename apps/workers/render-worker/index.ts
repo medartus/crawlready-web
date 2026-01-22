@@ -1,23 +1,32 @@
-import { cache, getCacheKey, getStorageKey } from '@crawlready/cache';
+import { cacheMetadata, getMetadataCacheKey, getStorageKey } from '@crawlready/cache';
 import { cacheAccessQueries, createConnection, renderedPageQueries, renderJobQueries } from '@crawlready/database';
 import { createLogger } from '@crawlready/logger';
 import { REDIS_CONNECTION } from '@crawlready/queue';
 import { validateUrlSecurity } from '@crawlready/security';
-import { isStorageConfigured, uploadRenderedPage } from '@crawlready/storage';
+import { getPublicUrlFromNormalizedUrl, isStorageConfigured, uploadRenderedPage } from '@crawlready/storage';
 import type { RenderJobData } from '@crawlready/types';
 import { detectCrawler } from '@crawlready/types';
 import type { Job } from 'bullmq';
 import { Worker } from 'bullmq';
 
 import { optimizeHtml } from './html-optimizer';
+import { startHttpServer } from './http-server';
 import { renderPage } from './renderer';
 
 const logger = createLogger({ service: 'render-worker' });
 
+// Start HTTP server for synchronous renders (on-the-fly rendering)
+const HTTP_PORT = Number.parseInt(process.env.HTTP_PORT || '3001');
+startHttpServer(HTTP_PORT);
+
 /**
  * CrawlReady Render Worker
  *
- * BullMQ worker that processes render jobs from the queue
+ * CDN-First Architecture:
+ * - Renders pages with Puppeteer
+ * - Uploads optimized HTML to Supabase Storage (public bucket)
+ * - Updates Redis with metadata only (not HTML content)
+ * - HTML served directly from CDN, not Redis
  */
 
 // Initialize database connection
@@ -41,6 +50,10 @@ const worker = new Worker<RenderJobData>(
     const crawlerType = job.data.crawlerType || crawlerInfo.type;
 
     logger.info({ jobId, url, crawlerName, crawlerType }, 'Processing render job');
+
+    // Generate keys for storage and cache
+    const storageKey = await getStorageKey(normalizedUrl);
+    const metadataKey = getMetadataCacheKey(normalizedUrl);
 
     try {
       // 1. Update job status to processing
@@ -73,36 +86,36 @@ const worker = new Worker<RenderJobData>(
 
       logger.info({ rawSize, optimizedSize: htmlSizeBytes }, 'HTML optimized');
 
-      // 5. Store in Redis (hot cache)
-      const cacheKey = getCacheKey(normalizedUrl);
-      await cache.set(cacheKey, optimizedHtml);
-      logger.debug({ cacheKey }, 'Stored in Redis cache');
-
-      // 6. Store in Supabase Storage (cold storage)
-      const storageKey = await getStorageKey(normalizedUrl);
-      if (isStorageConfigured()) {
-        const uploadResult = await uploadRenderedPage(storageKey, optimizedHtml);
-        if (uploadResult.success) {
-          logger.info({ storageKey }, 'Stored in Supabase cold storage');
-        } else {
-          logger.warn({ storageKey, error: uploadResult.error }, 'Failed to store in cold storage');
-        }
-      } else {
-        logger.debug('Cold storage not configured, skipping Supabase upload');
+      // 5. Store in Supabase Storage (public bucket for CDN access)
+      if (!isStorageConfigured()) {
+        throw new Error('Storage not configured. Set SUPABASE_URL, SUPABASE_SERVICE_KEY, and SUPABASE_STORAGE_BUCKET.');
       }
 
-      // 7. Update or create rendered_pages metadata
+      const uploadResult = await uploadRenderedPage(storageKey, optimizedHtml);
+      if (!uploadResult.success) {
+        throw new Error(`Failed to upload to storage: ${uploadResult.error}`);
+      }
+      logger.info({ storageKey }, 'Stored in Supabase CDN storage');
+
+      // 6. Generate public CDN URL
+      const publicUrl = getPublicUrlFromNormalizedUrl(normalizedUrl);
+
+      // 7. Update Redis with metadata only (not HTML)
+      await cacheMetadata.setReady(metadataKey, publicUrl, storageKey, htmlSizeBytes);
+      logger.debug({ metadataKey, publicUrl }, 'Updated cache metadata');
+
+      // 8. Update or create rendered_pages metadata in database
       await renderedPageQueries.upsert(db, {
         normalizedUrl,
         storageKey,
         htmlSizeBytes,
         apiKeyId,
         firstRenderedAt: new Date(),
-        inRedis: true,
+        inRedis: true, // Metadata is in Redis
         accessCount: 0,
       });
 
-      // 8. Update job status to completed
+      // 9. Update job status to completed
       const renderDurationMs = Date.now() - startTime;
       await renderJobQueries.updateStatus(db, jobId, 'completed', {
         completedAt: new Date(),
@@ -110,7 +123,7 @@ const worker = new Worker<RenderJobData>(
         htmlSizeBytes,
       });
 
-      // 9. Log cache access with crawler attribution
+      // 10. Log cache access with crawler attribution
       try {
         await cacheAccessQueries.create(db, {
           apiKeyId,
@@ -128,19 +141,22 @@ const worker = new Worker<RenderJobData>(
         logger.warn({ error: logError instanceof Error ? logError.message : 'Unknown' }, 'Failed to log cache access');
       }
 
-      logger.info({ jobId, renderDurationMs, htmlSizeBytes, crawlerName }, 'Job completed successfully');
+      logger.info({ jobId, renderDurationMs, htmlSizeBytes, crawlerName, publicUrl }, 'Job completed successfully');
 
       return {
         success: true,
         htmlSizeBytes,
         renderDurationMs,
-        cacheKey,
+        publicUrl,
         crawlerName,
         crawlerType,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error({ jobId, error: errorMessage }, 'Job failed');
+
+      // Update cache metadata to failed state
+      await cacheMetadata.setFailed(metadataKey, errorMessage);
 
       await renderJobQueries.updateStatus(db, jobId, 'failed', {
         completedAt: new Date(),
@@ -189,6 +205,7 @@ process.on('SIGINT', async () => {
 logger.info(
   {
     concurrency: process.env.WORKER_CONCURRENCY || '5',
+    httpPort: HTTP_PORT,
   },
-  'CrawlReady render worker started',
+  'CrawlReady render worker started (BullMQ + HTTP server)',
 );

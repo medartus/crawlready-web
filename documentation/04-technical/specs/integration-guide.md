@@ -54,11 +54,193 @@ The wizard automatically:
 
 ---
 
-## 3. Manual Integration
+## 3. Simplified API Integration (Recommended)
+
+The **on-the-fly rendering** API is the simplest way to integrate CrawlReady. Your middleware makes a single API call, and CrawlReady returns the rendered HTML directly.
+
+### 3.1 How It Works
+
+```
+Customer Middleware:
+  1. Detect AI bot (GPTBot, ClaudeBot, etc.)
+  2. POST /api/render { url }
+  3. Return HTML from response
+
+CrawlReady handles:
+  - Check CDN cache (fast path)
+  - Render on-the-fly if not cached (slow path)
+  - Store in CDN for next time
+  - Return HTML directly
+```
+
+**Benefits:**
+- ✅ Single API call - no CDN hash computation
+- ✅ First AI bot visit gets rendered HTML (not unrendered JS)
+- ✅ ~20 lines of middleware code
+- ✅ Automatic caching for subsequent requests
+
+### 3.2 Next.js Middleware (Recommended)
+
+```typescript
+// middleware.ts
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+const CRAWLREADY_API_KEY = process.env.CRAWLREADY_API_KEY;
+const CRAWLREADY_API = 'https://api.crawlready.com';
+
+const AI_BOT_PATTERNS = [
+  /GPTBot/i,
+  /ChatGPT-User/i,
+  /ClaudeBot/i,
+  /PerplexityBot/i,
+  /Google-Extended/i,
+];
+
+export async function middleware(req: NextRequest) {
+  const userAgent = req.headers.get('user-agent') || '';
+
+  // Only intercept AI bots
+  if (!AI_BOT_PATTERNS.some(p => p.test(userAgent))) {
+    return NextResponse.next();
+  }
+
+  const pageUrl = req.nextUrl.toString();
+
+  try {
+    // Single API call - CrawlReady handles everything
+    const response = await fetch(`${CRAWLREADY_API}/api/render`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CRAWLREADY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ url: pageUrl }),
+      signal: AbortSignal.timeout(35000)  // 35s to allow 30s render + network
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return new NextResponse(data.html, {
+        headers: {
+          'Content-Type': 'text/html',
+          'X-Rendered-By': 'CrawlReady',
+          'X-Cache': data.source  // 'cdn' or 'rendered'
+        }
+      });
+    }
+
+    // 202 = rendering in progress, retry or fallback
+    if (response.status === 202) {
+      return NextResponse.next();
+    }
+  } catch (error) {
+    // Timeout or network error - fallback to origin
+    console.error('CrawlReady error:', error);
+  }
+
+  // Fallback: serve original page
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ['/((?!api|_next|static|favicon.ico).*)'],
+};
+```
+
+### 3.3 Express.js Middleware
+
+```typescript
+import express from 'express';
+
+const AI_BOT_PATTERNS = [/GPTBot/i, /ClaudeBot/i, /PerplexityBot/i];
+
+export function crawlReadyMiddleware(req, res, next) {
+  const userAgent = req.headers['user-agent'] || '';
+
+  if (!AI_BOT_PATTERNS.some(p => p.test(userAgent))) {
+    return next();
+  }
+
+  const pageUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+
+  fetch('https://api.crawlready.com/api/render', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.CRAWLREADY_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ url: pageUrl }),
+    signal: AbortSignal.timeout(35000)
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.html) {
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('X-Rendered-By', 'CrawlReady');
+        res.send(data.html);
+      } else {
+        next();
+      }
+    })
+    .catch(() => next());
+}
+```
+
+### 3.4 API Response Format
+
+**Success (200)** - Returns rendered HTML:
+```json
+{
+  "html": "<!DOCTYPE html>...",
+  "source": "cdn",           // or "rendered" if freshly rendered
+  "publicUrl": "https://...",
+  "renderDurationMs": 0,     // 0 if from cache
+  "sizeBytes": 85432
+}
+```
+
+**Rendering In Progress (202)** - Another request is rendering:
+```json
+{
+  "status": "rendering",
+  "message": "Page is being rendered. Retry in a few seconds.",
+  "retryAfter": 5
+}
+```
+
+**Timeout (504)** - Render took too long:
+```json
+{
+  "error": "Render timeout",
+  "message": "Page took too long to render. Pass through to origin."
+}
+```
+
+### 3.5 Request Options
+
+```typescript
+// Full request body schema
+{
+  "url": "https://example.com/page",    // Required: URL to render
+  "timeout": 30000,                      // Optional: max render time (5s-60s, default 30s)
+  "waitForSelector": ".content"          // Optional: wait for element
+}
+```
+
+---
+
+## 4. CDN-First Integration (Advanced)
+
+For advanced users who want to minimize API calls, you can try the CDN directly first. See Section 5.1 below for the CDN-first pattern.
+
+---
+
+## 5. Manual Integration (Legacy)
 
 For advanced users or custom implementations, follow the steps below.
 
-### 3.1 Get Your API Key
+### 5.1 Get Your API Key
 
 **Option A: Via Dashboard (Recommended)**
 1. Go to [dashboard.crawlready.com](https://dashboard.crawlready.com)
@@ -95,28 +277,33 @@ curl -X POST https://api.crawlready.com/api/render \
   }'
 ```
 
-**Expected Response** (first request):
+**Expected Response** (cached - 200):
 ```json
 {
-  "status": "queued",
-  "jobId": "01HQTX5K3G7YZ8VWXR9NQM2PF4",
-  "statusUrl": "/api/status/01HQTX5K3G7YZ8VWXR9NQM2PF4",
-  "estimatedTime": 5000
+  "cached": true,
+  "publicUrl": "https://yourproject.supabase.co/storage/v1/object/public/rendered-pages/a1b2c3d4e5f6g7h8.html",
+  "renderedAt": "2026-01-18T12:00:00Z",
+  "sizeBytes": 45000
 }
 ```
 
-Wait 5-10 seconds, then make the same request again.
-
-**Expected Response** (cached):
-```html
-<!DOCTYPE html>
-<html>
-  <head>...</head>
-  <body>Your pre-rendered content</body>
-</html>
+**Expected Response** (rendering in progress - 202):
+```json
+{
+  "cached": false,
+  "status": "rendering",
+  "message": "Page is currently being rendered. Try again shortly."
+}
 ```
 
-✅ If you see HTML, integration is working!
+**Expected Response** (not cached - 204):
+```
+(empty body with status 204)
+X-Cache: MISS
+X-Cache-Status: not-cached
+```
+
+✅ If you get a 200 with `publicUrl`, the page is cached and ready to serve!
 
 ---
 
@@ -194,15 +381,22 @@ curl -H "User-Agent: Mozilla/5.0 (compatible; GPTBot/1.0)" \
 
 ## 5. Framework Integration
 
-### 5.1 Next.js (App Router)
+### 5.1 Next.js (App Router) - CDN-First Fail-Safe Pattern
 
-#### Implementation: Middleware
+#### Recommended: CDN-First Middleware
+
+This pattern provides **fail-safe** operation: if CrawlReady is down, your site continues working.
 
 **File**: `middleware.ts` (project root)
 
 ```typescript
+import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+
+// Configuration - get from CrawlReady dashboard
+const SUPABASE_PROJECT_ID = process.env.CRAWLREADY_SUPABASE_PROJECT_ID; // e.g., 'abcdefgh'
+const CRAWLREADY_API_KEY = process.env.CRAWLREADY_API_KEY;
 
 const AI_BOT_PATTERNS = [
   /GPTBot/i,
@@ -216,61 +410,107 @@ function isAIBot(userAgent: string): boolean {
   return AI_BOT_PATTERNS.some(pattern => pattern.test(userAgent));
 }
 
+/**
+ * Normalize URL for consistent cache key generation
+ * Must match CrawlReady's normalization exactly
+ */
+function normalizeUrl(url: string): string {
+  const parsed = new URL(url);
+  parsed.protocol = 'https:';
+  parsed.hostname = parsed.hostname.toLowerCase();
+
+  // Remove trailing slashes
+  if (parsed.pathname.endsWith('/') && parsed.pathname.length > 1) {
+    parsed.pathname = parsed.pathname.slice(0, -1);
+  }
+
+  // Strip tracking params
+  const trackingParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
+                          'utm_term', 'fbclid', 'gclid', 'msclkid', '_ga'];
+  trackingParams.forEach(p => parsed.searchParams.delete(p));
+  parsed.searchParams.sort();
+  parsed.hash = '';
+
+  let result = parsed.toString();
+  if (result.endsWith('/') && !result.endsWith('://')) {
+    result = result.slice(0, -1);
+  }
+  return result;
+}
+
+/**
+ * Generate deterministic CDN URL from page URL
+ * Same hash = same CDN URL = direct cache access
+ */
+function getCdnUrl(pageUrl: string): string {
+  const normalized = normalizeUrl(pageUrl);
+  const hash = crypto.createHash('sha256').update(normalized).digest('hex').slice(0, 16);
+  return `https://${SUPABASE_PROJECT_ID}.supabase.co/storage/v1/object/public/rendered-pages/${hash}.html`;
+}
+
 export async function middleware(req: NextRequest) {
   const userAgent = req.headers.get('user-agent') || '';
-  
+
   // Only intercept AI bot traffic
   if (!isAIBot(userAgent)) {
     return NextResponse.next();
   }
-  
-  console.log(`[CrawlReady] AI bot detected: ${userAgent}`);
-  
-  const url = req.nextUrl.toString();
-  
+
+  const pageUrl = req.nextUrl.toString();
+  const cdnUrl = getCdnUrl(pageUrl);
+
   try {
-    // Request pre-rendered HTML from CrawlReady
-    const response = await fetch('https://api.crawlready.com/api/render', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.CRAWLREADY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ url }),
+    // Try CDN directly (500ms timeout - fail fast)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 500);
+
+    const response = await fetch(cdnUrl, {
+      signal: controller.signal,
     });
-    
-    const contentType = response.headers.get('content-type');
-    
-    // If cached HTML (200), serve to bot
-    if (response.ok && contentType?.includes('text/html')) {
+
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      // Cache HIT - serve directly from CDN
       const html = await response.text();
-      
+
       return new NextResponse(html, {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'X-Served-By': 'CrawlReady',
-          'X-Cache': response.headers.get('X-Cache') || 'UNKNOWN',
+          'X-Cache': 'HIT',
         },
       });
     }
-    
-    // If 202 (queued), let request through to origin
-    // Bot will see normal page, but next request will be cached
-    if (response.status === 202) {
-      console.log('[CrawlReady] Render queued, serving origin');
-      return NextResponse.next();
-    }
-    
-    // If error, fall back to origin
-    console.error('[CrawlReady] Error:', response.status, await response.text());
-    return NextResponse.next();
-    
-  } catch (error) {
-    console.error('[CrawlReady] Request failed:', error);
-    // Always fall back to origin on error
-    return NextResponse.next();
+  } catch {
+    // CDN miss or timeout - continue to origin
   }
+
+  // Cache MISS - pass through to origin immediately
+  // Fire-and-forget: trigger background render for next time
+  triggerRenderAsync(pageUrl);
+
+  return NextResponse.next();
+}
+
+/**
+ * Fire-and-forget render request
+ * Don't await - we don't want to block the response
+ */
+function triggerRenderAsync(url: string): void {
+  if (!CRAWLREADY_API_KEY) return;
+
+  fetch('https://api.crawlready.com/api/render-async', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${CRAWLREADY_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ url }),
+  }).catch(() => {
+    // Silently fail - origin serves the request anyway
+  });
 }
 
 // Configure which routes to intercept

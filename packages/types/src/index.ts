@@ -9,6 +9,9 @@ export * from './database';
 // API types
 export * from './api';
 
+// Cache types (CDN-first architecture)
+export * from './cache';
+
 // Render job types
 export * from './render-job';
 

@@ -1,24 +1,51 @@
 /**
  * POST /api/render
  *
- * Core endpoint for pre-rendering pages.
- * Returns cached HTML (200) or queues job (202).
+ * On-the-Fly Rendering Endpoint
+ *
+ * Simplified API that ALWAYS returns HTML for AI bots:
+ * - 200: Returns HTML (from cache or freshly rendered)
+ * - 202: Page is being rendered by another request (retry)
+ * - 504: Render timeout
+ *
+ * Customer middleware is now trivial:
+ *   1. Detect AI bot
+ *   2. POST /api/render { url }
+ *   3. Return HTML from response
+ *
+ * CrawlReady handles:
+ *   - Cache checking (Redis metadata + CDN storage)
+ *   - On-the-fly rendering if not cached
+ *   - Storing rendered HTML in CDN
+ *   - Returning HTML directly
+ *
  * Supports dual authentication: API key OR Clerk session.
  */
 
-import { cache, getCacheKey, normalizeUrl } from '@crawlready/cache';
-import { apiKeyQueries, cacheAccessQueries, renderJobQueries } from '@crawlready/database';
-import { getRenderQueue } from '@crawlready/queue';
+import { cacheMetadata, getMetadataCacheKey, lock, normalizeUrl } from '@crawlready/cache';
+import { apiKeyQueries, cacheAccessQueries, renderedPageQueries } from '@crawlready/database';
 import { SSRFError, validateUrlSecurity } from '@crawlready/security';
-import { downloadRenderedPage, getStorageKey, isStorageConfigured } from '@crawlready/storage';
+import {
+  downloadRenderedPage,
+  getPublicUrlFromNormalizedUrl,
+  getStorageKey,
+  isStorageConfigured,
+  uploadRenderedPage,
+} from '@crawlready/storage';
+import type { OnTheFlyRenderResponse, RenderingInProgressResponse, RenderTimeoutResponse } from '@crawlready/types';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { withErrorHandler } from '@/libs/api-error-handler';
-import { badRequest, rateLimitExceeded, success, unauthorized, validationError } from '@/libs/api-response-helpers';
+import { badRequest, rateLimitExceeded, unauthorized, validationError } from '@/libs/api-response-helpers';
 import { db } from '@/libs/DB';
 import { authenticateRequest } from '@/libs/dual-auth';
 import { checkRateLimit } from '@/libs/rate-limit-helper';
+import {
+  isRenderServiceConfigured,
+  RenderServiceError,
+  renderViaWorker,
+} from '@/libs/render-service';
 
 // Force dynamic rendering - this route uses request.headers for authentication
 export const dynamic = 'force-dynamic';
@@ -26,8 +53,8 @@ export const dynamic = 'force-dynamic';
 // Request body schema
 const renderRequestSchema = z.object({
   url: z.string().url(),
+  timeout: z.number().min(5000).max(60000).optional(),
   waitForSelector: z.string().optional(),
-  timeout: z.number().int().min(1000).max(60000).optional().default(30000),
 });
 
 export const POST = withErrorHandler(async (request: NextRequest): Promise<NextResponse> => {
@@ -61,9 +88,8 @@ export const POST = withErrorHandler(async (request: NextRequest): Promise<NextR
     return validationError(parseResult.error);
   }
 
-  const { url } = parseResult.data;
-  // TODO: Use these when implementing render worker
-  // const { waitForSelector, timeout } = parseResult.data;
+  const { url, timeout: requestTimeout, waitForSelector } = parseResult.data;
+  const renderTimeout = requestTimeout || 30000;
 
   // 4. SSRF protection
   try {
@@ -78,136 +104,234 @@ export const POST = withErrorHandler(async (request: NextRequest): Promise<NextR
     throw error;
   }
 
-  // 5. Normalize URL and check cache
-  const startTime = Date.now();
+  // 5. Normalize URL and generate keys
   const normalizedUrl = normalizeUrl(url);
-  const cacheKey = getCacheKey(normalizedUrl);
+  const metadataKey = getMetadataCacheKey(normalizedUrl);
+  const storageKey = getStorageKey(normalizedUrl);
+  const publicUrl = getPublicUrlFromNormalizedUrl(normalizedUrl);
+  const lockKey = `render:${normalizedUrl}`;
 
-  // Check hot cache (Redis)
-  const cachedHtml = await cache.get(cacheKey);
+  // 6. Check cache metadata (fast path)
+  const metadata = await cacheMetadata.get(metadataKey);
 
-  if (cachedHtml) {
-    const responseTime = Date.now() - startTime;
-
-    // Log cache access (async) - use apiKeyId if available
-    if (authContext.apiKeyId) {
-      cacheAccessQueries.log(db, {
-        apiKeyId: authContext.apiKeyId,
-        normalizedUrl,
-        cacheLocation: 'hot',
-        responseTimeMs: responseTime,
-      }).catch(console.error);
-    }
-
-    return new NextResponse(cachedHtml, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'X-Cache': 'HIT',
-        'X-Cache-Location': 'hot',
-        'X-Served-By': 'CrawlReady',
-        'X-Auth-Method': authContext.authMethod,
-      },
-    });
-  }
-
-  // Check cold storage (Supabase)
-  if (isStorageConfigured()) {
-    const storageKey = getStorageKey(normalizedUrl);
+  if (metadata?.status === 'ready') {
+    // Cache HIT - fetch HTML from CDN and return it
     const { html, error } = await downloadRenderedPage(storageKey);
 
     if (html) {
-      const responseTime = Date.now() - startTime;
-
-      // Promote to hot cache (async, don't block response)
-      cache.set(cacheKey, html).catch(console.error);
-
       // Log cache access (async)
-      if (authContext.apiKeyId) {
-        cacheAccessQueries.log(db, {
-          apiKeyId: authContext.apiKeyId,
-          normalizedUrl,
-          cacheLocation: 'cold',
-          responseTimeMs: responseTime,
-        }).catch(console.error);
-      }
+      logCacheAccess(authContext.apiKeyId ?? null, normalizedUrl, 'cold').catch(console.error);
 
-      return new NextResponse(html, {
+      const response: OnTheFlyRenderResponse = {
+        html,
+        source: 'cdn',
+        publicUrl: metadata.publicUrl,
+        renderDurationMs: 0,
+        sizeBytes: metadata.sizeBytes,
+      };
+
+      return NextResponse.json(response, {
         status: 200,
         headers: {
-          'Content-Type': 'text/html',
-          'X-Cache': 'COLD',
-          'X-Cache-Location': 'cold',
-          'X-Response-Time': `${responseTime}ms`,
+          'X-Cache': 'HIT',
+          'X-Cache-Source': 'cdn',
+          'X-Auth-Method': authContext.authMethod,
         },
       });
     }
 
-    // Log error if download failed (but continue to queue job)
-    if (error) {
-      console.error('[Render API] Cold storage download error:', error);
-    }
+    // CDN download failed - cache metadata out of sync, continue to render
+    console.error('CDN download failed despite ready metadata:', error);
+    await cacheMetadata.del(metadataKey);
   }
 
-  // 6. Check if job already in progress for this URL
-  const existingJob = await renderJobQueries.findInProgressByUrl(db, normalizedUrl);
+  // 7. Check if another request is already rendering
+  if (metadata?.status === 'rendering' || (await lock.isLocked(lockKey))) {
+    const response: RenderingInProgressResponse = {
+      status: 'rendering',
+      message: 'Page is being rendered. Retry in a few seconds.',
+      retryAfter: 5,
+    };
 
-  if (existingJob) {
-    // Job already queued or processing, return existing job ID
-    return success(
-      {
-        status: existingJob.status,
-        jobId: existingJob.id,
-        statusUrl: `/api/status/${existingJob.id}`,
-        estimatedTime: 5000,
-        message: 'Render job already in progress for this URL.',
+    return NextResponse.json(response, {
+      status: 202,
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Cache-Status': 'rendering',
+        'Retry-After': '5',
       },
-      202,
-    );
+    });
   }
 
-  // 7. Create new render job
-  // For Clerk users, we need to get or create an API key association
-  // For MVP, we'll require an API key ID
-  if (!authContext.apiKeyId) {
-    return badRequest('API key required for render jobs. Clerk-only users should generate an API key first.');
+  // 8. Check prerequisites
+  if (!isStorageConfigured()) {
+    return badRequest('Storage not configured on server');
   }
 
-  const job = await renderJobQueries.create(db, {
-    apiKeyId: authContext.apiKeyId,
-    url,
-    normalizedUrl,
-    status: 'queued',
-  });
+  if (!isRenderServiceConfigured()) {
+    return badRequest('Render service not configured on server');
+  }
 
-  // 8. Add to BullMQ queue
-  const renderQueue = getRenderQueue();
-  await renderQueue.add('render', {
-    jobId: job.id,
-    url,
-    normalizedUrl,
-    apiKeyId: authContext.apiKeyId,
-    waitForSelector: parseResult.data.waitForSelector,
-    timeout: parseResult.data.timeout,
-  });
+  // 9. Acquire lock and render on-the-fly
+  const lockTtl = Math.ceil(renderTimeout / 1000) + 30; // Render timeout + 30s buffer
+  const acquired = await lock.acquire(lockKey, lockTtl);
 
-  // Log cache miss (async)
-  cacheAccessQueries.log(db, {
-    apiKeyId: authContext.apiKeyId,
-    normalizedUrl,
-    cacheLocation: 'none',
-    responseTimeMs: Date.now() - startTime,
-  }).catch(console.error);
+  if (!acquired) {
+    // Race condition - another request got the lock
+    const response: RenderingInProgressResponse = {
+      status: 'rendering',
+      message: 'Page is being rendered. Retry in a few seconds.',
+      retryAfter: 5,
+    };
 
-  // Return job details with 202 Accepted
-  return success(
-    {
-      status: 'queued',
-      jobId: job.id,
-      statusUrl: `/api/status/${job.id}`,
-      estimatedTime: 5000,
-      message: 'Page is being rendered. Poll statusUrl for completion.',
-    },
-    202,
-  );
+    return NextResponse.json(response, {
+      status: 202,
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Cache-Status': 'rendering',
+        'Retry-After': '5',
+      },
+    });
+  }
+
+  try {
+    // Set metadata to rendering state
+    await cacheMetadata.setRendering(metadataKey, storageKey, publicUrl);
+
+    // 10. Call Fly.io worker to render
+    const renderResult = await renderViaWorker(url, {
+      waitForSelector,
+      timeout: renderTimeout,
+    });
+
+    // 11. Upload to Supabase Storage (CDN)
+    const uploadResult = await uploadRenderedPage(storageKey, renderResult.html);
+
+    if (!uploadResult.success) {
+      console.error('Failed to upload to CDN:', uploadResult.error);
+      // Continue anyway - we have the HTML, we can return it
+    }
+
+    // 12. Update cache metadata to ready
+    await cacheMetadata.setReady(metadataKey, publicUrl, storageKey, renderResult.sizeBytes);
+
+    // 13. Update database (async)
+    updateDatabase(
+      authContext.apiKeyId ?? null,
+      normalizedUrl,
+      storageKey,
+      renderResult.sizeBytes,
+    ).catch(console.error);
+
+    // Log cache access (async)
+    logCacheAccess(authContext.apiKeyId ?? null, normalizedUrl, 'none').catch(console.error);
+
+    // 14. Return rendered HTML
+    const response: OnTheFlyRenderResponse = {
+      html: renderResult.html,
+      source: 'rendered',
+      publicUrl,
+      renderDurationMs: renderResult.renderDurationMs,
+      sizeBytes: renderResult.sizeBytes,
+    };
+
+    return NextResponse.json(response, {
+      status: 200,
+      headers: {
+        'X-Cache': 'MISS',
+        'X-Cache-Source': 'rendered',
+        'X-Render-Duration': renderResult.renderDurationMs.toString(),
+        'X-Auth-Method': authContext.authMethod,
+      },
+    });
+  } catch (error) {
+    // Handle render errors
+    if (error instanceof RenderServiceError) {
+      // Update metadata to failed
+      await cacheMetadata.setFailed(metadataKey, error.message);
+
+      if (error.type === 'timeout') {
+        const response: RenderTimeoutResponse = {
+          error: 'Render timeout',
+          message: 'Page took too long to render. Pass through to origin.',
+        };
+
+        return NextResponse.json(response, {
+          status: 504,
+          headers: { 'X-Cache': 'MISS', 'X-Error': 'timeout' },
+        });
+      }
+
+      if (error.type === 'busy') {
+        const response: RenderingInProgressResponse = {
+          status: 'rendering',
+          message: error.message,
+          retryAfter: error.retryAfter || 5,
+        };
+
+        return NextResponse.json(response, {
+          status: 202,
+          headers: {
+            'X-Cache': 'MISS',
+            'Retry-After': (error.retryAfter || 5).toString(),
+          },
+        });
+      }
+
+      return badRequest(error.message);
+    }
+
+    // Update metadata to failed
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    await cacheMetadata.setFailed(metadataKey, errorMessage);
+
+    throw error;
+  } finally {
+    // Always release lock
+    await lock.release(lockKey);
+  }
 });
+
+/**
+ * Log cache access for analytics
+ */
+async function logCacheAccess(
+  apiKeyId: string | null,
+  normalizedUrl: string,
+  cacheLocation: 'cold' | 'none',
+): Promise<void> {
+  if (!apiKeyId) {
+    return;
+  }
+
+  await cacheAccessQueries.create(db, {
+    apiKeyId,
+    normalizedUrl,
+    cacheLocation,
+    responseTimeMs: 0, // We don't track this in the API route
+    siteId: null,
+    crawlerName: null,
+    crawlerType: null,
+    userAgent: null,
+  });
+}
+
+/**
+ * Update database with rendered page metadata
+ */
+async function updateDatabase(
+  apiKeyId: string | null,
+  normalizedUrl: string,
+  storageKey: string,
+  htmlSizeBytes: number,
+): Promise<void> {
+  await renderedPageQueries.upsert(db, {
+    normalizedUrl,
+    storageKey,
+    htmlSizeBytes,
+    apiKeyId,
+    firstRenderedAt: new Date(),
+    inRedis: true,
+    accessCount: 0,
+  });
+}

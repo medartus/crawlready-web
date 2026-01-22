@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@crawlready/logger": "workspace:*",
+    "@crawlready/types": "workspace:*",
     "@upstash/redis": "^1.36.0"
   },
   "devDependencies": {

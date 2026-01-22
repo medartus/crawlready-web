@@ -2,7 +2,7 @@
   "name": "@crawlready/render-worker",
   "type": "module",
   "version": "1.0.0",
-  "description": "CrawlReady render worker - Puppeteer + BullMQ",
+  "description": "CrawlReady render worker - Puppeteer + BullMQ + HTTP API",
   "main": "index.ts",
   "engines": {
     "node": ">=20.0.0"
@@ -21,7 +21,9 @@
     "@crawlready/security": "workspace:*",
     "@crawlready/storage": "workspace:*",
     "@crawlready/types": "workspace:*",
+    "@hono/node-server": "^1.13.0",
     "bullmq": "^5.0.0",
+    "hono": "^4.6.0",
     "puppeteer": "^21.0.0",
     "tsx": "^4.0.0"
   },

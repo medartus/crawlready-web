@@ -105,8 +105,8 @@ export function serverError(error?: unknown) {
 /**
  * Return successful response with data
  */
-export function success<T>(data: T, status: number = 200) {
-  return NextResponse.json(data, { status });
+export function success<T>(data: T, status: number = 200, headers?: Record<string, string>) {
+  return NextResponse.json(data, { status, headers });
 }
 
 /**

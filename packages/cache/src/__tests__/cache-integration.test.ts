@@ -3,11 +3,24 @@
  *
  * Tests the cache module at the highest level possible - testing real Redis operations
  * with actual URL normalization and cache key generation.
+ *
+ * CDN-First Architecture Tests:
+ * - Tests metadata caching (not HTML storage)
+ * - Tests CDN URL generation
  */
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { cache, getCacheKey, normalizeUrl } from '../index';
+import {
+  cache,
+  cacheMetadata,
+  extractSupabaseProjectId,
+  getCacheKey,
+  getCdnUrlSync,
+  getMetadataCacheKey,
+  hashUrlSync,
+  normalizeUrl,
+} from '../index';
 
 describe('cache Integration Tests', () => {
   const testHtml = '<html><body><h1>Test Page</h1></body></html>';
@@ -38,7 +51,7 @@ describe('cache Integration Tests', () => {
       // Generate cache key
       const cacheKey = getCacheKey(normalized1);
 
-      expect(cacheKey).toMatch(/^cache:/);
+      expect(cacheKey).toMatch(/^render:v1:/);
       expect(cacheKey).toContain(normalized1);
     });
 
@@ -151,8 +164,8 @@ describe('cache Integration Tests', () => {
       expect(normalizeUrl('https://example.com/page/')).toBe('https://example.com/page');
       expect(normalizeUrl('https://example.com/')).toBe('https://example.com');
 
-      // Protocol normalization
-      expect(normalizeUrl('http://example.com')).toBe('http://example.com');
+      // Protocol normalization (always upgrades to https)
+      expect(normalizeUrl('http://example.com')).toBe('https://example.com');
       expect(normalizeUrl('https://example.com')).toBe('https://example.com');
 
       // Fragment removal
@@ -165,6 +178,219 @@ describe('cache Integration Tests', () => {
       expect(normalized).toContain('a=1');
       expect(normalized).toContain('m=2');
       expect(normalized).toContain('z=3');
+    });
+  });
+});
+
+describe('cDN-First Architecture Tests', () => {
+  const testUrl = 'https://example.com/cdn-test-page';
+  const testProjectId = 'testproject';
+
+  afterAll(async () => {
+    // Cleanup test metadata
+    const normalizedUrl = normalizeUrl(testUrl);
+    const metadataKey = getMetadataCacheKey(normalizedUrl);
+    await cacheMetadata.del(metadataKey);
+  });
+
+  describe('uRL Hashing and CDN URL Generation', () => {
+    it('should generate consistent URL hashes', () => {
+      const url = 'https://example.com/page';
+      const hash1 = hashUrlSync(url);
+      const hash2 = hashUrlSync(url);
+
+      expect(hash1).toBe(hash2);
+      expect(hash1.length).toBe(32); // 32 hex characters (128 bits)
+    });
+
+    it('should generate different hashes for different URLs', () => {
+      const hash1 = hashUrlSync('https://example.com/page1');
+      const hash2 = hashUrlSync('https://example.com/page2');
+
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('should generate deterministic CDN URLs', () => {
+      const pageUrl = 'https://example.com/my-page';
+      const cdnUrl1 = getCdnUrlSync(pageUrl, testProjectId);
+      const cdnUrl2 = getCdnUrlSync(pageUrl, testProjectId);
+
+      expect(cdnUrl1).toBe(cdnUrl2);
+      expect(cdnUrl1).toMatch(
+        /^https:\/\/testproject\.supabase\.co\/storage\/v1\/object\/public\/rendered-pages\/[a-f0-9]{32}\.html$/,
+      );
+    });
+
+    it('should generate different CDN URLs for different pages', () => {
+      const cdnUrl1 = getCdnUrlSync('https://example.com/page1', testProjectId);
+      const cdnUrl2 = getCdnUrlSync('https://example.com/page2', testProjectId);
+
+      expect(cdnUrl1).not.toBe(cdnUrl2);
+    });
+
+    it('should normalize URL before generating CDN URL', () => {
+      // Different URL variations should produce the same CDN URL
+      const cdnUrl1 = getCdnUrlSync('https://example.com/page?utm_source=test', testProjectId);
+      const cdnUrl2 = getCdnUrlSync('https://example.com/page', testProjectId);
+
+      expect(cdnUrl1).toBe(cdnUrl2);
+    });
+
+    it('should extract Supabase project ID from URL', () => {
+      const projectId = extractSupabaseProjectId('https://myproject.supabase.co');
+
+      expect(projectId).toBe('myproject');
+    });
+
+    it('should throw for invalid Supabase URL', () => {
+      expect(() => extractSupabaseProjectId('not-a-valid-url')).toThrow();
+    });
+  });
+
+  describe('metadata Cache Key Generation', () => {
+    it('should generate metadata cache key with correct prefix', () => {
+      const url = 'https://example.com/page';
+      const metadataKey = getMetadataCacheKey(url);
+
+      expect(metadataKey).toMatch(/^render:meta:v1:/);
+    });
+
+    it('should generate different key than legacy cache key', () => {
+      const url = 'https://example.com/page';
+      const metadataKey = getMetadataCacheKey(url);
+      const legacyKey = getCacheKey(url);
+
+      expect(metadataKey).not.toBe(legacyKey);
+      expect(metadataKey).toContain('meta');
+      expect(legacyKey).not.toContain('meta');
+    });
+
+    it('should normalize URL before generating metadata key', () => {
+      const key1 = getMetadataCacheKey('https://example.com/page?utm_source=test');
+      const key2 = getMetadataCacheKey('https://example.com/page');
+
+      expect(key1).toBe(key2);
+    });
+  });
+
+  describe('cache Metadata Operations', () => {
+    it('should store and retrieve cache metadata', async () => {
+      const normalizedUrl = normalizeUrl(testUrl);
+      const metadataKey = getMetadataCacheKey(normalizedUrl);
+      const publicUrl = getCdnUrlSync(testUrl, testProjectId);
+
+      // Set as ready
+      await cacheMetadata.setReady(metadataKey, publicUrl, 'rendered/test.html', 1024);
+
+      // Retrieve
+      const metadata = await cacheMetadata.get(metadataKey);
+
+      expect(metadata).not.toBeNull();
+      expect(metadata?.status).toBe('ready');
+      expect(metadata?.publicUrl).toBe(publicUrl);
+      expect(metadata?.storageKey).toBe('rendered/test.html');
+      expect(metadata?.sizeBytes).toBe(1024);
+      expect(metadata?.renderedAt).toBeGreaterThan(0);
+    });
+
+    it('should track rendering status', async () => {
+      const url = 'https://example.com/rendering-test';
+      const normalizedUrl = normalizeUrl(url);
+      const metadataKey = getMetadataCacheKey(normalizedUrl);
+      const publicUrl = getCdnUrlSync(url, testProjectId);
+
+      // Set as rendering
+      await cacheMetadata.setRendering(metadataKey, 'rendered/rendering.html', publicUrl);
+
+      // Check status
+      const metadata = await cacheMetadata.get(metadataKey);
+
+      expect(metadata?.status).toBe('rendering');
+      expect(metadata?.sizeBytes).toBe(0);
+
+      // Cleanup
+      await cacheMetadata.del(metadataKey);
+    });
+
+    it('should track failed status', async () => {
+      const url = 'https://example.com/failed-test';
+      const normalizedUrl = normalizeUrl(url);
+      const metadataKey = getMetadataCacheKey(normalizedUrl);
+      const publicUrl = getCdnUrlSync(url, testProjectId);
+
+      // Set as rendering first
+      await cacheMetadata.setRendering(metadataKey, 'rendered/failed.html', publicUrl);
+
+      // Mark as failed
+      await cacheMetadata.setFailed(metadataKey, 'Test error message');
+
+      // Check status
+      const metadata = await cacheMetadata.get(metadataKey);
+
+      expect(metadata?.status).toBe('failed');
+      expect(metadata?.errorMessage).toBe('Test error message');
+
+      // Cleanup
+      await cacheMetadata.del(metadataKey);
+    });
+
+    it('should update status', async () => {
+      const url = 'https://example.com/status-update-test';
+      const normalizedUrl = normalizeUrl(url);
+      const metadataKey = getMetadataCacheKey(normalizedUrl);
+      const publicUrl = getCdnUrlSync(url, testProjectId);
+
+      // Set as rendering
+      await cacheMetadata.setRendering(metadataKey, 'rendered/update.html', publicUrl);
+
+      // Update to ready
+      const updated = await cacheMetadata.updateStatus(metadataKey, 'ready', { sizeBytes: 2048 });
+
+      expect(updated).toBe(true);
+
+      // Verify update
+      const metadata = await cacheMetadata.get(metadataKey);
+
+      expect(metadata?.status).toBe('ready');
+      expect(metadata?.sizeBytes).toBe(2048);
+
+      // Cleanup
+      await cacheMetadata.del(metadataKey);
+    });
+
+    it('should return false when updating non-existent key', async () => {
+      const updated = await cacheMetadata.updateStatus('non-existent-key', 'ready');
+
+      expect(updated).toBe(false);
+    });
+
+    it('should delete cache metadata', async () => {
+      const url = 'https://example.com/delete-test';
+      const normalizedUrl = normalizeUrl(url);
+      const metadataKey = getMetadataCacheKey(normalizedUrl);
+      const publicUrl = getCdnUrlSync(url, testProjectId);
+
+      // Create
+      await cacheMetadata.setReady(metadataKey, publicUrl, 'rendered/delete.html', 512);
+
+      // Verify exists
+      let exists = await cacheMetadata.exists(metadataKey);
+
+      expect(exists).toBe(true);
+
+      // Delete
+      await cacheMetadata.del(metadataKey);
+
+      // Verify deleted
+      exists = await cacheMetadata.exists(metadataKey);
+
+      expect(exists).toBe(false);
+    });
+
+    it('should return null for non-existent metadata', async () => {
+      const metadata = await cacheMetadata.get('non-existent-metadata-key');
+
+      expect(metadata).toBeNull();
     });
   });
 });

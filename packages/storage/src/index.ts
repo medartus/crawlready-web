@@ -1,8 +1,13 @@
 /**
  * Supabase Storage Service Client
  *
- * Service-level client for Supabase Storage operations.
- * Uses service role key for background worker access.
+ * CDN-First Architecture:
+ * - Rendered HTML stored in public Supabase bucket
+ * - Serves directly from Supabase CDN (no API call needed)
+ * - Deterministic public URLs based on URL hash
+ *
+ * Public URL Format:
+ * https://{project}.supabase.co/storage/v1/object/public/{bucket}/{hash}.html
  */
 
 import crypto from 'node:crypto';
@@ -37,6 +42,12 @@ export function getStorageClient(): SupabaseClient {
 }
 
 /**
+ * Hash length for storage keys (must match @crawlready/cache)
+ * 32 chars = 128 bits = virtually no collision risk
+ */
+const HASH_LENGTH = 32;
+
+/**
  * Generate consistent storage key from normalized URL
  */
 export function getStorageKey(normalizedUrl: string): string {
@@ -44,7 +55,7 @@ export function getStorageKey(normalizedUrl: string): string {
     .createHash('sha256')
     .update(normalizedUrl)
     .digest('hex')
-    .substring(0, 16);
+    .substring(0, HASH_LENGTH);
 
   return `rendered/${hash}.html`;
 }
@@ -163,5 +174,95 @@ export async function deleteRenderedPage(
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+/**
+ * Get Supabase project ID from environment
+ */
+export function getSupabaseProjectId(): string {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  if (!supabaseUrl) {
+    throw new Error('SUPABASE_URL environment variable is required');
+  }
+
+  const url = new URL(supabaseUrl);
+  // Format: {project-id}.supabase.co
+  const projectId = url.hostname.split('.')[0];
+  if (!projectId) {
+    throw new Error('Invalid SUPABASE_URL format');
+  }
+  return projectId;
+}
+
+/**
+ * Generate public CDN URL for a storage key
+ *
+ * This URL can be accessed directly without authentication
+ * (requires bucket to have public access enabled)
+ *
+ * @param storageKey - Storage key (e.g., 'rendered/abc123.html')
+ * @returns Public CDN URL
+ */
+export function getPublicUrl(storageKey: string): string {
+  const projectId = getSupabaseProjectId();
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'rendered-pages';
+
+  // Remove 'rendered/' prefix if present (it's part of the path in the bucket)
+  const path = storageKey.startsWith('rendered/')
+    ? storageKey.substring('rendered/'.length)
+    : storageKey;
+
+  return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${path}`;
+}
+
+/**
+ * Generate public CDN URL from normalized URL
+ *
+ * Combines URL normalization + hashing + public URL generation
+ *
+ * @param normalizedUrl - Already normalized URL
+ * @returns Public CDN URL for the rendered page
+ */
+export function getPublicUrlFromNormalizedUrl(normalizedUrl: string): string {
+  const hash = crypto
+    .createHash('sha256')
+    .update(normalizedUrl)
+    .digest('hex')
+    .substring(0, HASH_LENGTH);
+
+  const projectId = getSupabaseProjectId();
+  const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'rendered-pages';
+
+  return `https://${projectId}.supabase.co/storage/v1/object/public/${bucket}/${hash}.html`;
+}
+
+/**
+ * Check if a public URL exists (HEAD request)
+ *
+ * Use this for cache hit detection without downloading full content
+ *
+ * @param publicUrl - Public CDN URL to check
+ * @param timeoutMs - Timeout in milliseconds (default: 500ms for fail-fast)
+ * @returns true if exists, false otherwise
+ */
+export async function checkPublicUrlExists(
+  publicUrl: string,
+  timeoutMs = 500,
+): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    const response = await fetch(publicUrl, {
+      method: 'HEAD',
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+    return response.ok;
+  } catch {
+    // Timeout or network error - treat as cache miss
+    return false;
   }
 }

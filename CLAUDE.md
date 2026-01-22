@@ -166,11 +166,11 @@ pnpm storybook              # Run Storybook UI development
 
 All API routes use `force-dynamic` export for authentication via request headers.
 
-**Core Render API:**
-- **POST /api/render** - Main endpoint: queues render jobs (202) or returns cached HTML (200)
-- **GET /api/status/:jobId** - Poll render job status (queued, processing, completed, failed)
-- **GET /api/cache/status** - Check if URL is cached (hot/cold/none)
-- **DELETE /api/cache** - Invalidate cached pages (purge hot + cold storage)
+**Core Render API (On-the-Fly Rendering):**
+- **POST /api/render** - On-the-fly rendering: returns HTML directly (200), rendering by another request (202), or timeout (504)
+- **POST /api/render-async** - Fire-and-forget: queues render job, returns 202 immediately
+- **GET /api/cache/status** - Check if URL is cached
+- **DELETE /api/cache** - Invalidate cached pages (purge CDN storage)
 
 **Admin & User Management:**
 - **POST /api/admin/generate-key** - Generate API keys for customers (returns `sk_live_*` or `sk_free_*`)
@@ -187,37 +187,61 @@ All API routes use `force-dynamic` export for authentication via request headers
 - API keys stored hashed (SHA-256) in database
 - Rate limiting via Redis sliding window (100/day free, 1000/day pro)
 
-### Render Worker Flow
+### Render Worker Architecture
 
 **Purpose:** Pre-render JavaScript pages for AI bots that can't execute JavaScript (GPTBot, ClaudeBot, PerplexityBot).
 
+The render worker runs on Fly.io and provides two interfaces:
+1. **HTTP Server** (Hono) - Synchronous on-the-fly rendering for `/api/render`
+2. **BullMQ Worker** - Asynchronous background rendering for `/api/render-async`
+
+**Files:**
+- `apps/workers/render-worker/index.ts` - Main entrypoint (starts both HTTP + BullMQ)
+- `apps/workers/render-worker/http-server.ts` - HTTP endpoint for synchronous renders
+- `apps/workers/render-worker/renderer.ts` - Puppeteer rendering logic
+- `apps/workers/render-worker/html-optimizer.ts` - HTML optimization
+
+### On-the-Fly Rendering Flow (Recommended)
+
+**Customer Integration (Simple):**
+```
+Customer Middleware:
+  1. Detect AI bot
+  2. POST /api/render { url }
+  3. Return HTML from response
+```
+
+**Internal Flow:**
+```
+Customer → Vercel /api/render → Check Redis cache
+                                 ├─ Cache HIT → Fetch from CDN → Return HTML (200)
+                                 └─ Cache MISS → Acquire lock → Call Fly.io worker
+                                                                → Puppeteer render
+                                                                → Store in CDN
+                                                                → Return HTML (200)
+```
+
+**Key Components:**
+- **Redis Lock** (`@crawlready/cache lock.*`) - Prevents duplicate renders
+- **Render Service** (`apps/web/src/libs/render-service.ts`) - Vercel → Worker HTTP client
+- **Semaphore** - Limits concurrent renders on worker (default 10)
+
+### Async Rendering Flow (Legacy)
+
+**CDN-First Principle:** Customer middleware tries CDN directly, falls back to origin.
+
 **Flow:**
-1. Customer makes POST /api/render request with URL
-2. API checks cache (Redis hot → Supabase cold)
-   - **Cache HIT:** Return HTML immediately (200)
-   - **Cache MISS:** Queue job and return 202 with jobId
+1. Customer middleware detects AI bot via user-agent
+2. Middleware tries CDN URL directly (deterministic hash-based URL)
+   - **Cache HIT:** Serve HTML from CDN (no CrawlReady API call)
+   - **Cache MISS:** Pass through to origin immediately, fire-and-forget POST /api/render-async
 3. Worker picks up job from BullMQ queue
 4. **SSRF protection** validates URL (no localhost, private IPs, cloud metadata endpoints)
-5. **Puppeteer rendering:**
-   - Launch headless Chrome
-   - Navigate to URL with configurable timeout (default 30s)
-   - Wait for optional selector (`waitForSelector`)
-   - Execute all JavaScript
-   - Capture final HTML
-6. **HTML optimization:**
-   - Remove script tags (AI bots don't execute JS)
-   - Remove tracking pixels and analytics
-   - Minify HTML
-   - Inject schema.org markup (future)
-7. **Store in dual-tier cache:**
-   - **Hot cache** (Redis) - 1000 most recent, <50ms access, LRU eviction
-   - **Cold storage** (Supabase) - unlimited, <300ms access, permanent
-8. **Update database:**
-   - `rendered_pages` table with metadata (size, render time, access count)
-   - `cache_accesses` table for analytics
-9. Job marked complete, customer polls `/api/status/:jobId` to check
+5. **Puppeteer rendering** with HTML optimization
+6. **Store to CDN** and update Redis metadata
+7. Next AI bot visit hits cache
 
-**Cache Promotion:** When cold storage is accessed, page is asynchronously promoted to hot cache for faster future access.
+**Fail-Safe Guarantee:** If CrawlReady is down, customer site continues working (CDN serves or origin serves).
 
 ### URL Normalization & Caching
 
@@ -231,17 +255,16 @@ All API routes use `force-dynamic` export for authentication via request headers
 5. Query parameters sorted alphabetically (`?b=2&a=1` → `?a=1&b=2`)
 6. URL fragments removed (`#section`)
 
-**Cache Key Format:** `render:v1:{normalizedUrl}`
+**Cache Key Format (Metadata):** `render:meta:v1:{normalizedUrl}`
+
+**CDN URL Format:** `https://{project}.supabase.co/storage/v1/object/public/rendered-pages/{hash}.html`
+- `hash = SHA256(normalizedUrl).substring(0, 16)`
 
 **Examples:**
 - `http://Example.com/Page?utm_source=google` → `https://example.com/Page`
 - `https://site.com/page/?fbclid=abc&id=5` → `https://site.com/page?id=5`
 
-**Two-Tier Storage:**
-- **Hot Cache (Redis):** 1000 most recent pages, LRU eviction, <50ms access
-- **Cold Storage (Supabase):** All rendered pages, permanent, <300ms access
-- **Promotion:** Cold → hot on access (async, doesn't block response)
-
+C
 ### Rate Limiting
 
 - Implemented via Upstash Redis sliding window (24-hour window)
@@ -294,6 +317,13 @@ All API routes use `force-dynamic` export for authentication via request headers
 - `DATABASE_URL` - PostgreSQL connection string
 - `UPSTASH_REDIS_HOST` / `UPSTASH_REDIS_PORT` / `UPSTASH_REDIS_PASSWORD` - Redis (standard connection)
 - `UPSTASH_REDIS_TLS=true`
+- `RENDER_WORKER_SECRET` - Shared secret for internal Vercel → Worker auth
+- `HTTP_PORT` - HTTP server port (default: 3001)
+- `MAX_CONCURRENT_RENDERS` - Max concurrent renders per worker (default: 10)
+
+### Required (Web App - On-the-Fly Rendering)
+- `RENDER_WORKER_URL` - Fly.io worker URL (e.g., `https://crawlready-worker.fly.dev`)
+- `RENDER_WORKER_SECRET` - Must match worker's `RENDER_WORKER_SECRET`
 
 ### Optional
 - `SUPABASE_URL` / `SUPABASE_KEY` - Cold storage
