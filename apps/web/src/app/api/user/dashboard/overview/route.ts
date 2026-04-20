@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { apiKeys, cacheAccesses, renderJobs, sites } from '@crawlready/database';
-import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNull, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/libs/DB';
@@ -73,7 +73,7 @@ export async function GET() {
         .from(renderJobs)
         .where(
           and(
-            sql`${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
+            inArray(renderJobs.apiKeyId, apiKeyIds),
             gte(renderJobs.queuedAt, todayStart),
           ),
         );
@@ -85,7 +85,7 @@ export async function GET() {
         .from(renderJobs)
         .where(
           and(
-            sql`${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
+            inArray(renderJobs.apiKeyId, apiKeyIds),
             gte(renderJobs.queuedAt, yesterdayStart),
             sql`${renderJobs.queuedAt} < ${todayStart}`,
           ),
@@ -101,7 +101,7 @@ export async function GET() {
         .from(cacheAccesses)
         .where(
           and(
-            sql`${cacheAccesses.apiKeyId} = ANY(${apiKeyIds})`,
+            inArray(cacheAccesses.apiKeyId, apiKeyIds),
             gte(cacheAccesses.accessedAt, todayStart),
           ),
         );
@@ -115,7 +115,7 @@ export async function GET() {
           .from(cacheAccesses)
           .where(
             and(
-              sql`${cacheAccesses.apiKeyId} = ANY(${apiKeyIds})`,
+              inArray(cacheAccesses.apiKeyId, apiKeyIds),
               gte(cacheAccesses.accessedAt, todayStart),
               sql`${cacheAccesses.crawlerType} IS NOT NULL AND ${cacheAccesses.crawlerType} != 'direct'`,
             ),
@@ -163,7 +163,7 @@ export async function GET() {
           queuedAt: renderJobs.queuedAt,
         })
         .from(renderJobs)
-        .where(sql`${renderJobs.apiKeyId} = ANY(${apiKeyIds})`)
+        .where(inArray(renderJobs.apiKeyId, apiKeyIds))
         .orderBy(desc(renderJobs.queuedAt))
         .limit(10);
 
@@ -184,7 +184,7 @@ export async function GET() {
             .from(renderJobs)
             .where(
               and(
-                sql`${renderJobs.apiKeyId} = ANY(${apiKeyIds})`,
+                inArray(renderJobs.apiKeyId, apiKeyIds),
                 gte(renderJobs.queuedAt, weekAgo),
               ),
             ))[0]?.count || 0,

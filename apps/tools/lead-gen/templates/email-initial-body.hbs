@@ -1,0 +1,21 @@
+Hi {{contact.firstName}},
+
+I was analyzing how AI search engines see {{company.name}}'s website, and found something concerning.
+
+When GPTBot (ChatGPT's crawler) visits {{company.website}}, it only sees {{round (subtract 100 analysis.jsScore)}}% of your content. The rest requires JavaScript to render - which most AI crawlers can't execute.
+
+{{#if analysis.metaTagsJsInjected}}
+Even worse: your meta tags (title, description) are JavaScript-injected, so AI bots miss your SEO metadata entirely.
+
+{{/if}}
+I'm building CrawlReady, a pre-rendering solution specifically for AI crawlers. We're looking for 5-10 co-creation partners to shape the product.
+
+As a partner, you'd get:
+- Free early access
+- Direct input on features
+- Priority support
+
+Would you be open to a 15-minute call this week to see if this is relevant for {{company.name}}?
+
+Best,
+{{sender.name}}

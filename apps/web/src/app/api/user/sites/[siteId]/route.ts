@@ -8,7 +8,7 @@ import { db } from '@/libs/DB';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { siteId: string } },
+  { params }: { params: Promise<{ siteId: string }> },
 ) {
   try {
     const { userId, orgId } = await auth();
@@ -16,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { siteId } = params;
+    const { siteId } = await params;
 
     const site = await db
       .select()
@@ -73,7 +73,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { siteId: string } },
+  { params }: { params: Promise<{ siteId: string }> },
 ) {
   try {
     const { userId, orgId } = await auth();
@@ -81,7 +81,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { siteId } = params;
+    const { siteId } = await params;
     const body = await request.json();
 
     // Verify ownership
@@ -134,7 +134,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { siteId: string } },
+  { params }: { params: Promise<{ siteId: string }> },
 ) {
   try {
     const { userId, orgId } = await auth();
@@ -142,7 +142,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { siteId } = params;
+    const { siteId } = await params;
 
     // Verify ownership
     const existing = await db

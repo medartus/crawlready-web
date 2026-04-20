@@ -1,0 +1,168 @@
+[dotenv@17.2.3] injecting env (1) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+2026-01-27T08:06:47.151Z INFO  [cli] Starting website analysis {"input":"data/companies.json","output":"/Users/u1051506/Dev/crawlready-web/apps/tools/lead-gen/data/analysis-results.json","concurrent":"2"}
+2026-01-27T08:06:47.152Z INFO  [cli] Analyzing 50 companies
+[                    ] 2% - Analyzing Fygr2026-01-27T08:06:47.152Z INFO  [js-analyzer] Starting multi-page analysis for http://www.fygr.io
+(node:79872) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+2026-01-27T08:06:47.399Z INFO  [js-analyzer] Discovered 5 pages to analyze for http://www.fygr.io
+2026-01-27T08:06:47.399Z INFO  [js-analyzer] Analyzing JS dependency for http://www.fygr.io
+2026-01-27T08:06:57.938Z INFO  [js-analyzer] JS Score for http://www.fygr.io: 0% {"rawLength":7309,"renderedLength":6453,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:06:57.948Z INFO  [js-analyzer] Analyzed http://www.fygr.io: JS Score 0%
+2026-01-27T08:06:57.949Z INFO  [js-analyzer] Analyzing JS dependency for http://www.fygr.io/
+2026-01-27T08:07:06.263Z INFO  [js-analyzer] JS Score for http://www.fygr.io/: 0% {"rawLength":7309,"renderedLength":6455,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:07:06.274Z INFO  [js-analyzer] Analyzed http://www.fygr.io/: JS Score 0%
+2026-01-27T08:07:06.274Z INFO  [js-analyzer] Analyzing JS dependency for https://www.fygr.io/fr/blog
+2026-01-27T08:07:14.443Z INFO  [js-analyzer] JS Score for https://www.fygr.io/fr/blog: 0% {"rawLength":36545,"renderedLength":36545,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:07:14.454Z INFO  [js-analyzer] Analyzed https://www.fygr.io/fr/blog: JS Score 0%
+2026-01-27T08:07:14.454Z INFO  [js-analyzer] Analyzing JS dependency for https://www.fygr.io/fr/blog/categorie/actualites-fygr
+2026-01-27T08:07:22.441Z INFO  [js-analyzer] JS Score for https://www.fygr.io/fr/blog/categorie/actualites-fygr: 0% {"rawLength":3213,"renderedLength":3213,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:07:22.452Z INFO  [js-analyzer] Analyzed https://www.fygr.io/fr/blog/categorie/actualites-fygr: JS Score 0%
+2026-01-27T08:07:22.452Z INFO  [js-analyzer] Analyzing JS dependency for https://www.fygr.io/fr/blog/categorie/bfr
+2026-01-27T08:07:29.001Z INFO  [js-analyzer] JS Score for https://www.fygr.io/fr/blog/categorie/bfr: 0% {"rawLength":5609,"renderedLength":5609,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:07:29.012Z INFO  [js-analyzer] Analyzed https://www.fygr.io/fr/blog/categorie/bfr: JS Score 0%
+2026-01-27T08:07:29.012Z INFO  [js-analyzer] Multi-page analysis complete for http://www.fygr.io {"pagesAnalyzed":5,"overallJsScore":0,"jsRequiredDetected":false,"hasBlankPages":false}
+2026-01-27T08:07:29.176Z INFO  [robots-checker] robots.txt analysis for http://www.fygr.io {"overallStatus":"blocked","blocked":7,"allowed":0}
+[                    ] 4% - Analyzing Quadient2026-01-27T08:07:29.176Z INFO  [js-analyzer] Starting multi-page analysis for https://www.quadient.com
+2026-01-27T08:07:29.255Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://www.quadient.com
+2026-01-27T08:07:29.255Z INFO  [js-analyzer] Analyzing JS dependency for https://www.quadient.com
+2026-01-27T08:07:36.651Z INFO  [js-analyzer] JS Score for https://www.quadient.com: 65% {"rawLength":4164,"renderedLength":11818,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:07:36.662Z INFO  [js-analyzer] Analyzed https://www.quadient.com: JS Score 65%
+2026-01-27T08:07:36.662Z INFO  [js-analyzer] Analyzing JS dependency for https://www.quadient.com/
+2026-01-27T08:07:43.406Z INFO  [js-analyzer] JS Score for https://www.quadient.com/: 65% {"rawLength":4164,"renderedLength":11818,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:07:43.417Z INFO  [js-analyzer] Analyzed https://www.quadient.com/: JS Score 65%
+2026-01-27T08:07:43.417Z INFO  [js-analyzer] Analyzing JS dependency for https://www.quadient.com/blog
+2026-01-27T08:07:50.256Z INFO  [js-analyzer] JS Score for https://www.quadient.com/blog: 61% {"rawLength":6729,"renderedLength":17312,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:07:50.269Z INFO  [js-analyzer] Analyzed https://www.quadient.com/blog: JS Score 61%
+2026-01-27T08:07:50.269Z INFO  [js-analyzer] Analyzing JS dependency for https://www.quadient.com/resources
+2026-01-27T08:07:58.424Z INFO  [js-analyzer] JS Score for https://www.quadient.com/resources: 54% {"rawLength":7292,"renderedLength":15758,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:07:58.438Z INFO  [js-analyzer] Analyzed https://www.quadient.com/resources: JS Score 54%
+2026-01-27T08:07:58.438Z INFO  [js-analyzer] Analyzing JS dependency for https://www.quadient.com/docs
+2026-01-27T08:08:01.556Z INFO  [js-analyzer] Failed to analyze https://www.quadient.com/docs: Failed to fetch https://www.quadient.com/docs: 404 Not Found
+2026-01-27T08:08:01.556Z INFO  [js-analyzer] Multi-page analysis complete for https://www.quadient.com {"pagesAnalyzed":4,"overallJsScore":65,"jsRequiredDetected":false,"hasBlankPages":false,"worstPageUrl":"https://www.quadient.com"}
+2026-01-27T08:08:01.678Z INFO  [robots-checker] robots.txt analysis for https://www.quadient.com {"overallStatus":"allowed","blocked":0,"allowed":0}
+[=                   ] 6% - Analyzing Values Associates2026-01-27T08:08:02.016Z INFO  [js-analyzer] Starting multi-page analysis for https://values-associates.com
+2026-01-27T08:08:02.514Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://values-associates.com
+2026-01-27T08:08:02.514Z INFO  [js-analyzer] Analyzing JS dependency for https://values-associates.com
+2026-01-27T08:08:11.517Z INFO  [js-analyzer] JS Score for https://values-associates.com: 29% {"rawLength":6294,"renderedLength":8921,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:08:11.524Z INFO  [js-analyzer] Analyzed https://values-associates.com: JS Score 29%
+2026-01-27T08:08:11.524Z INFO  [js-analyzer] Analyzing JS dependency for https://values-associates.com/
+2026-01-27T08:08:18.972Z INFO  [js-analyzer] JS Score for https://values-associates.com/: 29% {"rawLength":6294,"renderedLength":8921,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:08:18.978Z INFO  [js-analyzer] Analyzed https://values-associates.com/: JS Score 29%
+2026-01-27T08:08:18.978Z INFO  [js-analyzer] Analyzing JS dependency for https://values-associates.com/blog
+2026-01-27T08:08:30.154Z INFO  [js-analyzer] JS Score for https://values-associates.com/blog: 28% {"rawLength":6884,"renderedLength":9508,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:08:30.160Z INFO  [js-analyzer] Analyzed https://values-associates.com/blog: JS Score 28%
+2026-01-27T08:08:30.160Z INFO  [js-analyzer] Analyzing JS dependency for https://values-associates.com/resources
+2026-01-27T08:08:36.391Z INFO  [js-analyzer] Failed to analyze https://values-associates.com/resources: Failed to fetch https://values-associates.com/resources: 404 Not Found
+2026-01-27T08:08:36.391Z INFO  [js-analyzer] Analyzing JS dependency for https://values-associates.com/docs
+2026-01-27T08:08:41.999Z INFO  [js-analyzer] Failed to analyze https://values-associates.com/docs: Failed to fetch https://values-associates.com/docs: 404 Not Found
+2026-01-27T08:08:41.999Z INFO  [js-analyzer] Multi-page analysis complete for https://values-associates.com {"pagesAnalyzed":3,"overallJsScore":29,"jsRequiredDetected":false,"hasBlankPages":false,"worstPageUrl":"https://values-associates.com"}
+2026-01-27T08:08:42.056Z INFO  [robots-checker] robots.txt analysis for https://values-associates.com {"overallStatus":"allowed","blocked":0,"allowed":0}
+[=                   ] 8% - Analyzing Nexen Tech2026-01-27T08:08:42.163Z INFO  [js-analyzer] Starting multi-page analysis for https://nexen-tech.fr
+2026-01-27T08:08:42.274Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://nexen-tech.fr
+2026-01-27T08:08:42.274Z INFO  [js-analyzer] Analyzing JS dependency for https://nexen-tech.fr
+2026-01-27T08:08:48.294Z INFO  [js-analyzer] JS Score for https://nexen-tech.fr: 6% {"rawLength":3101,"renderedLength":3283,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:08:48.298Z INFO  [js-analyzer] Analyzed https://nexen-tech.fr: JS Score 6%
+2026-01-27T08:08:48.298Z INFO  [js-analyzer] Analyzing JS dependency for https://nexen-tech.fr/
+2026-01-27T08:08:54.293Z INFO  [js-analyzer] JS Score for https://nexen-tech.fr/: 6% {"rawLength":3101,"renderedLength":3283,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:08:54.298Z INFO  [js-analyzer] Analyzed https://nexen-tech.fr/: JS Score 6%
+2026-01-27T08:08:54.298Z INFO  [js-analyzer] Analyzing JS dependency for https://nexen-tech.fr/blog
+2026-01-27T08:08:57.496Z INFO  [js-analyzer] Failed to analyze https://nexen-tech.fr/blog: Failed to fetch https://nexen-tech.fr/blog: 404 Not Found
+2026-01-27T08:08:57.496Z INFO  [js-analyzer] Analyzing JS dependency for https://nexen-tech.fr/resources
+2026-01-27T08:09:00.656Z INFO  [js-analyzer] Failed to analyze https://nexen-tech.fr/resources: Failed to fetch https://nexen-tech.fr/resources: 404 Not Found
+2026-01-27T08:09:00.656Z INFO  [js-analyzer] Analyzing JS dependency for https://nexen-tech.fr/docs
+2026-01-27T08:09:03.828Z INFO  [js-analyzer] Failed to analyze https://nexen-tech.fr/docs: Failed to fetch https://nexen-tech.fr/docs: 404 Not Found
+2026-01-27T08:09:03.828Z INFO  [js-analyzer] Multi-page analysis complete for https://nexen-tech.fr {"pagesAnalyzed":2,"overallJsScore":6,"jsRequiredDetected":false,"hasBlankPages":false,"worstPageUrl":"https://nexen-tech.fr"}
+2026-01-27T08:09:03.885Z INFO  [robots-checker] robots.txt analysis for https://nexen-tech.fr {"overallStatus":"blocked","blocked":7,"allowed":0}
+[==                  ] 10% - Analyzing Dext France2026-01-27T08:09:03.941Z INFO  [js-analyzer] Starting multi-page analysis for https://dext.com/fr
+2026-01-27T08:09:03.998Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://dext.com/fr
+2026-01-27T08:09:03.998Z INFO  [js-analyzer] Analyzing JS dependency for https://dext.com/fr
+2026-01-27T08:09:12.344Z INFO  [js-analyzer] JS Score for https://dext.com/fr: 4% {"rawLength":8587,"renderedLength":8953,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:09:12.356Z INFO  [js-analyzer] Analyzed https://dext.com/fr: JS Score 4%
+2026-01-27T08:09:12.356Z INFO  [js-analyzer] Analyzing JS dependency for https://dext.com/
+2026-01-27T08:09:19.926Z INFO  [js-analyzer] JS Score for https://dext.com/: 4% {"rawLength":8587,"renderedLength":8953,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:09:19.938Z INFO  [js-analyzer] Analyzed https://dext.com/: JS Score 4%
+2026-01-27T08:09:19.939Z INFO  [js-analyzer] Analyzing JS dependency for https://dext.com/blog
+2026-01-27T08:09:27.018Z INFO  [js-analyzer] JS Score for https://dext.com/blog: 12% {"rawLength":3751,"renderedLength":4248,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:09:27.028Z INFO  [js-analyzer] Analyzed https://dext.com/blog: JS Score 12%
+2026-01-27T08:09:27.028Z INFO  [js-analyzer] Analyzing JS dependency for https://dext.com/resources
+2026-01-27T08:09:30.509Z INFO  [js-analyzer] Failed to analyze https://dext.com/resources: Failed to fetch https://dext.com/resources: 404 Not Found
+2026-01-27T08:09:30.509Z INFO  [js-analyzer] Analyzing JS dependency for https://dext.com/docs
+2026-01-27T08:09:33.909Z INFO  [js-analyzer] Failed to analyze https://dext.com/docs: Failed to fetch https://dext.com/docs: 404 Not Found
+2026-01-27T08:09:33.909Z INFO  [js-analyzer] Multi-page analysis complete for https://dext.com/fr {"pagesAnalyzed":3,"overallJsScore":12,"jsRequiredDetected":false,"hasBlankPages":false,"worstPageUrl":"https://dext.com/blog"}
+2026-01-27T08:09:33.952Z INFO  [robots-checker] robots.txt analysis for https://dext.com/fr {"overallStatus":"allowed","blocked":0,"allowed":0}
+[==                  ] 12% - Analyzing Mediamagdistribution2026-01-27T08:09:34.017Z INFO  [js-analyzer] Starting multi-page analysis for https://mediamagdistribution.com
+2026-01-27T08:09:34.367Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://mediamagdistribution.com
+2026-01-27T08:09:34.367Z INFO  [js-analyzer] Analyzing JS dependency for https://mediamagdistribution.com
+2026-01-27T08:09:43.611Z INFO  [js-analyzer] JS Score for https://mediamagdistribution.com: 50% {"rawLength":5221,"renderedLength":10397,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:09:43.615Z INFO  [js-analyzer] Analyzed https://mediamagdistribution.com: JS Score 50%
+2026-01-27T08:09:43.615Z INFO  [js-analyzer] Analyzing JS dependency for https://mediamagdistribution.com/
+2026-01-27T08:09:50.851Z INFO  [js-analyzer] JS Score for https://mediamagdistribution.com/: 50% {"rawLength":5221,"renderedLength":10397,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:09:50.857Z INFO  [js-analyzer] Analyzed https://mediamagdistribution.com/: JS Score 50%
+2026-01-27T08:09:50.857Z INFO  [js-analyzer] Analyzing JS dependency for https://mediamagdistribution.com/blog
+2026-01-27T08:09:55.060Z INFO  [js-analyzer] Failed to analyze https://mediamagdistribution.com/blog: Failed to fetch https://mediamagdistribution.com/blog: 404 Not Found
+2026-01-27T08:09:55.060Z INFO  [js-analyzer] Analyzing JS dependency for https://mediamagdistribution.com/resources
+2026-01-27T08:09:59.238Z INFO  [js-analyzer] Failed to analyze https://mediamagdistribution.com/resources: Failed to fetch https://mediamagdistribution.com/resources: 404 Not Found
+2026-01-27T08:09:59.238Z INFO  [js-analyzer] Analyzing JS dependency for https://mediamagdistribution.com/docs
+2026-01-27T08:10:03.400Z INFO  [js-analyzer] Failed to analyze https://mediamagdistribution.com/docs: Failed to fetch https://mediamagdistribution.com/docs: 404 Not Found
+2026-01-27T08:10:03.400Z INFO  [js-analyzer] Multi-page analysis complete for https://mediamagdistribution.com {"pagesAnalyzed":2,"overallJsScore":50,"jsRequiredDetected":false,"hasBlankPages":false,"worstPageUrl":"https://mediamagdistribution.com"}
+2026-01-27T08:10:03.686Z INFO  [robots-checker] robots.txt analysis for https://mediamagdistribution.com {"overallStatus":"allowed","blocked":0,"allowed":0}
+[==                  ] 14% - Analyzing oqtave2026-01-27T08:10:03.766Z INFO  [js-analyzer] Starting multi-page analysis for https://oqtave.fr
+2026-01-27T08:10:04.101Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://oqtave.fr
+2026-01-27T08:10:04.101Z INFO  [js-analyzer] Analyzing JS dependency for https://oqtave.fr
+2026-01-27T08:13:21.950Z INFO  [js-analyzer] JS Score for https://oqtave.fr: 2% {"rawLength":1487,"renderedLength":1513,"jsRequiredMessage":false,"blankWithoutJs":false}
+2026-01-27T08:13:21.966Z INFO  [js-analyzer] Analyzed https://oqtave.fr: JS Score 2%
+2026-01-27T08:13:21.966Z INFO  [js-analyzer] Analyzing JS dependency for https://oqtave.fr/
+2026-01-27T08:13:25.966Z INFO  [js-analyzer] Failed to analyze https://oqtave.fr/: fetch failed
+2026-01-27T08:13:25.966Z INFO  [js-analyzer] Analyzing JS dependency for https://oqtave.fr/blog
+2026-01-27T08:13:29.163Z INFO  [js-analyzer] Failed to analyze https://oqtave.fr/blog: fetch failed
+2026-01-27T08:13:29.164Z INFO  [js-analyzer] Analyzing JS dependency for https://oqtave.fr/resources
+2026-01-27T08:13:32.429Z INFO  [js-analyzer] Failed to analyze https://oqtave.fr/resources: fetch failed
+2026-01-27T08:13:32.429Z INFO  [js-analyzer] Analyzing JS dependency for https://oqtave.fr/docs
+2026-01-27T08:13:35.623Z INFO  [js-analyzer] Failed to analyze https://oqtave.fr/docs: fetch failed
+2026-01-27T08:13:35.624Z INFO  [js-analyzer] Multi-page analysis complete for https://oqtave.fr {"pagesAnalyzed":1,"overallJsScore":2,"jsRequiredDetected":false,"hasBlankPages":false,"worstPageUrl":"https://oqtave.fr"}
+2026-01-27T08:13:35.650Z ERROR [robots-checker] Failed to check robots.txt for https://oqtave.fr {"error":"TypeError: fetch failed"}
+[===                 ] 16% - Analyzing Ask Mona2026-01-27T08:13:35.742Z INFO  [js-analyzer] Starting multi-page analysis for http://askmona.fr
+2026-01-27T08:13:35.752Z INFO  [js-analyzer] Discovered 5 pages to analyze for http://askmona.fr
+2026-01-27T08:13:35.752Z INFO  [js-analyzer] Analyzing JS dependency for http://askmona.fr
+2026-01-27T08:13:40.208Z INFO  [js-analyzer] Failed to analyze http://askmona.fr: fetch failed
+2026-01-27T08:13:40.208Z INFO  [js-analyzer] Analyzing JS dependency for http://askmona.fr/
+2026-01-27T08:13:43.307Z INFO  [js-analyzer] Failed to analyze http://askmona.fr/: fetch failed
+2026-01-27T08:13:43.307Z INFO  [js-analyzer] Analyzing JS dependency for http://askmona.fr/blog
+2026-01-27T08:13:46.428Z INFO  [js-analyzer] Failed to analyze http://askmona.fr/blog: fetch failed
+2026-01-27T08:13:46.428Z INFO  [js-analyzer] Analyzing JS dependency for http://askmona.fr/resources
+2026-01-27T08:15:02.883Z INFO  [js-analyzer] Failed to analyze http://askmona.fr/resources: fetch failed
+2026-01-27T08:15:02.883Z INFO  [js-analyzer] Analyzing JS dependency for http://askmona.fr/docs
+2026-01-27T08:15:08.162Z INFO  [js-analyzer] Failed to analyze http://askmona.fr/docs: fetch failed
+2026-01-27T08:15:08.195Z INFO  [js-analyzer] Multi-page analysis complete for http://askmona.fr {"pagesAnalyzed":0,"overallJsScore":0,"jsRequiredDetected":false,"hasBlankPages":false}
+2026-01-27T08:15:08.201Z ERROR [robots-checker] Failed to check robots.txt for http://askmona.fr {"error":"TypeError: fetch failed"}
+[===                 ] 18% - Analyzing Zefir2026-01-27T08:15:08.225Z INFO  [js-analyzer] Starting multi-page analysis for https://www.zefir.fr
+2026-01-27T08:15:08.228Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://www.zefir.fr
+2026-01-27T08:15:08.228Z INFO  [js-analyzer] Analyzing JS dependency for https://www.zefir.fr
+2026-01-27T08:31:37.163Z INFO  [js-analyzer] Failed to analyze https://www.zefir.fr: fetch failed
+2026-01-27T08:31:37.163Z INFO  [js-analyzer] Analyzing JS dependency for https://www.zefir.fr/
+2026-01-27T08:31:40.195Z INFO  [js-analyzer] Failed to analyze https://www.zefir.fr/: fetch failed
+2026-01-27T08:31:40.195Z INFO  [js-analyzer] Analyzing JS dependency for https://www.zefir.fr/blog
+2026-01-27T08:33:25.656Z INFO  [js-analyzer] Failed to analyze https://www.zefir.fr/blog: fetch failed
+2026-01-27T08:33:25.656Z INFO  [js-analyzer] Analyzing JS dependency for https://www.zefir.fr/resources
+2026-01-27T08:33:33.500Z INFO  [js-analyzer] Failed to analyze https://www.zefir.fr/resources: Failed to fetch https://www.zefir.fr/resources: 404 Not Found
+2026-01-27T08:33:33.500Z INFO  [js-analyzer] Analyzing JS dependency for https://www.zefir.fr/docs
+2026-01-27T08:33:39.220Z INFO  [js-analyzer] Failed to analyze https://www.zefir.fr/docs: Failed to fetch https://www.zefir.fr/docs: 404 Not Found
+2026-01-27T08:33:39.221Z INFO  [js-analyzer] Multi-page analysis complete for https://www.zefir.fr {"pagesAnalyzed":0,"overallJsScore":0,"jsRequiredDetected":false,"hasBlankPages":false}
+2026-01-27T08:33:39.353Z INFO  [robots-checker] robots.txt analysis for https://www.zefir.fr {"overallStatus":"allowed","blocked":0,"allowed":0}
+[====                ] 20% - Analyzing Teamstarter2026-01-27T08:33:39.572Z INFO  [js-analyzer] Starting multi-page analysis for https://teamstarter.co
+2026-01-27T08:33:39.675Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://teamstarter.co
+2026-01-27T08:33:39.675Z INFO  [js-analyzer] Analyzing JS dependency for https://teamstarter.co
+2026-01-27T08:33:43.230Z INFO  [js-analyzer] Failed to analyze https://teamstarter.co: fetch failed
+2026-01-27T08:33:43.231Z INFO  [js-analyzer] Analyzing JS dependency for https://teamstarter.co/
+2026-01-27T08:33:46.550Z INFO  [js-analyzer] Failed to analyze https://teamstarter.co/: fetch failed
+2026-01-27T08:33:46.552Z INFO  [js-analyzer] Analyzing JS dependency for https://teamstarter.co/blog
+2026-01-27T08:33:49.904Z INFO  [js-analyzer] Failed to analyze https://teamstarter.co/blog: fetch failed
+2026-01-27T08:33:49.904Z INFO  [js-analyzer] Analyzing JS dependency for https://teamstarter.co/resources
+2026-01-27T08:33:53.163Z INFO  [js-analyzer] Failed to analyze https://teamstarter.co/resources: fetch failed
+2026-01-27T08:33:53.164Z INFO  [js-analyzer] Analyzing JS dependency for https://teamstarter.co/docs
+2026-01-27T08:33:56.421Z INFO  [js-analyzer] Failed to analyze https://teamstarter.co/docs: fetch failed
+2026-01-27T08:33:56.422Z INFO  [js-analyzer] Multi-page analysis complete for https://teamstarter.co {"pagesAnalyzed":0,"overallJsScore":0,"jsRequiredDetected":false,"hasBlankPages":false}
+2026-01-27T08:33:56.444Z ERROR [robots-checker] Failed to check robots.txt for https://teamstarter.co {"error":"TypeError: fetch failed"}
+[====                ] 22% - Analyzing Volta2026-01-27T08:33:56.508Z INFO  [js-analyzer] Starting multi-page analysis for https://voltasoftware.com
+2026-01-27T08:33:57.080Z INFO  [js-analyzer] Discovered 5 pages to analyze for https://voltasoftware.com
+2026-01-27T08:33:57.082Z INFO  [js-analyzer] Analyzing JS dependency for https://voltasoftware.com

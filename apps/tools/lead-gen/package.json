@@ -1,0 +1,36 @@
+{
+  "name": "@crawlready/lead-gen",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lead generation pipeline for CrawlReady co-creators",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": {
+    "lead-gen": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "scrape-wttj": "tsx src/index.ts scrape-wttj",
+    "scrape-teams": "tsx src/index.ts scrape-teams",
+    "analyze": "tsx src/index.ts analyze",
+    "analyze-single": "tsx src/index.ts analyze-single",
+    "filter": "tsx src/index.ts filter",
+    "generate-emails": "tsx src/index.ts generate-emails",
+    "verify-email": "tsx src/index.ts verify-email",
+    "quick-verify": "tsx src/index.ts quick-verify",
+    "lint": "eslint src --ext .ts",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "commander": "^12.1.0",
+    "dotenv": "^17.2.3",
+    "handlebars": "^4.7.8",
+    "puppeteer": "^23.11.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -16,7 +16,7 @@ type Site = {
   statusReason: string | null;
   frameworkDetected: string | null;
   frameworkVersion: string | null;
-  settings: string;
+  settings: string | Record<string, unknown>;
   rendersCount: number;
   rendersThisMonth: number;
   lastRenderAt: string | null;
@@ -188,7 +188,18 @@ export default function SiteDetailPage() {
   const { site, apiKey, statusHistory } = data;
   const status = statusConfig[site.status];
   const StatusIcon = status.icon;
-  const settings = JSON.parse(site.settings || '{}');
+
+  // Parse settings safely - handle both string and object cases
+  let settings: Record<string, unknown> = {};
+  try {
+    if (typeof site.settings === 'string') {
+      settings = JSON.parse(site.settings || '{}');
+    } else if (typeof site.settings === 'object' && site.settings !== null) {
+      settings = site.settings as Record<string, unknown>;
+    }
+  } catch {
+    settings = {};
+  }
 
   const timeAgo = (date: string | null) => {
     if (!date) {
@@ -301,19 +312,19 @@ export default function SiteDetailPage() {
               <div className="flex justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Cache TTL</span>
                 <span className="text-gray-900 dark:text-white">
-                  {(settings.cacheTtl || 21600) / 3600}
+                  {(Number(settings.cacheTtl) || 21600) / 3600}
                   {' '}
                   hours
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Enabled Crawlers</span>
-                <span className="text-gray-900 dark:text-white">{settings.enabledCrawlers?.length || 0}</span>
+                <span className="text-gray-900 dark:text-white">{Array.isArray(settings.enabledCrawlers) ? settings.enabledCrawlers.length : 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Render Timeout</span>
                 <span className="text-gray-900 dark:text-white">
-                  {(settings.rendering?.timeout || 30000) / 1000}
+                  {(Number((settings.rendering as Record<string, unknown> | undefined)?.timeout) || 30000) / 1000}
                   s
                 </span>
               </div>
