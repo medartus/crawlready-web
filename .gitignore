@@ -78,3 +78,7 @@ supabase/
 
 # Worker specific
 /apps/workers/*/.puppeteer
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads-credential-key
