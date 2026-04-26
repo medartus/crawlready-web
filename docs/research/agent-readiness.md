@@ -29,8 +29,9 @@ The AI landscape has moved beyond crawlers reading pages to agents acting on pag
 | Protocol | User-Agent + HTTP | MCP, ACP, UCP, content negotiation |
 | Value to site owner | Citation in AI search | Direct revenue from agent transactions |
 | What they need | Clean Markdown / HTML | Structured data, pricing, APIs, actions |
-| Detection | UA string + IP range | `Accept: text/markdown` header, MCP protocol |
+| Detection | UA string + IP range | `Accept: text/markdown` header, MCP protocol, OAuth, Content Signals |
 | Market size | $1–1.5B (GEO) | $7.6B (agentic AI) |
+| Standards | robots.txt, sitemap.xml | robots.txt + Content Signals, MCP Server Card, API Catalog (RFC 9727), Agent Skills, WebMCP, OAuth discovery (RFC 8414/9728), Web Bot Auth |
 
 ---
 
@@ -38,9 +39,30 @@ The AI landscape has moved beyond crawlers reading pages to agents acting on pag
 
 The Agent Readiness Score (0–100) measures how well a website can be consumed and acted upon by AI agents. It complements the Crawlability Score — a site can score high on crawlability (content is visible) but low on agent readiness (content is not actionable).
 
-### Score Components (Phase 0 — Lightweight)
+### Emerging Agent Standards Landscape (April 2026 — Cloudflare Agent Readiness Review)
 
-For Phase 0, add 2–3 checks that require no additional crawling infrastructure beyond what the Crawlability Score already uses. These checks analyze the HTML/Markdown already fetched by Firecrawl.
+Cloudflare's isitagentready.com tool (launched April 17, 2026) and Radar AI Insights dataset established baseline adoption rates across the top 200K domains. This data informs which standards CrawlReady should check:
+
+| Standard | Adoption (200K domains) | CrawlReady Phase | Rationale |
+|---|---|---|---|
+| robots.txt | 78% | **Phase 0** (A4) | Near-universal; check for AI-specific rules |
+| Content Signals (`Content-Signal:` in robots.txt) | 4% | **Phase 0** (A4) | Growing standard; zero HTTP cost (parsed from robots.txt) |
+| Markdown content negotiation | 3.9% | **Phase 0** (A2) | Already in A2 |
+| Sitemap.xml | ~60-70% estimated | **Phase 0** (A4) | Fundamental discoverability; 1 HEAD request |
+| Link Headers (RFC 8288) | Very low | **Phase 0** (A4) | Zero HTTP cost (parsed from existing response headers) |
+| MCP Server Card (`/.well-known/mcp/server-card.json`) | <15 sites | **Phase 0** (A4) | 1 HEAD request; rewards early adopters |
+| API Catalog (RFC 9727, `/.well-known/api-catalog`) | <15 sites | **Phase 0** (A4) | 1 HEAD request; relevant for API-heavy ICP |
+| Agent Skills (`/.well-known/agent-skills/index.json`) | Near zero | Phase 1 | Too early; revisit when adoption grows |
+| WebMCP | Near zero | Phase 1+ | Chrome-specific proposal; too early |
+| Web Bot Auth (`/.well-known/http-message-signatures-directory`) | Near zero | Phase 1+ | Relevant for sites running agents, not CrawlReady's ICP |
+| OAuth discovery (RFC 8414/9728) | Low but growing | Phase 1 | Relevant but adds scope; deferred |
+| x402, UCP, ACP (commerce) | Near zero | Phase 2+ | Cloudflare doesn't score these either |
+
+Source: `blog.cloudflare.com/agent-readiness/`, `radar.cloudflare.com/ai-insights`, `contentsignals.org/`. See `docs/research/cloudflare-agent-readiness.md` for full analysis.
+
+### Score Components (Phase 0)
+
+Phase 0 checks analyze the HTML/Markdown already fetched by the crawling provider, plus 5 additional lightweight HTTP requests (2 existing + 3 new HEAD requests added in the April 2026 Cloudflare review).
 
 **Component 1: Structured Data Completeness (0–30 points)**
 
@@ -101,9 +123,12 @@ The weighting favors actionable data (40 points) over metadata (30 points) becau
 
 The Agent Readiness Score is computed alongside the Crawlability Score during the same diagnostic scan. No additional crawling passes are required — the checks analyze the same HTML, Markdown, and HTTP responses already collected.
 
-Additional requests per scan: 2 maximum
-- One `Accept: text/markdown` probe request
-- One `/llms.txt` check
+Additional requests per scan: 5 maximum
+- One `Accept: text/markdown` probe request (existing)
+- One `/llms.txt` check (existing)
+- One `HEAD /sitemap.xml` (new, April 2026 Cloudflare review)
+- One `HEAD /.well-known/mcp/server-card.json` (new, April 2026 Cloudflare review)
+- One `HEAD /.well-known/api-catalog` (new, April 2026 Cloudflare review)
 
 Display: The score page shows three scores:
 ```
@@ -120,17 +145,26 @@ The Crawlability Score remains the primary Phase 0 hook (strongest CSR aha momen
 
 As the product matures, the Agent Readiness Score expands to include:
 
-- **MCP endpoint discovery** (Phase 1): Does the site expose an MCP server? Is it listed in registries?
-- **Commerce protocol compatibility** (Phase 2+): Does the site support ACP or UCP for agent transactions?
-- **Agent authentication readiness** (Phase 3+): Does the site support KYA (Know Your Agent) frameworks?
+- **MCP Server Card** (moved to Phase 0, April 2026): Basic presence check at `/.well-known/mcp/server-card.json` is now in A4 (Phase 0). Phase 1 adds validation of the JSON content (tools listed, transport type, authentication config).
+- **OAuth discovery** (Phase 1): Check `/.well-known/oauth-authorization-server` and `/.well-known/openid-configuration`. Deferred from Phase 0 to avoid scope creep but relevant for agent authentication.
+- **Agent Skills discovery** (Phase 1): Check `/.well-known/agent-skills/index.json`. Currently <15 sites support this (Cloudflare Radar, April 2026). Revisit when adoption grows.
+- **Commerce protocol compatibility** (Phase 2+): Does the site support ACP or UCP for agent transactions? Cloudflare tracks these as informational (not scored) as of April 2026.
+- **Agent authentication readiness** (Phase 2+): Does the site support Web Bot Auth (`/.well-known/http-message-signatures-directory`) and KYA (Know Your Agent) frameworks?
+- **WebMCP** (Phase 2+): Chrome-specific proposal for exposing MCP over web pages. Too early to score.
 
-These are tracked as future roadmap items, not Phase 0 scope.
+Adoption of these standards will be tracked using Cloudflare Radar data (updated weekly) as a benchmark for when to add new checks.
 
 ---
 
 ## Competitive Positioning
 
-No competitor in the AI optimization space (MachineContext, Mersel, HypoText, Prerender.io, DualWeb.AI, 11+ total) offers an integrated agent readiness + agent interaction assessment as part of a comprehensive crawlability diagnostic. AgentReady.tools offers a standalone "AI Readiness Score" with paid tiers ($19-79/mo), and isagentready.com provides standalone accessibility tree scanning. The GEO scoring tools (SearchScore, Orchly, ViaMetric, AI Crawler Check, AmICitable) check metadata signals but not agent-actionable data availability. CrawlReady's unified diagnostic (AI Readiness Score headline + three sub-scores + EU checklist) provides a differentiated integrated view no competitor offers.
+No competitor in the AI optimization space (MachineContext, Mersel, HypoText, Prerender.io, DualWeb.AI, 11+ total) offers an integrated agent readiness + agent interaction assessment as part of a comprehensive crawlability diagnostic.
+
+**Cloudflare isitagentready.com (April 2026):** Cloudflare launched a free agent readiness scanner checking 5 categories of standards adoption (Discoverability, Content Accessibility, Bot Access Control, Protocol Discovery, Commerce). It also exposes an MCP server for programmatic scanning and is integrated into Cloudflare's URL Scanner API. **Key distinction:** Cloudflare checks *standards adoption* (does your site speak the protocols?). CrawlReady checks *content quality for AI* (can AI actually understand your content?). A site can pass every Cloudflare check but score 0 on CrawlReady because its content is JS-hidden. These are complementary dimensions. CrawlReady absorbs Cloudflare's standards checks (via the new A4 category) to become the superset tool.
+
+AgentReady.tools offers a standalone "AI Readiness Score" with paid tiers ($19-79/mo). The GEO scoring tools (SearchScore, Orchly, ViaMetric, AI Crawler Check, AmICitable) check metadata signals but not agent-actionable data availability.
+
+CrawlReady's unified diagnostic (AI Readiness Score headline + three sub-scores with A4 standards adoption + EU checklist + visual diff + permanent shareable URLs) provides a differentiated integrated view no competitor offers.
 
 ---
 
@@ -145,9 +179,12 @@ No competitor in the AI optimization space (MachineContext, Mersel, HypoText, Pr
 
 ## Decisions
 
-- **Phase 0 scope:** Add 3 agent-readiness checks (structured data, content negotiation, machine-actionable data) to the diagnostic. These use existing crawl data plus 2 lightweight HTTP requests.
+- **Phase 0 scope (updated April 2026 Cloudflare review):** Agent Readiness sub-score now has 4 categories: A1 Structured Data (25pts), A2 Content Negotiation (25pts), A3 Machine-Actionable Data (30pts), A4 Standards Adoption (20pts). Total remains 100. Uses existing crawl data plus 5 lightweight HTTP requests (up from 2).
 - **Score display:** Show Agent Readiness Score and Agent Interaction Score as secondary metrics alongside the primary Crawlability Score. All three scores displayed on a single score page. Do not split them into separate products.
 - **Messaging:** Phase 0 marketing leads with the Crawlability Score (stronger CSR hook). Agent Readiness Score is the expansion story for Phase 1+ and for SSR sites where the crawlability hook is weaker.
-- **Agent Readiness Score components deferred to Phase 1+:** MCP endpoint discovery, commerce protocol compatibility, agent authentication readiness.
+- **A4 Standards Adoption (April 2026):** New category added after analyzing Cloudflare's isitagentready.com. Six checks (robots.txt AI rules, Content Signals, sitemap.xml, Link Headers, MCP Server Card, API Catalog) measuring emerging standards. See `docs/research/cloudflare-agent-readiness.md`.
+- **MCP Server Card moved to Phase 0:** Basic presence check (HEAD request) is now in A4. Full JSON validation deferred to Phase 1.
+- **Agent Readiness Score components deferred to Phase 1+:** OAuth discovery, Agent Skills, commerce protocols, Web Bot Auth, WebMCP.
+- **Cloudflare Radar as benchmark:** Use Cloudflare's weekly Radar data on standards adoption to inform when to add new checks and to benchmark CrawlReady scan results against global averages.
 
 Sources: `digitalapplied.com/blog/agentic-ai-statistics-2026-definitive-collection-150-data-points`, `nevermined.ai/blog/model-context-protocol-adoption-statistics`, `nerq.ai/report/q1-2026`, `skillsindex.dev/blog/state-of-ai-agent-tools-february-2026`, `openai.com/blog/buy-it-in-chatgpt`, `ucpchecker.com/blog/first-autonomous-ai-agent-purchase-ucp`, `wearepresta.com/ai-shopping-agents-the-strategic-guide-to-agentic-commerce-in-2026/`

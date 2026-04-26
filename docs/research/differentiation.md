@@ -163,20 +163,25 @@ CrawlReady needs a differentiator that is:
 
 ## How This Competes
 
-| Dimension | MachineContext | Mersel | HypoText | Prerender | GenRankEngine / iGEO / Clemelopy | Free tools (SearchScore, etc.) | **CrawlReady** |
-|---|---|---|---|---|---|---|---|
-| Core mechanic | Edge proxy + Markdown | Edge proxy + Markdown | Edge proxy + Markdown | Pre-rendering for AI bots | GEO monitoring + fixes | GEO signal checking | Edge proxy + Markdown |
-| Source code | Proprietary | Proprietary | Proprietary | Proprietary | Proprietary | Proprietary | **Open-source (AGPL, Phase 2)** |
-| Self-hostable | No | No | No | No | No | No | **Yes (Phase 2)** |
-| Content parity proof | No | No | No | No | No | No | **Yes (public endpoint + diff)** |
-| Content negotiation (`Accept: text/markdown`) | No | No | No | No | No | N/A | **Yes (planned)** |
-| Vertical templates | No | No | No | No | No | No | **Yes (dev docs, Phase 3)** |
-| Free diagnostic tool | URL test only | No | No | No | Partial (monitoring) | GEO signal score + multi-dimensional readiness (6+ free tools) | **Visual diff + scoring + gap analysis** |
-| Permanent shareable score URLs | No | No | No | No | No | No (ephemeral results) | **Yes (HubSpot model)** |
+| Dimension | MachineContext | Mersel | HypoText | Prerender | GenRankEngine / iGEO / Clemelopy | Free tools (SearchScore, etc.) | **CF isitagentready** | **CrawlReady** |
+|---|---|---|---|---|---|---|---|---|
+| Core mechanic | Edge proxy + Markdown | Edge proxy + Markdown | Edge proxy + Markdown | Pre-rendering for AI bots | GEO monitoring + fixes | GEO signal checking | Standards adoption scanner | Edge proxy + Markdown |
+| Source code | Proprietary | Proprietary | Proprietary | Proprietary | Proprietary | Proprietary | Free (no source) | **Open-source (AGPL, Phase 2)** |
+| Self-hostable | No | No | No | No | No | No | No | **Yes (Phase 2)** |
+| Content parity proof | No | No | No | No | No | No | No | **Yes (public endpoint + diff)** |
+| Content negotiation (`Accept: text/markdown`) | No | No | No | No | No | N/A | Checks (binary) | **Yes (planned)** |
+| Content quality / noise analysis | No | No | No | No | No | No | **No** | **Yes** |
+| Standards adoption checks (MCP, API Catalog, Content Signals) | No | No | No | No | No | No | **Yes (comprehensive)** | **Yes (A4, absorbed from CF)** |
+| Vertical templates | No | No | No | No | No | No | No | **Yes (dev docs, Phase 3)** |
+| Free diagnostic tool | URL test only | No | No | No | Partial (monitoring) | GEO signal score + multi-dimensional readiness (6+ free tools) | Standards pass/fail + fix prompts | **Visual diff + scoring + gap analysis** |
+| Permanent shareable score URLs | No | No | No | No | No | No (ephemeral results) | No (ephemeral) | **Yes (HubSpot model)** |
+| MCP server | No | No | No | No | No | No | **Yes** (scan_site) | **Yes (Phase 1)** |
 
 **Note (April 7, 2026 critical analysis):** AgentReady.tools already ships an "AI Readiness Score" with paid tiers ($19-79/mo), 17 checks across 5 categories. AmICitable.com scores 20+ signals across 4 weighted dimensions. The free diagnostic landscape is now crowded. CrawlReady's visual diff (browser render vs. AI crawler HTML view) and permanent shareable score URLs remain genuinely unique — no competitor offers either.
 
-**Note on free GEO scoring tools (updated April 2026):** SearchScore.io, Orchly.ai, ViaMetric.app, AI Crawler Check, AmICitable, AgentReady.tools, AgentReady.site, AI PeekABoo, and agent-ready.org all offer free AI visibility scoring — at least 9 tools in total. AgentReady.tools has paid tiers at $19-79/mo. However, these check GEO metadata signals (llms.txt presence, schema markup, brand authority, E-E-A-T) — they do NOT show what AI crawlers actually receive. None offer a visual diff of browser render vs. AI crawler HTML view. None generate permanent, indexable, shareable score URLs. This and the visual diff (actual browser render vs. AI crawler view showing invisible content highlighted in red) remain CrawlReady's two genuinely unique diagnostic features. SearchScore's "850K+ websites" claim is inconsistent across their own site (650K/750K/850K in different sections). CrawlReady's diagnostic is a fundamentally different product: content visibility analysis, not metadata signal checking.
+**Note (April 20, 2026 Cloudflare analysis):** Cloudflare launched isitagentready.com (April 17, 2026) as a free agent readiness scanner checking standards adoption across 5 categories. It also exposes an MCP server and generates fix prompts for coding agents. **Key insight:** Cloudflare checks *standards adoption* (protocol endpoints exist?); CrawlReady checks *content quality for AI* (can AI parse your content?). These are orthogonal dimensions. CrawlReady absorbs Cloudflare's standards checks via the new A4 category to become the superset tool. Positioning line: *"Cloudflare checks if your site speaks the protocols. CrawlReady checks if AI can actually understand your content."* See `docs/research/cloudflare-agent-readiness.md` for full analysis.
+
+**Note on free GEO scoring tools (updated April 2026):** SearchScore.io, Orchly.ai, ViaMetric.app, AI Crawler Check, AmICitable, AgentReady.tools, AgentReady.site, AI PeekABoo, agent-ready.org, and now isitagentready.com (Cloudflare) all offer free AI visibility scoring — at least 10 tools in total. AgentReady.tools has paid tiers at $19-79/mo. However, these check GEO metadata signals and standards adoption (llms.txt presence, schema markup, brand authority, E-E-A-T, MCP Server Cards, Content Signals) — they do NOT show what AI crawlers actually receive. None offer a visual diff of browser render vs. AI crawler HTML view. None generate permanent, indexable, shareable score URLs. This and the visual diff (actual browser render vs. AI crawler view showing invisible content highlighted in red) remain CrawlReady's two genuinely unique diagnostic features. SearchScore's "850K+ websites" claim is inconsistent across their own site (650K/750K/850K in different sections). CrawlReady's diagnostic is a fundamentally different product: content visibility analysis, not metadata signal checking.
 
 ---
 

@@ -290,7 +290,7 @@ Note: The 7-day default TTL applies to the Starter paid tier's optimization cach
 
 ## What Differentiates This From Competitors
 
-Multiple companies now offer active AI optimization layers (MachineContext, Mersel AI, HypoText, Prerender.io, DualWeb.AI, GenRankEngine, iGEO, Clemelopy, MultiLipi, Pure.md — 11+ as of April 2026, including adjacent tools like isagentready.com). The core mechanic — user-agent detection + Markdown serving — is table stakes. CrawlReady's differentiation is not the mechanic itself but four capabilities no competitor offers:
+Multiple companies now offer active AI optimization layers (MachineContext, Mersel AI, HypoText, Prerender.io, DualWeb.AI, GenRankEngine, iGEO, Clemelopy, MultiLipi, Pure.md — 11+ as of April 2026, including adjacent tools like isagentready.com). Cloudflare launched isitagentready.com (April 17, 2026) as a free standards-adoption scanner with MCP integration — checking protocol endpoints (MCP Server Card, API Catalog, Content Signals, OAuth) rather than content quality. The core mechanic — user-agent detection + Markdown serving — is table stakes. CrawlReady's differentiation is not the mechanic itself but five capabilities no competitor offers:
 
 **1. Free diagnostic as the primary product (not a feature)**
 
@@ -318,6 +318,13 @@ Multiple companies now offer active AI optimization layers (MachineContext, Mers
 - Multi-format serving delivers the optimal format per AI client type (Markdown for text crawlers, enriched HTML with Schema for Google-Extended, original HTML with enhanced ARIA for visual agents) — not one-size-fits-all Markdown
 - MultiLipi ships Markdown + JSON-LD pass-through, but does not generate Schema where none exists on the origin
 
+**5. Content quality analysis — the dimension Cloudflare and all standards-only scanners miss (April 2026 Cloudflare review)**
+
+- Cloudflare's isitagentready.com checks *standards adoption* (does your site speak the protocols?). CrawlReady checks *content quality for AI* (can AI actually understand your content?). A site can pass every Cloudflare check and still score 0 on CrawlReady because its content is JS-hidden.
+- CrawlReady absorbs Cloudflare's standards checks via the A4 (Standards Adoption) category of the Agent Readiness sub-score — making CrawlReady the superset tool.
+- Positioning: *"Cloudflare checks if your site speaks the protocols. CrawlReady checks if AI can actually understand your content."*
+- See `docs/research/cloudflare-agent-readiness.md` for full competitive analysis.
+
 ---
 
 ## Agent Readiness Score (Innovation Addition — April 2026)
@@ -326,29 +333,40 @@ The AI landscape has moved beyond crawlers reading pages to agents acting on pag
 
 ### What It Measures
 
-The Agent Readiness Score (0–100) complements the Crawlability Score. A site can score high on crawlability (content is visible) but low on agent readiness (content is not actionable). The score has three components:
+The Agent Readiness Score (0–100) complements the Crawlability Score. A site can score high on crawlability (content is visible) but low on agent readiness (content is not actionable). The score has four components (updated April 2026 after Cloudflare Agent Readiness review):
 
-**1. Structured Data Completeness (0–30 points)**
+**1. Structured Data Completeness (0–25 points)**
 
 - Schema.org JSON-LD presence and validity (Organization, Product, SoftwareApplication, APIReference, FAQPage, HowTo)
 - OpenGraph metadata completeness
 - Product/pricing data in machine-readable format vs. only in rendered text
 
-**2. Content Negotiation Readiness (0–30 points)**
+**2. Content Negotiation Readiness (0–25 points)**
 
 - Does the server respond to `Accept: text/markdown` with actual Markdown?
 - Does the site serve an `llms.txt` file?
 - Are there alternative machine-readable endpoints (API docs, JSON feeds)?
 
-**3. Machine-Actionable Data Availability (0–40 points)**
+**3. Machine-Actionable Data Availability (0–30 points)**
 
 - Are key business facts (pricing, features, contact, API endpoints) extractable without visual rendering?
 - Is there a clear information hierarchy (H1 → H2 → content) that agents can navigate programmatically?
 - Are call-to-action targets (signup URLs, API endpoints, docs links) discoverable from the page content?
 
+**4. Standards Adoption (0–20 points) — NEW (April 2026 Cloudflare review)**
+
+- Does robots.txt contain explicit rules for AI crawlers (GPTBot, ClaudeBot, etc.)?
+- Does robots.txt contain a Content Signals directive (`Content-Signal: ai-train, ai-input, search`)?
+- Does the site have a sitemap.xml?
+- Does the HTTP response include Link Headers (RFC 8288) for resource discovery?
+- Does the site expose an MCP Server Card at `/.well-known/mcp/server-card.json`?
+- Does the site expose an API Catalog (RFC 9727) at `/.well-known/api-catalog`?
+
+The A4 category was added after analyzing Cloudflare's isitagentready.com tool and Radar adoption data. It measures adoption of emerging AI agent standards using lightweight HTTP probes. See `docs/research/cloudflare-agent-readiness.md` and `docs/architecture/scoring-detail.md` for full rubrics.
+
 ### Phase 0 Implementation
 
-The Agent Readiness Score is computed alongside the Crawlability Score during the same diagnostic scan. Only 2 additional HTTP requests are needed per scan: one `Accept: text/markdown` probe and one `/llms.txt` check. All other data comes from the HTML/Markdown already fetched.
+The Agent Readiness Score is computed alongside the Crawlability Score during the same diagnostic scan. 5 additional HTTP requests are needed per scan (updated from 2, April 2026 Cloudflare review): one `Accept: text/markdown` probe, one `/llms.txt` check, and three parallel HEAD requests for sitemap.xml, MCP Server Card, and API Catalog. robots.txt and Link Headers are parsed from HTTP responses already fetched — zero additional cost.
 
 The score page displays both metrics:
 
@@ -543,6 +561,7 @@ See `docs/architecture/crawler-analytics.md` for the full feature specification 
 All technical architecture questions have been researched and resolved. See `docs/decisions/open-questions.md` for full evidence and sources.
 
 - **Bot detection:** UA + IP range verification per vendor (see verification matrix above). UA-only fallback for ClaudeBot until Anthropic publishes ranges.
+- **A4 Standards Adoption (April 2026 Cloudflare review):** New scoring category added to Agent Readiness sub-score after analyzing Cloudflare's isitagentready.com. Six checks measuring emerging AI agent standards (robots.txt AI rules, Content Signals, sitemap.xml, Link Headers, MCP Server Card, API Catalog). Points redistributed: A1(30→25), A2(30→25), A3(40→30), A4(0-20) — total remains 100. HTTP budget increased from 2 to 5 requests per scan. See `docs/architecture/scoring-detail.md`.
 - **Authenticated content:** Out of scope for Phase 0–2. Optimize public URLs only. Enterprise: self-hosted worker in customer VPC.
 - **Cache refresh:** Starter default 7-day TTL, Pro 24h, Business 12h, Enterprise 6h + webhook-triggered refresh + recache API (see cache strategy table above). No daily full-site re-crawls.
 - **Public Markdown endpoint:** Public by default (`/crawlready-preview/page-slug`) with `rel=canonical` to original URL and `X-Robots-Tag: noindex`. Core differentiator — do not hide it.

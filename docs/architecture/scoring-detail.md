@@ -130,29 +130,36 @@ Measures: Can AI agents act on your content?
 - **Rendered HTML:** JS-rendered page (same as Crawlability)
 - **Markdown probe response:** HTTP response to `Accept: text/markdown` request
 - **llms.txt response:** HTTP response to `GET /llms.txt`
+- **robots.txt response:** HTTP response to `GET /robots.txt` (same request as bot-view, may already be fetched)
+- **Sitemap probe response:** HTTP HEAD response to `GET /sitemap.xml`
+- **Well-known probes:** HTTP HEAD responses to `/.well-known/mcp/server-card.json` and `/.well-known/api-catalog`
 
 ### Checks
 
-#### A1. Structured Data Completeness (0-30 points)
+#### A1. Structured Data Completeness (0-25 points)
+
+*Reduced from 30 to 25 points (April 2026 Cloudflare review) to accommodate the new A4 Standards Adoption category.*
 
 | Check | Points | Condition |
 |---|---|---|
-| OpenGraph basics present | 5 | `og:title` AND `og:description` AND `og:image` present |
-| OpenGraph type present | 3 | `og:type` present (not just the three basics) |
-| Schema.org with key properties | 7 | JSON-LD present with ≥ 3 meaningful properties beyond `@type` and `name` |
-| Product/pricing data structured | 8 | Schema.org `Product` or `SoftwareApplication` with `offers` property, OR pricing data in `<table>` with machine-readable structure |
-| Twitter Card metadata | 3 | `twitter:card` + `twitter:title` present |
+| OpenGraph basics present | 4 | `og:title` AND `og:description` AND `og:image` present |
+| OpenGraph type present | 2 | `og:type` present (not just the three basics) |
+| Schema.org with key properties | 6 | JSON-LD present with ≥ 3 meaningful properties beyond `@type` and `name` |
+| Product/pricing data structured | 7 | Schema.org `Product` or `SoftwareApplication` with `offers` property, OR pricing data in `<table>` with machine-readable structure |
+| Twitter Card metadata | 2 | `twitter:card` + `twitter:title` present |
 | Canonical URL | 4 | `<link rel="canonical">` present with valid URL |
 
-#### A2. Content Negotiation Readiness (0-30 points)
+#### A2. Content Negotiation Readiness (0-25 points)
+
+*Reduced from 30 to 25 points (April 2026 Cloudflare review) to accommodate the new A4 Standards Adoption category.*
 
 | Check | Points | Condition |
 |---|---|---|
-| `Accept: text/markdown` returns Markdown | 15 | Server responds with `Content-Type: text/markdown` or body starts with `#` and contains Markdown syntax |
-| llms.txt present | 8 | `GET /llms.txt` returns 200 with non-empty body |
-| JSON feed or API docs link | 7 | Page contains link to `/api`, `/docs`, or `<link rel="alternate" type="application/json">` |
+| `Accept: text/markdown` returns Markdown | 12 | Server responds with `Content-Type: text/markdown` or body starts with `#` and contains Markdown syntax |
+| llms.txt present | 7 | `GET /llms.txt` returns 200 with non-empty body |
+| JSON feed or API docs link | 6 | Page contains link to `/api`, `/docs`, or `<link rel="alternate" type="application/json">` |
 
-**Implementation:** The Markdown probe and llms.txt check are the 2 additional HTTP requests per scan.
+**Implementation:** The Markdown probe and llms.txt check are 2 of the additional HTTP requests per scan (5 total for Agent Readiness — see A4 for the other 3).
 
 The Markdown probe sends:
 ```
@@ -161,21 +168,40 @@ Accept: text/markdown
 User-Agent: CrawlReady/1.0
 ```
 
-If the server responds with Markdown content (detected by Content-Type header or heuristic: starts with `#`, contains `##`, `- `, `` ``` ``), award 15 points.
+If the server responds with Markdown content (detected by Content-Type header or heuristic: starts with `#`, contains `##`, `- `, `` ``` ``), award 12 points.
 
-#### A3. Machine-Actionable Data Availability (0-40 points)
+#### A3. Machine-Actionable Data Availability (0-30 points)
+
+*Reduced from 40 to 30 points (April 2026 Cloudflare review) to accommodate the new A4 Standards Adoption category.*
 
 | Check | Points | Condition |
 |---|---|---|
-| Key facts in structured HTML | 12 | Pricing, features, or contact info present in `<table>`, `<dl>`, or Schema.org (from bot HTML, not just rendered) |
-| Clear heading hierarchy | 8 | H1 → H2 → content pattern with no more than 1 skipped level |
-| Actionable CTAs discoverable | 10 | Links with text containing "sign up", "get started", "pricing", "docs", "api", "contact" are present as `<a>` tags in bot HTML |
-| No critical data behind JS only | 10 | If rendered page has pricing/feature data, at least 50% is also present in bot HTML (uses visibility ratio from C1 applied to structured elements only) |
+| Key facts in structured HTML | 9 | Pricing, features, or contact info present in `<table>`, `<dl>`, or Schema.org (from bot HTML, not just rendered) |
+| Clear heading hierarchy | 6 | H1 → H2 → content pattern with no more than 1 skipped level |
+| Actionable CTAs discoverable | 8 | Links with text containing "sign up", "get started", "pricing", "docs", "api", "contact" are present as `<a>` tags in bot HTML |
+| No critical data behind JS only | 7 | If rendered page has pricing/feature data, at least 50% is also present in bot HTML (uses visibility ratio from C1 applied to structured elements only) |
+
+#### A4. Standards Adoption (0-20 points)
+
+*New category added April 2026 (Cloudflare Agent Readiness review). Measures adoption of emerging AI agent standards. See `docs/research/cloudflare-agent-readiness.md` for analysis.*
+
+| Check | Points | Condition |
+|---|---|---|
+| robots.txt AI bot rules | 5 | robots.txt contains at least one `User-agent` rule for an AI crawler (GPTBot, ChatGPT-User, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended, Applebot-Extended, Meta-ExternalAgent, Bytespider). Award 5 if any explicit `Allow` or `Disallow` rules exist for AI bots. Award 3 if only a generic `User-agent: *` rule exists with no AI-specific entries. Award 0 if no robots.txt or no relevant rules. |
+| Content Signals directive | 3 | robots.txt contains a `Content-Signal:` directive (per contentsignals.org spec). Must include at least one of `ai-train`, `ai-input`, or `search` parameters. Currently 4% adoption across top 200K domains (Cloudflare Radar, April 2026). |
+| Sitemap.xml presence | 4 | `HEAD /sitemap.xml` returns HTTP 200. Award 4 for 200 response with XML content-type. Award 2 for 200 response with non-XML content-type. Award 0 for 404 or error. |
+| Link Headers (RFC 8288) | 3 | HTTP response headers contain at least one `Link:` header with a discovery-relevant `rel` value (`api-catalog`, `describedby`, `service-doc`, `alternate`, `canonical`). Zero additional HTTP cost — parsed from existing response headers. |
+| MCP Server Card | 3 | `HEAD /.well-known/mcp/server-card.json` returns HTTP 200. Currently <15 sites in the top 200K support this (Cloudflare Radar, April 2026). Early adopters are rewarded. |
+| API Catalog (RFC 9727) | 2 | `HEAD /.well-known/api-catalog` returns HTTP 200. Currently <15 sites support this. Relevant for API-heavy sites (CrawlReady's ICP). |
+
+**Implementation:** robots.txt and Link Headers are parsed from HTTP responses already fetched — zero additional requests. Sitemap, MCP Server Card, and API Catalog require 3 additional HEAD requests (lightweight, parallel). Total Agent Readiness HTTP budget is 5 requests per scan (2 existing + 3 new HEAD).
+
+**Scoring note:** A typical B2B SaaS site today scores 3-8 out of 20 on A4 (has robots.txt with generic rules, has sitemap.xml, nothing else). Fully standards-compliant sites score 15-20. The low baseline creates room for improvement recommendations.
 
 ### Agent Readiness Score Total
 
 ```
-Agent Readiness = A1 + A2 + A3
+Agent Readiness = A1 + A2 + A3 + A4
 ```
 
 Range: 0-100.
@@ -265,16 +291,17 @@ Binary checklist — does NOT affect the numeric score. Displayed separately as 
 | C3. Noise ratio | 0 | Bot HTML is 99% scripts |
 | C4. Schema.org | 0 | No JSON-LD in bot HTML |
 | **Crawlability** | **0** | |
-| A1. Structured data | 5 | Has basic OG tags in `<head>` (static) |
+| A1. Structured data | 4 | Has basic OG tags in `<head>` (static) |
 | A2. Content negotiation | 0 | No Markdown response, no llms.txt |
 | A3. Machine-actionable | 0 | All data behind JS |
-| **Agent Readiness** | **5** | |
+| A4. Standards adoption | 5 | Has robots.txt with generic rules (3), has sitemap.xml (2) |
+| **Agent Readiness** | **9** | |
 | I1. Semantic HTML | 15 | React app has decent semantic elements in rendered DOM |
 | I2. Accessibility | 15 | Some aria-labels, some gaps |
 | I3. Navigation | 12 | Has nav, no skip link |
 | I4. Visual-semantic | 10 | Decent alignment, some icon-only buttons |
 | **Agent Interaction** | **52** | |
-| **AI Readiness Score** | **14** | (0×0.5 + 5×0.25 + 52×0.25 = 14.25, rounded) |
+| **AI Readiness Score** | **15** | (0×0.5 + 9×0.25 + 52×0.25 = 15.25, rounded) |
 
 Floor rule does not apply further (14 < 60 already). Note: Crawlability < 20 AND Agent Readiness < 20, so cap at 60 applies — but 14 < 60 so no effect.
 
@@ -287,25 +314,26 @@ Floor rule does not apply further (14 < 60 already). Note: Crawlability < 20 AND
 | C3. Noise ratio | 14 | Moderate noise — Next.js hydration scripts |
 | C4. Schema.org | 0 | No JSON-LD |
 | **Crawlability** | **59** | |
-| A1. Structured data | 8 | OG tags complete, no Schema.org |
+| A1. Structured data | 6 | OG tags complete, no Schema.org |
 | A2. Content negotiation | 0 | No Markdown response, no llms.txt |
-| A3. Machine-actionable | 18 | Pricing in HTML table, good hierarchy, CTAs visible |
-| **Agent Readiness** | **26** | |
+| A3. Machine-actionable | 14 | Pricing in HTML table, good hierarchy, CTAs visible |
+| A4. Standards adoption | 8 | Has robots.txt with AI bot rules (5), has sitemap.xml (3) |
+| **Agent Readiness** | **28** | |
 | I1. Semantic HTML | 22 | Good semantic usage, minor gaps |
 | I2. Accessibility | 22 | Most elements labeled, a few icon-only buttons |
 | I3. Navigation | 20 | Good nav structure, no skip link |
 | I4. Visual-semantic | 16 | Good alignment, image alts mostly present |
 | **Agent Interaction** | **80** | |
-| **AI Readiness Score** | **56** | (59×0.5 + 26×0.25 + 80×0.25 = 56, rounded) |
+| **AI Readiness Score** | **57** | (59×0.5 + 28×0.25 + 80×0.25 = 56.5, rounded) |
 
 ### Example 3: Fully Optimized Site
 
 | Check | Score | Reason |
 |---|---|---|
 | **Crawlability** | **92** | Near-perfect visibility, clean structure, rich Schema |
-| **Agent Readiness** | **85** | Full OG, rich Schema, Markdown response, llms.txt |
+| **Agent Readiness** | **88** | Full OG, rich Schema, Markdown response, llms.txt, AI bot rules, Content Signals, sitemap, MCP server card |
 | **Agent Interaction** | **88** | Strong semantics, full accessibility, good nav |
-| **AI Readiness Score** | **89** | (92×0.5 + 85×0.25 + 88×0.25 = 89.25, rounded) |
+| **AI Readiness Score** | **90** | (92×0.5 + 88×0.25 + 88×0.25 = 90, rounded) |
 
 ---
 
@@ -324,9 +352,12 @@ Floor rule does not apply further (14 < 60 already). Note: Crawlability < 20 AND
 
 ## Scoring Version
 
-Every scan stores a `scoring_version` field (integer). The current version is **1**.
+Every scan stores a `scoring_version` field (integer). The current version is **2**.
 
-When thresholds, checks, or weights change, increment the version. Historical scans are never rescored — they retain their original version. The score page displays the version only if it differs from the current version ("Scored with algorithm v1 — rescan for latest").
+- **Version 1:** Initial scoring algorithm (A1+A2+A3 for Agent Readiness).
+- **Version 2:** Added A4 Standards Adoption category (April 2026, Cloudflare Agent Readiness review). Rebalanced A1 (30→25), A2 (30→25), A3 (40→30), added A4 (0-20). Total remains 100.
+
+When thresholds, checks, or weights change, increment the version. Historical scans are never rescored — they retain their original version. The score page displays the version only if it differs from the current version ("Scored with algorithm v2 — rescan for latest").
 
 ---
 
@@ -337,3 +368,6 @@ When thresholds, checks, or weights change, increment the version. Historical sc
 - **Text extraction:** Use a simple "extract visible text" function (strip tags, normalize whitespace). Do not use LLM-based extraction — too slow and expensive for scoring.
 - **Heuristic tolerance:** Agent Interaction checks (hover-only content, infinite scroll) are heuristic. Award benefit of the doubt — deduct only when patterns are clearly detected.
 - **Crawling provider independence:** Checks are defined in terms of HTML/DOM properties, not provider-specific response fields. The `CrawlProvider` abstraction feeds data; scoring code never imports a provider SDK.
+- **A4 Standards Adoption (April 2026 Cloudflare review):** New category added to Agent Readiness sub-score. Six checks measuring adoption of emerging AI agent standards. Points redistributed from A1/A2/A3 to keep total at 100. See `docs/research/cloudflare-agent-readiness.md` for the competitive analysis that motivated this change.
+- **HTTP request budget:** Agent Readiness now uses 5 additional HTTP requests per scan (up from 2). Three new HEAD requests (sitemap.xml, MCP server card, API catalog) run in parallel. Total scan latency impact: <500ms.
+- **OAuth discovery deferred:** Considered for A4 but deferred to Phase 1 to avoid scope creep. The check (`HEAD /.well-known/oauth-authorization-server`) is relevant but adds a 6th HTTP request and targets a narrower ICP segment.

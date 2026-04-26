@@ -131,7 +131,7 @@ These companies entered the market recently and were not in the original competi
 - Weakness: Cache-only model, no diagnostic, no scoring, no Schema generation, different market positioning (infrastructure vs. customer-facing product)
 - Source: `pure.md`
 
-**Market velocity note (updated):** Six new tools appeared across two research sessions that were not in the original April 2026 research (GenRankEngine, iGEO, Clemelopy, MultiLipi, Pure.md, isagentready.com). This confirms the market is growing rapidly and new entrants are arriving monthly. Speed of execution matters more than plan completeness.
+**Market velocity note (updated April 20, 2026):** Seven new tools appeared across three research sessions that were not in the original April 2026 research (GenRankEngine, iGEO, Clemelopy, MultiLipi, Pure.md, isagentready.com, isitagentready.com/Cloudflare). This confirms the market is growing rapidly and new entrants are arriving monthly. Speed of execution matters more than plan completeness.
 
 ### npm Ecosystem Entrants (Developer-First)
 
@@ -221,27 +221,29 @@ These companies have millions of existing customers and are adding GEO monitorin
 
 ## The Real Competitive Map
 
-| Capability | MachineContext | Mersel | HypoText | Prerender | DualWeb | npm packages | Profound/Peec/Evertune | **CrawlReady** |
-|---|---|---|---|---|---|---|---|---|
-| Serve AI-optimized content | ✓ | ✓ | ✓ | ✓ | ✓ | Partial | — | ✓ |
-| Fix JS-rendering invisibility | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | ✓ |
-| Content negotiation (`Accept: text/markdown`) | — | — | — | — | — | — | — | **✓** |
-| Monitor AI citations | — | ✓ | — | — | — | — | ✓ | ✓ (Phase 3) |
-| Free crawlability diagnostic (visual diff) | — | — | — | — | — | — | — | **✓** |
-| **Agent Readiness Score** | — | — | — | — | — | — | — | **✓** |
-| Public transparency endpoint | — | — | — | — | — | — | — | **✓** |
-| Content parity diff engine | — | — | — | — | — | — | — | **✓** |
-| EU AI Act compliance framing | — | — | — | — | — | — | — | **✓** |
-| Self-hostable / open-source (AGPL) | — | — | — | — | — | Partial (MIT) | — | **Yes** |
-| MCP server for IDE integration | — | — | — | — | — | — | — | **✓ (Phase 1)** |
-| Docusaurus / docs vertical plugin | — | — | — | — | — | — | — | **✓ (Phase 1)** |
-| Monitoring tool integration (fix layer) | — | — | — | — | — | — | — | **✓ (Phase 1.5)** |
-| Zero-code setup | ✓ | ✓ | ✓ | — | — | — | — | ✓ |
-| npm middleware package | — | — | — | — | — | ✓ | — | **✓** |
-| AI Crawler Analytics | ✓ (edge-level) | — | — | — | — | — | — | **✓** |
-| **Dynamic Schema.org generation** | ✓ (auto-generates) | — | — | — | — | — | — | **✓ (Phase 1-2)** |
-| **Multi-format serving (Markdown + enriched HTML)** | — | Partial (MultiLipi) | — | — | — | — | — | **✓ (Phase 1-2)** |
-| Self-serve pricing | ✓ | ✓ | ✓ | ✓ | — | Free/OSS | — | ✓ |
+| Capability | MachineContext | Mersel | HypoText | Prerender | DualWeb | npm packages | Profound/Peec/Evertune | **CF isitagentready** | **CrawlReady** |
+|---|---|---|---|---|---|---|---|---|---|
+| Serve AI-optimized content | ✓ | ✓ | ✓ | ✓ | ✓ | Partial | — | — | ✓ |
+| Fix JS-rendering invisibility | ✓ | ✓ | ✓ | ✓ | ✓ | — | — | — | ✓ |
+| Content negotiation (`Accept: text/markdown`) | — | — | — | — | — | — | — | ✓ (checks) | **✓** |
+| Monitor AI citations | — | ✓ | — | — | — | — | ✓ | — | ✓ (Phase 3) |
+| Free crawlability diagnostic (visual diff) | — | — | — | — | — | — | — | — | **✓** |
+| **Agent Readiness Score** | — | — | — | — | — | — | — | ✓ (standards-only) | **✓ (standards + content quality)** |
+| Standards adoption checks (MCP, API Catalog, Content Signals) | — | — | — | — | — | — | — | **✓** | **✓ (A4)** |
+| Content quality / noise analysis | — | — | — | — | — | — | — | — | **✓** |
+| Public transparency endpoint | — | — | — | — | — | — | — | — | **✓** |
+| Content parity diff engine | — | — | — | — | — | — | — | — | **✓** |
+| EU AI Act compliance framing | — | — | — | — | — | — | — | — | **✓** |
+| Self-hostable / open-source (AGPL) | — | — | — | — | — | Partial (MIT) | — | — | **Yes** |
+| MCP server for IDE integration | — | — | — | — | — | — | — | **✓** (scan_site tool) | **✓ (Phase 1)** |
+| Docusaurus / docs vertical plugin | — | — | — | — | — | — | — | — | **✓ (Phase 1)** |
+| Monitoring tool integration (fix layer) | — | — | — | — | — | — | — | — | **✓ (Phase 1.5)** |
+| Zero-code setup | ✓ | ✓ | ✓ | — | — | — | — | ✓ | ✓ |
+| npm middleware package | — | — | — | — | — | ✓ | — | — | **✓** |
+| AI Crawler Analytics | ✓ (edge-level) | — | — | — | — | — | — | ✓ (Radar data) | **✓** |
+| **Dynamic Schema.org generation** | ✓ (auto-generates) | — | — | — | — | — | — | — | **✓ (Phase 1-2)** |
+| **Multi-format serving (Markdown + enriched HTML)** | — | Partial (MultiLipi) | — | — | — | — | — | — | **✓ (Phase 1-2)** |
+| Self-serve pricing | ✓ | ✓ | ✓ | ✓ | — | Free/OSS | — | Free | ✓ |
 
 **Updated April 7, 2026:** MachineContext now offers edge-level analytics tracking AI crawler visits and automatic Schema.org JSON-LD enrichment. The 'no competitor' claims for these capabilities no longer hold. CrawlReady's differentiation must be reframed around the **compound distribution engine** (npm + MCP + badge + GitHub Action + Docusaurus plugin — no competitor has multi-channel) and **public shareable score URLs** (genuinely unique).
 
@@ -268,42 +270,72 @@ These companies have millions of existing customers and are adding GEO monitorin
 
 ## Platform Threat: Cloudflare
 
-Cloudflare deserves its own section because it has already shipped the infrastructure for AI-optimized content delivery.
+Cloudflare deserves its own section because it has shipped both the infrastructure for AI-optimized content delivery AND a free agent readiness scoring tool.
 
 **What Cloudflare has shipped (as of April 2026):**
 - **Markdown for Agents (February 2026):** Automatic HTML-to-Markdown conversion at the edge via HTTP content negotiation. When a client sends `Accept: text/markdown`, Cloudflare-enabled zones return a clean Markdown version of the page on the fly. Includes `x-markdown-tokens` response header showing estimated token count. Achieves ~80% token reduction (16,180 HTML tokens → 3,150 Markdown tokens on their own blog).
 - **Content Signals Policy:** Framework for publishers to express preferences for AI training, search indexing, and AI input use via `robots.txt` instructions.
+- **isitagentready.com (April 17, 2026 — Agents Week 2026):** Free agent readiness scanner checking 5 categories: Discoverability (robots.txt, sitemap.xml, Link Headers RFC 8288), Content Accessibility (Markdown negotiation, llms.txt), Bot Access Control (Content Signals, AI bot rules, Web Bot Auth), Protocol Discovery (MCP Server Card, Agent Skills, WebMCP, API Catalog RFC 9727, OAuth discovery), Commerce (x402, UCP, ACP — informational only, not scored). Generates copy-paste fix prompts for coding agents. Exposes an MCP server at `/.well-known/mcp.json` with a `scan_site` tool. Also publishes Agent Skills at `/.well-known/agent-skills/index.json`. See `docs/research/cloudflare-agent-readiness.md` for full analysis.
+- **Cloudflare Radar AI Insights:** New dataset tracking adoption of agent standards across top 200K domains, updated weekly. Key data: robots.txt 78%, Content Signals 4%, Markdown negotiation 3.9%, MCP Server Cards + API Catalogs <15 sites.
+- **URL Scanner integration:** Agent readiness checks added as a tab in Cloudflare's URL Scanner, with API access via `agentReadiness: true` option.
 - `/crawl` endpoint: crawls entire websites with a single API call, outputs HTML/Markdown/JSON
 - AI Crawl Control: ML-based bot detection for AI crawlers
 - 20% of all web traffic flowing through their network
-- HTTP 402 "Payment Required" for AI crawler monetization
+- HTTP 402 "Payment Required" for AI crawler monetization (x402 Foundation with Coinbase)
 - Global edge network with Workers, KV, and R2
 
 **The critical adoption gap (as of April 2026):** Markdown for Agents requires AI crawlers to send the `Accept: text/markdown` header. Most do not:
 - **GPTBot (OpenAI):** Does NOT send the header in either indexing or live browsing modes
 - **PerplexityBot:** No documented use of the header
-- **Claude Code / OpenCode:** DO send the header (coding agents, not search crawlers)
+- **Claude Code / OpenCode / Cursor:** DO send the header (coding agents, not search crawlers)
+- Only 3 of 7 tested agents send the header by default (Checkly, Feb 2026)
 - No major AI search crawler has adopted the header yet
 
+**isitagentready.com vs CrawlReady — Key Distinction:**
+
+Cloudflare's tool checks **standards adoption** (does your site speak the right protocols?). CrawlReady checks **content quality for AI** (can AI actually understand your content?). A site can pass every Cloudflare check and still score 0 on CrawlReady because its content is JS-hidden, structurally noisy, or lacks rich structured data. These are complementary dimensions.
+
+| Dimension | isitagentready.com | CrawlReady |
+|---|---|---|
+| JS rendering comparison | ✔️ No | ✔️ Yes (core differentiator) |
+| Content visibility ratio | ✔️ No | ✔️ Yes |
+| Noise ratio analysis | ✔️ No | ✔️ Yes |
+| Schema.org attribute depth | ✔️ No (presence only) | ✔️ Yes (richness scoring) |
+| Standards adoption checks | ✔️ Yes (comprehensive) | ✔️ Yes (A4, absorbed from CF) |
+| Visual agent accessibility | ✔️ No | ✔️ Yes (Agent Interaction Score) |
+| Visual diff (browser vs bot) | ✔️ No | ✔️ Yes |
+| Permanent shareable score URLs | ✔️ No | ✔️ Yes |
+| EU AI Act compliance checklist | ✔️ No | ✔️ Yes |
+| MCP server | ✔️ Yes (`scan_site`) | ✔️ Yes (Phase 1, 3 tools) |
+| Fix prompts for coding agents | ✔️ Yes | Actionable recommendations |
+
+**CrawlReady's response:** Absorb Cloudflare's standards checks into A4 (Standards Adoption) category of the Agent Readiness sub-score. This makes CrawlReady the superset tool — everything isitagentready.com checks PLUS content quality analysis, visual diff, and permanent shareable URLs.
+
+**Competitive positioning line:** *"Cloudflare checks if your site speaks the protocols. CrawlReady checks if AI can actually understand your content."*
+
 **What this means for CrawlReady:**
-- The "when will Cloudflare build it" question is answered — they already did
+- The "when will Cloudflare build it" question is answered — they already did (both Markdown delivery AND scoring)
 - The remaining question is "when will AI crawlers adopt the content negotiation header" — this is a matter of when, not if
 - CrawlReady's UA-detection approach works today because bots don't send the header. Content negotiation is the standards-compliant future.
 - **CrawlReady should support both mechanisms:** UA detection (works now for all crawlers) AND respond to `Accept: text/markdown` (forward-compatible with Cloudflare's standard). This positions CrawlReady ahead of competitors who only do UA detection.
 
 **Where Cloudflare still falls short:**
-- No crawlability scoring or diagnostic
+- No JS rendering comparison or content visibility analysis
+- No content quality / noise ratio analysis
 - No content parity verification or diff engine
+- No Schema.org attribute richness scoring
+- No visual agent / accessibility tree scoring
 - No vertical-specific transformation templates
-- No public transparency endpoint
+- No public transparency endpoint for content parity
+- No permanent shareable score URLs (scores are ephemeral)
 - Generic Markdown conversion vs. purpose-built AI-optimized restructuring (semantic headings, FAQ blocks, definition paragraphs)
-- Their incentive structure still favors monetization (charge bots to crawl) over optimization (help bots crawl better)
+- Their incentive structure still favors monetization (charge bots to crawl via x402) over optimization (help bots crawl better)
 
-**Assessment (revised, April 2026):** Cloudflare has shipped the Markdown delivery mechanism. The competitive moat must be above the Markdown layer: scoring, transformation quality, vertical templates, transparency, and diff engine. When AI crawlers adopt content negotiation headers, generic Markdown serving becomes free for all Cloudflare sites. CrawlReady's value must be in what the Markdown contains and how it's structured — not in the act of serving it.
+**Assessment (revised, April 20, 2026):** Cloudflare has shipped both the Markdown delivery mechanism AND a standards-adoption scoring tool. The competitive moat must be above both layers: content quality analysis, visual diff, transformation quality, vertical templates, transparency, and diff engine. CrawlReady's value is in understanding what AI crawlers actually see and how to improve it — not just checking whether protocol endpoints exist.
 
-**Updated verification (April 2026 search):** GPTBot still does NOT send the `Accept: text/markdown` header. PerplexityBot does not either. Only Claude Code and OpenCode (coding agents, not search crawlers) send it. The adoption gap remains as of April 2026. However, Prerender.io now serves **100,000+ businesses** with **1,200+ monthly signups**, making them the most formidable established competitor in the AI optimization space — they have distribution, brand, and data that CrawlReady cannot match directly.
+**Updated verification (April 2026 search):** GPTBot still does NOT send the `Accept: text/markdown` header. PerplexityBot does not either. Only Claude Code, OpenCode, and Cursor send it. The adoption gap remains as of April 2026. However, Prerender.io now serves **100,000+ businesses** with **1,200+ monthly signups**, making them the most formidable established competitor in the AI optimization space — they have distribution, brand, and data that CrawlReady cannot match directly.
 
-Sources: `developers.cloudflare.com/fundamentals/reference/markdown-for-agents/`, `machinecontext.ai/blog/can-chatgpt-request-markdown`, `theregister.com/2026/02/13/cloudflare_markdown_for_ai_crawlers`, `blog.cloudflare.com/markdown-for-agents`
+Sources: `developers.cloudflare.com/fundamentals/reference/markdown-for-agents/`, `blog.cloudflare.com/agent-readiness/`, `isitagentready.com/`, `radar.cloudflare.com/ai-insights`, `machinecontext.ai/blog/can-chatgpt-request-markdown`, `theregister.com/2026/02/13/cloudflare_markdown_for_ai_crawlers`, `blog.cloudflare.com/markdown-for-agents`, `checklyhq.com/blog/state-of-ai-agent-content-negotation/`
 
 ---
 
@@ -490,6 +522,7 @@ All market-related questions have been researched and resolved. See `docs/decisi
 - **Prerender.io cannibalization:** High overlap on CSR story, partial on SSR optimization (they serve HTML snapshots, not structured Markdown). Differentiate on: Markdown output, transparency, free diagnostic with shareable score URLs. Do not position as "Prerender for AI." **Updated: Prerender.io now serves 100K+ businesses — direct competition is formidable.**
 - **Cloudflare native feature (UPDATED April 2026):** Cloudflare shipped "Markdown for Agents" in February 2026 — automatic HTML-to-Markdown via `Accept: text/markdown` content negotiation. AI crawlers still don't send the header (re-confirmed April 2026). CrawlReady should support both UA detection (today) and content negotiation (future). Build moat above the Markdown layer: scoring, transformation quality, vertical templates, transparency, diff engine.
 - **SSR/SSG market:** Yes, meaningful. ~80% noise reduction + ~17.3% citation improvement from structural optimization (peer-reviewed). This is the primary market by volume for Phase 1+. Phase 0 leads with CSR invisibility (stronger hook).
-- **Competitor count (UPDATED April 7, 2026):** 17+ direct and adjacent competitors. Includes multi-format review additions (MultiLipi, Pure.md, isagentready.com, GenRankEngine, iGEO, Clemelopy), npm entrant @agentmarkup/next, and free diagnostic scanners (see Free AI Diagnostic Scanners section). New entrants appearing monthly — speed of execution matters.
+- **Competitor count (UPDATED April 20, 2026):** 18+ direct and adjacent competitors. Now includes Cloudflare's isitagentready.com (April 17, 2026) alongside multi-format review additions (MultiLipi, Pure.md, isagentready.com, GenRankEngine, iGEO, Clemelopy), npm entrant @agentmarkup/next, and free diagnostic scanners (see Free AI Diagnostic Scanners section). New entrants appearing monthly — speed of execution matters.
+- **Cloudflare Radar as market benchmark (April 2026):** Use Cloudflare's weekly Radar data on standards adoption (robots.txt 78%, Content Signals 4%, Markdown 3.9%, MCP/API Catalog <15 sites) to benchmark CrawlReady scan results against global averages. Display in diagnostic: "Your site supports X/6 agent standards. The web average is Y/6."
 - **Schema.org citation impact (April 2026 multi-format review; MachineContext update April 7, 2026):** Original ~3% weight for Schema markup applies to generic implementations only. Attribute-rich Schema.org (pricing, FAQ, specs) is a ~15-20% citation factor — 5-7x larger. MachineContext auto-generates JSON-LD; CrawlReady's angle is attribute-rich generation from content and CSR visibility. See `docs/architecture/multi-format-serving.md`.
 - **Agent Interaction Score claim (April 2026 multi-format review):** isagentready.com exists as a standalone agent readiness scanner. The claim "no competitor measures agent interaction" is revised to "no competitor in the AI optimization space offers this as part of a comprehensive crawlability diagnostic."

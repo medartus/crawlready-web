@@ -153,10 +153,11 @@ Existing design from `docs/product/vision.md`:
 
 ### Agent Readiness Drill-Down (0-100)
 
-Existing design from `docs/research/agent-readiness.md`:
-- Structured Data Completeness (0-30 points)
-- Content Negotiation Readiness (0-30 points)
-- Machine-Actionable Data Availability (0-40 points)
+Existing design from `docs/research/agent-readiness.md`, updated April 2026 (Cloudflare Agent Readiness review):
+- Structured Data Completeness (0-25 points) — *reduced from 30*
+- Content Negotiation Readiness (0-25 points) — *reduced from 30*
+- Machine-Actionable Data Availability (0-30 points) — *reduced from 40*
+- **Standards Adoption (0-20 points)** — *NEW: robots.txt AI rules, Content Signals, sitemap.xml, Link Headers, MCP Server Card, API Catalog. See `docs/architecture/scoring-detail.md` A4 section.*
 
 ### Agent Interaction Drill-Down (0-100)
 

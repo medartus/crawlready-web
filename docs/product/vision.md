@@ -46,10 +46,11 @@ What the diagnostic does:
   - Noise ratio (scripts, styles, tracking code as % of payload)
   - Schema.org presence
 - Issues an **Agent Readiness Score** (0–100) per page measuring how well AI agents can act on the content:
-  - Structured data completeness (Schema.org JSON-LD, OpenGraph, machine-readable product/pricing data)
-  - Content negotiation readiness (does the server respond to `Accept: text/markdown`? Is llms.txt present?)
-  - Machine-actionable data availability (can key business facts be extracted without visual rendering?)
-  - Only 2 additional HTTP requests per scan — lightweight addition to existing crawl
+  - Structured data completeness (Schema.org JSON-LD, OpenGraph, machine-readable product/pricing data) — 0-25 pts
+  - Content negotiation readiness (does the server respond to `Accept: text/markdown`? Is llms.txt present?) — 0-25 pts
+  - Machine-actionable data availability (can key business facts be extracted without visual rendering?) — 0-30 pts
+  - **Standards adoption** (robots.txt AI bot rules, Content Signals directive, sitemap.xml, Link Headers RFC 8288, MCP Server Card, API Catalog RFC 9727) — 0-20 pts — *NEW: added April 2026 after Cloudflare Agent Readiness review. See `docs/research/cloudflare-agent-readiness.md`.*
+  - 5 additional HTTP requests per scan (2 existing + 3 new parallel HEAD requests for sitemap.xml, MCP Server Card, API Catalog)
 - Issues an **Agent Interaction Score** (0–100) per page measuring how well visual AI agents (OpenAI Operator, Anthropic Computer Use) can navigate the site:
   - Semantic HTML quality (proper `<button>`, `<form>`, `<nav>` vs generic `<div>`)
   - Interactive element accessibility (labels, ARIA roles, click target sizes)
@@ -57,7 +58,7 @@ What the diagnostic does:
   - Visual-semantic consistency (what's visually prominent matches what's semantically important)
   - Zero additional HTTP requests — uses the rendered DOM already captured by the crawling provider
 - **Schema Generation Preview:** After checking Schema.org presence, the diagnostic analyzes the page content for detectable structured data patterns and displays what CrawlReady could generate: "0 Schema.org types detected. Based on your content, we can generate: FAQPage (3 Q&A pairs detected), Product (pricing data detected). [Preview generated markup]." This is display-only in Phase 0 — actual generation and injection activates in the paid tier. Zero additional crawl cost (uses HTML already fetched). See `docs/architecture/multi-format-serving.md`.
-- Provides actionable recommendations: "Add SSR to these routes" / "Your pricing section is client-rendered and invisible" / "Reduce HTML noise from 14K tokens to under 2K" / "Add Schema.org Product markup to make your pricing agent-readable" / "Your signup button uses a `<div>` — AI agents can't find it"
+- Provides actionable recommendations: "Add SSR to these routes" / "Your pricing section is client-rendered and invisible" / "Reduce HTML noise from 14K tokens to under 2K" / "Add Schema.org Product markup to make your pricing agent-readable" / "Your signup button uses a `<div>` — AI agents can’t find it" / "Add a Content Signals directive to robots.txt to declare your AI training preferences" / "Your llms.txt is a single massive file — split it by section to fit within agent context windows" / "Expose an MCP Server Card at /.well-known/mcp/server-card.json to help agents discover your API" *(Cloudflare-inspired recommendation patterns — see `docs/research/cloudflare-agent-readiness.md`)*
 - Generates a **public, permanent score URL** (e.g., `crawlready.app/score/stripe.com`) — this is built into the diagnostic, not a separate deliverable
 - CTA: "Fix this score" requires email (lead capture, lightweight — no account creation)
 
@@ -80,6 +81,7 @@ What analytics onboarding delivers:
 - Public score page (`/score/{domain}`)
 - Email subscribe endpoint (lightweight capture, no account creation)
 - Scan + score API endpoints (`POST /api/v1/scan`, `GET /api/v1/score/{domain}`)
+- Standards adoption checks: robots.txt AI bot rules, Content Signals, sitemap.xml, Link Headers, MCP Server Card, API Catalog (A4 category, 3 additional HEAD requests per scan — added April 2026 Cloudflare review)
 
 **IN (Analytics side):**
 - Clerk-based sign-up / sign-in
