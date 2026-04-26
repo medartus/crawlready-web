@@ -24,6 +24,7 @@
     "@clerk/themes": "^2.1.36",
     "@crawlready/database": "workspace:*",
     "@crawlready/logger": "workspace:*",
+    "@crawlready/security": "workspace:*",
     "@hookform/resolvers": "^3.9.0",
     "@logtail/pino": "^0.5.2",
     "@mendable/firecrawl-js": "^4.20.0",

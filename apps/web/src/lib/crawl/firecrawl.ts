@@ -12,7 +12,12 @@ import { Env } from '@/libs/Env';
 import type { CrawlProvider, CrawlResult } from './provider';
 import { CrawlProviderError } from './provider';
 
+let _client: FirecrawlApp | null = null;
+
 function getClient(): FirecrawlApp {
+  if (_client) {
+    return _client;
+  }
   const apiKey = Env.FIRECRAWL_API_KEY;
   if (!apiKey) {
     throw new CrawlProviderError(
@@ -21,11 +26,17 @@ function getClient(): FirecrawlApp {
       'firecrawl',
     );
   }
-  return new FirecrawlApp({ apiKey });
+  _client = new FirecrawlApp({ apiKey });
+  return _client;
 }
 
+let _provider: CrawlProvider | null = null;
+
 export function createFirecrawlProvider(): CrawlProvider {
-  return {
+  if (_provider) {
+    return _provider;
+  }
+  const provider: CrawlProvider = {
     name: 'firecrawl',
 
     scrape: async (url: string): Promise<CrawlResult> => {
@@ -61,4 +72,6 @@ export function createFirecrawlProvider(): CrawlProvider {
       }
     },
   };
+  _provider = provider;
+  return provider;
 }

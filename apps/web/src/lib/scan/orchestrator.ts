@@ -13,7 +13,7 @@
  */
 
 import { schema } from '@crawlready/database';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, gte } from 'drizzle-orm';
 
 import { botFetch } from '@/lib/crawl/bot-fetch';
 import { normalizeUrl } from '@/lib/crawl/normalize-url';
@@ -29,6 +29,8 @@ import {
 } from '@/lib/scoring';
 import type { AgentReadinessInput } from '@/lib/scoring/agent-readiness';
 import { analyzeSchemaPreview } from '@/lib/scoring/schema-preview';
+import type { VisualDiffResult } from '@/lib/scoring/visual-diff';
+import { computeVisualDiff } from '@/lib/scoring/visual-diff';
 
 import { getDb } from './db-helper';
 
@@ -53,6 +55,7 @@ export type ScanResult = {
     detectedTypes: Array<{ type: string; properties: number }>;
     generatable: Array<{ type: string; confidence: number; reason: string }>;
   };
+  visualDiff: VisualDiffResult | null;
   rawHtmlSize: number | null;
   markdownSize: number | null;
   scannedAt: string;
@@ -71,12 +74,12 @@ async function checkCache(url: string): Promise<ScanResult | null> {
   const rows = await db
     .select()
     .from(schema.scans)
-    .where(eq(schema.scans.url, url))
+    .where(and(eq(schema.scans.url, url), gte(schema.scans.scannedAt, cutoff)))
     .orderBy(desc(schema.scans.scannedAt))
     .limit(1);
 
   const row = rows[0];
-  if (!row || new Date(row.scannedAt) < cutoff) {
+  if (!row) {
     return null;
   }
 
@@ -91,6 +94,7 @@ async function checkCache(url: string): Promise<ScanResult | null> {
     euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as ScanResult['euAiAct'],
     recommendations: (row.recommendations ?? []) as ScanResult['recommendations'],
     schemaPreview: (row.schemaPreview ?? { detectedTypes: [], generatable: [] }) as ScanResult['schemaPreview'],
+    visualDiff: null,
     rawHtmlSize: row.rawHtmlSize,
     markdownSize: row.markdownSize,
     scannedAt: row.scannedAt.toISOString(),
@@ -147,6 +151,8 @@ export async function runScan(
 
   const euAiActResult = scoreEuAiAct(botResult.botHtml);
   const schemaPreviewResult = analyzeSchemaPreview(botResult.botHtml, crawlResult.html);
+  const visualDiff = computeVisualDiff(crawlResult.html, botResult.botHtml);
+
   const recommendations = generateRecommendations({
     crawlability: crawlabilityResult,
     agentReadiness: agentReadinessResult,
@@ -186,6 +192,7 @@ export async function runScan(
     euAiAct: euAiActResult,
     recommendations,
     schemaPreview: schemaPreviewResult,
+    visualDiff,
     rawHtmlSize: crawlResult.html.length,
     markdownSize: crawlResult.markdown.length,
     scannedAt: new Date().toISOString(),

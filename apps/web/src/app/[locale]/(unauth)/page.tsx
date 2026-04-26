@@ -11,6 +11,7 @@ import { LandingNavbar } from '@/templates/LandingNavbar';
 import { MarketOpportunitySection } from '@/templates/MarketOpportunitySection';
 import { ProblemSection } from '@/templates/ProblemSection';
 import { SocialProofSection } from '@/templates/SocialProofSection';
+import { getBaseUrl } from '@/utils/Helpers';
 
 export async function generateMetadata(props: { params: { locale: string } }) {
   const t = await getTranslations({
@@ -18,9 +19,28 @@ export async function generateMetadata(props: { params: { locale: string } }) {
     namespace: 'LandingPage',
   });
 
+  const baseUrl = getBaseUrl();
+  const title = t('meta_title');
+  const description = t('meta_description');
+
   return {
-    title: t('meta_title'),
-    description: t('meta_description'),
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: baseUrl,
+      siteName: 'CrawlReady',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image' as const,
+      title,
+      description,
+    },
+    alternates: {
+      canonical: baseUrl,
+    },
   };
 }
 

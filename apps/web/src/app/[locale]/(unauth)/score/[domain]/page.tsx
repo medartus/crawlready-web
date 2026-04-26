@@ -1,85 +1,93 @@
-'use client';
-
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { schema } from '@crawlready/database';
+import { desc, eq } from 'drizzle-orm';
+import { ArrowLeft } from 'lucide-react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
 
 import { ScanForm } from '@/components/score/ScanForm';
 import { ScanResultCard } from '@/components/score/ScanResultCard';
-import { api } from '@/libs/api-client';
+import { getScoreBand } from '@/components/score/score-utils';
+import { normalizeDomain } from '@/lib/crawl/normalize-url';
+import { db } from '@/libs/DB';
+import { getBaseUrl } from '@/utils/Helpers';
 
-type ScanResultData = {
-  url: string;
-  domain: string;
-  aiReadinessScore: number;
-  crawlabilityScore: number;
-  agentReadinessScore: number;
-  agentInteractionScore: number;
-  euAiAct: {
-    passed: number;
-    total: number;
-    checks: Array<{ name: string; passed: boolean }>;
-  };
-  recommendations: Array<{
-    id: string;
-    severity: string;
-    category: string;
-    title: string;
-    description: string;
-    impact: string;
-  }>;
-  scannedAt: string;
-  score_url?: string;
+type Props = {
+  params: { domain: string; locale: string };
 };
 
-export default function ScoreResultPage() {
-  const params = useParams<{ domain: string }>();
-  const domain = params.domain;
-  const [result, setResult] = useState<ScanResultData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const cached = sessionStorage.getItem('scanResult');
-    if (cached) {
-      try {
-        const parsed = JSON.parse(cached) as ScanResultData;
-        if (parsed.domain === domain) {
-          setResult(parsed);
-          setLoading(false);
-          return;
-        }
-      } catch {
-        // ignore parse errors
-      }
-    }
-
-    fetchScore();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domain]);
-
-  async function fetchScore() {
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await api.get(`/api/v1/score/${encodeURIComponent(domain)}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data?.error?.message ?? 'Score not found. Try scanning first.');
-        setLoading(false);
-        return;
-      }
-
-      setResult(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load score');
-    } finally {
-      setLoading(false);
-    }
+async function getLatestScan(rawDomain: string) {
+  let domain: string;
+  try {
+    domain = normalizeDomain(rawDomain);
+  } catch {
+    return null;
   }
+
+  const rows = await db
+    .select()
+    .from(schema.scans)
+    .where(eq(schema.scans.domain, domain))
+    .orderBy(desc(schema.scans.scannedAt))
+    .limit(1);
+
+  return rows[0] ?? null;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const row = await getLatestScan(params.domain);
+  const baseUrl = getBaseUrl();
+  const domain = decodeURIComponent(params.domain);
+
+  if (!row) {
+    return {
+      title: `AI Readiness Score for ${domain} | CrawlReady`,
+      description: `Check the AI Readiness Score for ${domain}. See how well this site is optimized for AI crawlers like GPTBot, ClaudeBot, and PerplexityBot.`,
+      openGraph: {
+        title: `AI Readiness Score for ${domain}`,
+        description: `Check the AI Readiness Score for ${domain}. See how well this site is optimized for AI crawlers.`,
+        url: `${baseUrl}/score/${domain}`,
+        siteName: 'CrawlReady',
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: `AI Readiness Score for ${domain}`,
+        description: `Check the AI Readiness Score for ${domain}.`,
+      },
+      alternates: {
+        canonical: `${baseUrl}/score/${domain}`,
+      },
+    };
+  }
+
+  const band = getScoreBand(row.aiReadinessScore);
+  const title = `${domain} scored ${row.aiReadinessScore}/100 on AI Readiness | CrawlReady`;
+  const description = `${domain} AI Readiness Score: ${row.aiReadinessScore}/100 (${band.label}). Crawlability: ${row.crawlabilityScore}, Agent Readiness: ${row.agentReadinessScore}, Agent Interaction: ${row.agentInteractionScore}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${domain}: ${row.aiReadinessScore}/100 AI Readiness Score`,
+      description,
+      url: `${baseUrl}/score/${domain}`,
+      siteName: 'CrawlReady',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${domain}: ${row.aiReadinessScore}/100 AI Readiness`,
+      description,
+    },
+    alternates: {
+      canonical: `${baseUrl}/score/${domain}`,
+    },
+  };
+}
+
+export default async function ScoreResultPage({ params }: Props) {
+  const row = await getLatestScan(params.domain);
+  const domain = decodeURIComponent(params.domain);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -96,37 +104,18 @@ export default function ScoreResultPage() {
           <span className="text-lg font-bold text-gray-900 dark:text-white">
             CrawlReady
           </span>
-          {result && (
-            <button
-              type="button"
-              onClick={fetchScore}
-              className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-            >
-              <RefreshCw className="size-4" />
-              Rescan
-            </button>
-          )}
+          <div className="w-16" />
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="mb-4 size-12 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
-            <p className="text-gray-600 dark:text-gray-400">
-              Loading score for
-              {' '}
-              <span className="font-mono font-semibold">{domain}</span>
-              ...
-            </p>
-          </div>
-        )}
-
-        {error && !loading && (
+        {!row && (
           <div className="mx-auto max-w-lg space-y-8 py-12">
             <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-950/20">
               <p className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
-                {error}
+                No scan found for
+                {' '}
+                <span className="font-mono">{domain}</span>
               </p>
               <p className="text-sm text-red-600 dark:text-red-400">
                 Run a scan to generate a score for this domain.
@@ -141,20 +130,39 @@ export default function ScoreResultPage() {
           </div>
         )}
 
-        {result && !loading && (
+        {row && (
           <ScanResultCard
             result={{
-              ...result,
-              scoreUrl: result.score_url,
+              url: row.url,
+              domain: row.domain,
+              aiReadinessScore: row.aiReadinessScore,
+              crawlabilityScore: row.crawlabilityScore,
+              agentReadinessScore: row.agentReadinessScore,
+              agentInteractionScore: row.agentInteractionScore,
+              euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as {
+                passed: number;
+                total: number;
+                checks: Array<{ name: string; passed: boolean }>;
+              },
+              recommendations: (row.recommendations ?? []) as Array<{
+                id: string;
+                severity: string;
+                category: string;
+                title: string;
+                description: string;
+                impact: string;
+              }>,
+              scannedAt: row.scannedAt.toISOString(),
+              scoreUrl: `https://crawlready.app/score/${row.domain}`,
             }}
           />
         )}
 
-        {/* Scan another site */}
-        {result && !loading && (
+        {/* CTA: Check your site */}
+        {row && (
           <div className="mt-12 rounded-xl border border-gray-200 bg-white p-8 dark:border-gray-700 dark:bg-gray-800">
             <h3 className="mb-4 text-center text-lg font-semibold text-gray-900 dark:text-white">
-              Check another site
+              Check your site&apos;s AI readiness
             </h3>
             <div className="mx-auto max-w-xl">
               <ScanForm />

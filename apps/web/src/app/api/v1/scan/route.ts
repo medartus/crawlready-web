@@ -1,3 +1,4 @@
+import { SSRFError } from '@crawlready/security';
 import { NextResponse } from 'next/server';
 
 import { createFirecrawlProvider } from '@/lib/crawl/firecrawl';
@@ -43,6 +44,10 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof CrawlProviderError) {
       return apiError('PROVIDER_ERROR', error.message, 502);
+    }
+
+    if (error instanceof SSRFError) {
+      return apiError('BLOCKED_URL', 'This URL cannot be scanned for security reasons.', 400);
     }
 
     if (error instanceof Error && error.message.startsWith('Invalid URL')) {

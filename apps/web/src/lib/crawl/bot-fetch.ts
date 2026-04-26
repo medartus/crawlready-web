@@ -7,6 +7,8 @@
  *   3. llms.txt check — GET {origin}/llms.txt
  */
 
+import { validateUrlSecurity } from '@crawlready/security';
+
 export type BotFetchResult = {
   /** Raw HTML returned when fetched with GPTBot User-Agent */
   botHtml: string;
@@ -33,6 +35,8 @@ async function fetchWithTimeout(
   init: RequestInit,
   timeoutMs = FETCH_TIMEOUT_MS,
 ): Promise<Response> {
+  validateUrlSecurity(url);
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -135,6 +139,8 @@ async function checkLlmsTxt(url: string): Promise<{
  * Run all bot-fetch operations for a URL in parallel.
  */
 export async function botFetch(url: string): Promise<BotFetchResult> {
+  validateUrlSecurity(url);
+
   const [botResult, mdResult, llmsResult] = await Promise.all([
     fetchAsBotRaw(url),
     probeMarkdownNegotiation(url),

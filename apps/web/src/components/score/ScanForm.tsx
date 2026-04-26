@@ -1,21 +1,75 @@
 'use client';
 
-import { Loader2, Search } from 'lucide-react';
+import { AlertCircle, Loader2, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { api } from '@/libs/api-client';
+
+const PROGRESS_MESSAGES = [
+  'Connecting to site...',
+  'Rendering page with JavaScript...',
+  'Fetching bot view (GPTBot)...',
+  'Checking content negotiation...',
+  'Analyzing crawlability...',
+  'Scoring agent readiness...',
+  'Computing AI Readiness Score...',
+  'Almost done...',
+];
 
 type ScanFormProps = {
   className?: string;
   size?: 'default' | 'hero';
 };
 
+function getErrorMessage(data: { error?: { code?: string; message?: string; retry_after?: number } }): string {
+  const code = data?.error?.code;
+  switch (code) {
+    case 'RATE_LIMITED': {
+      const retry = data?.error?.retry_after;
+      return retry
+        ? `Rate limited. Try again in ${Math.ceil(retry / 60)} minute(s).`
+        : 'Too many scans. Please wait a few minutes.';
+    }
+    case 'INVALID_URL':
+      return 'Invalid URL. Please check the address and try again.';
+    case 'BLOCKED_URL':
+      return 'This URL cannot be scanned for security reasons.';
+    case 'PROVIDER_ERROR':
+      return 'The site could not be reached or timed out. Please try again.';
+    default:
+      return data?.error?.message ?? 'Scan failed. Please try again.';
+  }
+}
+
 export function ScanForm({ className = '', size = 'default' }: ScanFormProps) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [progressIdx, setProgressIdx] = useState(0);
   const router = useRouter();
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      setProgressIdx(0);
+      timerRef.current = setInterval(() => {
+        setProgressIdx(prev =>
+          prev < PROGRESS_MESSAGES.length - 1 ? prev + 1 : prev,
+        );
+      }, 2000);
+    } else {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [loading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +89,7 @@ export function ScanForm({ className = '', size = 'default' }: ScanFormProps) {
       // eslint-disable-next-line no-new
       new URL(fullUrl);
     } catch {
-      setError('Please enter a valid URL');
+      setError('Please enter a valid URL (e.g. example.com)');
       return;
     }
 
@@ -46,15 +100,15 @@ export function ScanForm({ className = '', size = 'default' }: ScanFormProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data?.error?.message ?? 'Scan failed. Please try again.');
+        setError(getErrorMessage(data));
         setLoading(false);
         return;
       }
 
       sessionStorage.setItem('scanResult', JSON.stringify(data));
       router.push(`/score/${data.domain}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch {
+      setError('Network error. Check your connection and try again.');
       setLoading(false);
     }
   };
@@ -94,10 +148,32 @@ export function ScanForm({ className = '', size = 'default' }: ScanFormProps) {
             : 'Scan Now'}
         </button>
       </div>
-      {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+
+      {/* Progressive loading message */}
+      {loading && (
+        <div className="mt-3 flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-indigo-100 dark:bg-indigo-900/30">
+            <div
+              className="h-full rounded-full bg-indigo-500 transition-all duration-1000 ease-out"
+              style={{ width: `${Math.min(((progressIdx + 1) / PROGRESS_MESSAGES.length) * 100, 95)}%` }}
+            />
+          </div>
+          <span className="shrink-0 transition-opacity duration-300">
+            {PROGRESS_MESSAGES[progressIdx]}
+          </span>
+        </div>
       )}
-      {!error && (
+
+      {/* Error display */}
+      {error && !loading && (
+        <div className="mt-2 flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+          <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Helper text */}
+      {!error && !loading && (
         <p className={`mt-2 text-center text-gray-500 dark:text-gray-400 ${isHero ? 'text-sm' : 'text-xs'}`}>
           Free scan — no signup required
         </p>

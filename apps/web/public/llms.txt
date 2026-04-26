@@ -1,0 +1,29 @@
+# CrawlReady
+
+> AI Readiness Score platform — diagnostic tool that scores, monitors, and optimizes websites for AI crawlers and agents.
+
+## What is CrawlReady?
+
+CrawlReady analyzes websites to determine how well they are visible to AI crawlers like GPTBot (OpenAI), ClaudeBot (Anthropic), and PerplexityBot. It produces an AI Readiness Score (0-100) with three sub-scores:
+
+- **Crawlability (50%)**: Can the AI crawler see and read the content?
+- **Agent Readiness (25%)**: Does the site provide structured data, llms.txt, and machine-readable formats?
+- **Agent Interaction (25%)**: Does the site support content negotiation, markdown responses, and AI-specific endpoints?
+
+## Core Features
+
+- Free instant diagnostic scan for any URL
+- Side-by-side visual diff: browser view vs bot view
+- EU AI Act compliance checklist
+- Actionable recommendations to improve AI visibility
+- Public shareable score pages (crawlready.app/score/{domain})
+
+## API
+
+- `POST /api/v1/scan` — Scan a URL and get full AI Readiness Score
+- `GET /api/v1/score/{domain}` — Get the latest score for a domain
+
+## Links
+
+- Website: https://crawlready.app
+- Score page example: https://crawlready.app/score/stripe.com
