@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-// Redirect to the new Overview page
+// Redirect to the Sites page
 export default function DashboardIndexPage() {
-  redirect('/dashboard/overview');
+  redirect('/dashboard/sites');
 }

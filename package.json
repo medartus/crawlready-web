@@ -6,10 +6,8 @@
   "scripts": {
     "dev": "turbo run dev --parallel",
     "dev:web": "pnpm run dev --filter @crawlready/web...",
-    "dev:render-worker": "pnpm run dev --filter @crawlready/render-worker...",
     "build": "turbo run build",
     "build:web": "pnpm run build --filter @crawlready/web...",
-    "build:render-worker": "pnpm run build --filter @crawlready/render-worker...",
     "start": "t --filter @crawlready/web start",
     "clean": "turbo run clean && rimraf .turbo node_modules/.cache",
     "lint": "turbo run lint",

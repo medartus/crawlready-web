@@ -2,25 +2,18 @@ import path from 'node:path';
 
 import { schema } from '@crawlready/database';
 import { logger } from '@crawlready/logger';
-import { PGlite } from '@electric-sql/pglite';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { migrate as migratePg } from 'drizzle-orm/node-postgres/migrator';
-import { drizzle as drizzlePglite, type PgliteDatabase } from 'drizzle-orm/pglite';
-import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator';
 import { PHASE_PRODUCTION_BUILD } from 'next/dist/shared/lib/constants';
 import { Pool } from 'pg';
 
 import { Env } from './Env';
 
 let pool: Pool | null = null;
-let drizzle: ReturnType<typeof drizzlePg> | PgliteDatabase<typeof schema> | null = null;
+let drizzle: ReturnType<typeof drizzlePg> | null = null;
 
 /**
  * AUTO_MIGRATE controls whether migrations run automatically on app startup.
- *
- * Development workflow:
- * - Local dev (PGlite): Set AUTO_MIGRATE=true (default) - migrations run automatically
- * - Supabase: Set AUTO_MIGRATE=false - use `supabase db push` instead
  *
  * Production workflow:
  * - Use `supabase db push` or run migrations manually before deployment
@@ -81,33 +74,6 @@ if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD && Env.DATABASE_URL) {
       });
   } else {
     logger.info('ℹ AUTO_MIGRATE=false - Skipping automatic migrations');
-  }
-} else {
-  // Fallback to PGlite for local development when DATABASE_URL is not set
-  const global = globalThis as unknown as { client: PGlite; drizzle: PgliteDatabase<typeof schema> };
-
-  if (!global.client) {
-    global.client = new PGlite();
-    // Wait for PGlite to be ready (synchronous for local dev)
-    (async () => {
-      await global.client.waitReady;
-      global.drizzle = drizzlePglite(global.client, { schema });
-      drizzle = global.drizzle;
-
-      // PGlite always runs migrations (in-memory database, no persistence issues)
-      try {
-        await migratePglite(global.drizzle, {
-          migrationsFolder: path.join(process.cwd(), 'migrations'),
-        });
-      } catch (error) {
-        // Ignore "already exists" errors for PGlite too (hot reload scenario)
-        if (!(error instanceof Error && error.message.includes('already exists'))) {
-          logger.error({ error }, '✗ PGlite migration error');
-        }
-      }
-    })();
-  } else {
-    drizzle = global.drizzle;
   }
 }
 

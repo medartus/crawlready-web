@@ -18,13 +18,10 @@ const isApiRoute = (pathname: string) => {
 // Public API routes that don't require authentication (allowlist)
 // All other /api/* routes are protected by default
 const publicApiRoutes = [
-  '/api/check-crawler',
-  '/api/check-schema',
   '/api/waitlist',
   '/api/waitlist/count',
-  '/api/render', // Handles dual auth internally
-  '/api/status', // Handles dual auth internally
-  '/api/cache', // Handles dual auth internally
+  '/api/v1/scan',
+  '/api/v1/subscribe',
 ];
 
 // Protected page routes that require authentication
@@ -42,7 +39,10 @@ export default function middleware(
   const { pathname } = request.nextUrl;
 
   // 1. Allow public API routes immediately (no auth required)
-  if (publicApiRoutes.includes(pathname)) {
+  if (
+    publicApiRoutes.includes(pathname)
+    || pathname.startsWith('/api/v1/score/')
+  ) {
     return NextResponse.next();
   }
 
