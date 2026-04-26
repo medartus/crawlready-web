@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, CheckCircle2, Clock, Globe, MoreVertical, Plus, RefreshCw, Settings, Trash2 } from 'lucide-react';
+import { Copy, Globe, MoreVertical, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -10,59 +10,41 @@ import { TitleBar } from '@/features/dashboard/TitleBar';
 type Site = {
   id: string;
   domain: string;
-  displayName: string | null;
-  status: 'pending' | 'active' | 'error' | 'suspended';
-  statusReason: string | null;
-  frameworkDetected: string | null;
-  rendersCount: number;
-  rendersThisMonth: number;
-  lastRenderAt: string | null;
-  lastCrawlerVisitAt: string | null;
-  createdAt: string;
-  apiKeyPrefix: string | null;
-};
-
-const statusConfig = {
-  pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-900/30', label: 'Pending' },
-  active: { icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-100 dark:bg-green-900/30', label: 'Active' },
-  error: { icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30', label: 'Error' },
-  suspended: { icon: AlertTriangle, color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-gray-900/30', label: 'Suspended' },
+  site_key: string;
+  created_at: string;
+  visit_count_30d: number;
 };
 
 function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => void }) {
   const [showMenu, setShowMenu] = useState(false);
-  const status = statusConfig[site.status];
-  const StatusIcon = status.icon;
+  const [copied, setCopied] = useState(false);
 
-  const timeAgo = (date: string | null) => {
-    if (!date) {
-      return 'Never';
+  const handleCopyKey = async () => {
+    try {
+      await navigator.clipboard.writeText(site.site_key);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard failed silently
     }
-    const diff = Date.now() - new Date(date).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 60) {
-      return `${minutes}m ago`;
-    }
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) {
-      return `${hours}h ago`;
-    }
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
   };
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
       <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className={`flex size-10 items-center justify-center rounded-lg ${status.bg}`}>
-            <Globe className={`size-5 ${status.color}`} />
+          <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+            <Globe className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
             <h3 className="font-semibold text-gray-900 dark:text-white">
-              {site.displayName || site.domain}
+              {site.domain}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{site.domain}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Added
+              {' '}
+              {new Date(site.created_at).toLocaleDateString()}
+            </p>
           </div>
         </div>
         <div className="relative">
@@ -70,6 +52,7 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
             type="button"
             onClick={() => setShowMenu(!showMenu)}
             className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+            aria-label="Site actions"
           >
             <MoreVertical className="size-5" />
           </button>
@@ -88,13 +71,6 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
                 aria-label="Close menu"
               />
               <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                <Link
-                  href={`/dashboard/sites/${site.id}`}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                  <Settings className="size-4" />
-                  Site Settings
-                </Link>
                 <button
                   type="button"
                   onClick={() => {
@@ -112,56 +88,35 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
         </div>
       </div>
 
-      {/* Status */}
-      <div className="mb-4 flex items-center gap-2">
-        <div className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${status.bg} ${status.color}`}>
-          <StatusIcon className="size-3" />
-          {status.label}
-        </div>
-        {site.frameworkDetected && (
-          <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-            {site.frameworkDetected}
-          </span>
+      {/* Site Key */}
+      <div className="mb-4 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-900">
+        <code className="flex-1 truncate text-xs text-gray-600 dark:text-gray-400">
+          {site.site_key}
+        </code>
+        <button
+          type="button"
+          onClick={handleCopyKey}
+          className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          title="Copy site key"
+        >
+          <Copy className="size-4" />
+        </button>
+        {copied && (
+          <span className="text-xs text-emerald-600">Copied!</span>
         )}
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 border-t border-gray-100 pt-4 text-center dark:border-gray-700">
-        <div>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">{site.rendersThisMonth}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Renders/Month</p>
+      <div className="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-700">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-gray-900 dark:text-white">{site.visit_count_30d}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">AI Visits (30d)</p>
         </div>
-        <div>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">{timeAgo(site.lastRenderAt)}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Last Render</p>
-        </div>
-        <div>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">{timeAgo(site.lastCrawlerVisitAt)}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Last Crawler</p>
-        </div>
-      </div>
-
-      {/* API Key */}
-      {site.apiKeyPrefix && (
-        <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            API Key:
-            {' '}
-            <code className="text-gray-700 dark:text-gray-300">
-              {site.apiKeyPrefix}
-              ...
-            </code>
-          </p>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="mt-4 flex gap-2">
         <Link
           href={`/dashboard/sites/${site.id}`}
-          className={`${buttonVariants({ variant: 'outline', size: 'sm' })} flex-1`}
+          className={buttonVariants({ variant: 'outline', size: 'sm' })}
         >
-          View Details
+          Details
         </Link>
       </div>
     </div>
@@ -175,7 +130,7 @@ export default function SitesPage() {
 
   const fetchSites = async () => {
     try {
-      const response = await fetch('/api/user/sites');
+      const response = await fetch('/api/v1/sites');
       if (response.ok) {
         const data = await response.json();
         setSites(data.sites || []);
@@ -195,8 +150,8 @@ export default function SitesPage() {
 
   const handleDelete = async (siteId: string) => {
     try {
-      const response = await fetch(`/api/user/sites/${siteId}`, { method: 'DELETE' });
-      if (response.ok) {
+      const response = await fetch(`/api/v1/sites/${siteId}`, { method: 'DELETE' });
+      if (response.ok || response.status === 204) {
         setSites(prev => prev.filter(s => s.id !== siteId));
       }
       // Delete failed silently
