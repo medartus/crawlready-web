@@ -19,7 +19,6 @@
     "pg": "^8.13.0"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.2.12",
     "@types/pg": "^8.11.10",
     "vitest": "^2.1.9"
   }
