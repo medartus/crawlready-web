@@ -3,6 +3,7 @@ import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { normalizeDomain } from '@/lib/crawl/normalize-url';
+import { apiError } from '@/lib/utils/api-helpers';
 import { db } from '@/libs/DB';
 
 export async function GET(
@@ -13,10 +14,7 @@ export async function GET(
   try {
     domain = normalizeDomain(params.domain);
   } catch {
-    return NextResponse.json(
-      { code: 'INVALID_DOMAIN', message: 'Invalid domain format.' },
-      { status: 400 },
-    );
+    return apiError('INVALID_DOMAIN', 'Invalid domain format.', 400);
   }
 
   const rows = await db
@@ -28,10 +26,7 @@ export async function GET(
 
   const row = rows[0];
   if (!row) {
-    return NextResponse.json(
-      { code: 'NOT_FOUND', message: `No scan found for domain: ${domain}` },
-      { status: 404 },
-    );
+    return apiError('NOT_FOUND', `No scan found for domain: ${domain}`, 404);
   }
 
   return NextResponse.json({

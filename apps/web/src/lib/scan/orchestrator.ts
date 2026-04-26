@@ -132,6 +132,7 @@ export async function runScan(
     botHtml: botResult.botHtml,
     renderedHtml: crawlResult.html,
     botFetch: botResult,
+    responseHeaders: botResult.responseHeaders,
   };
   const agentReadinessResult = scoreAgentReadiness(agentReadinessInput, standardsProbes);
 

@@ -60,8 +60,8 @@ export function normalizeUrl(input: string): NormalizedResult {
 
   const portSuffix = isDefaultPort ? '' : `:${parsed.port}`;
 
-  // URL normalization — lowercase path, strip query & fragment
-  const path = parsed.pathname.toLowerCase();
+  // URL normalization — preserve path as-is, strip query & fragment
+  const path = parsed.pathname;
 
   const url = `https://${domain}${portSuffix}${path}`;
 

@@ -20,9 +20,12 @@ export type BotFetchResult = {
   hasLlmsTxt: boolean;
   /** Contents of /llms.txt if it exists */
   llmsTxtContent: string | null;
+  /** Response headers from the bot fetch (for Link header analysis) */
+  responseHeaders: Record<string, string>;
 };
 
 const BOT_USER_AGENT = 'GPTBot/1.0 (+https://openai.com/gptbot)';
+const CRAWLREADY_USER_AGENT = 'CrawlReady/1.0 (+https://crawlready.app)';
 const FETCH_TIMEOUT_MS = 15_000;
 
 async function fetchWithTimeout(
@@ -43,7 +46,7 @@ async function fetchWithTimeout(
 /**
  * Fetch a URL as GPTBot (no JS rendering — raw HTTP GET).
  */
-async function fetchAsBotRaw(url: string): Promise<{ html: string; statusCode: number }> {
+async function fetchAsBotRaw(url: string): Promise<{ html: string; statusCode: number; headers: Record<string, string> }> {
   try {
     const res = await fetchWithTimeout(url, {
       method: 'GET',
@@ -55,9 +58,13 @@ async function fetchAsBotRaw(url: string): Promise<{ html: string; statusCode: n
     });
 
     const html = await res.text();
-    return { html, statusCode: res.status };
+    const headers: Record<string, string> = {};
+    res.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    return { html, statusCode: res.status, headers };
   } catch {
-    return { html: '', statusCode: 0 };
+    return { html: '', statusCode: 0, headers: {} };
   }
 }
 
@@ -72,7 +79,7 @@ async function probeMarkdownNegotiation(url: string): Promise<{
     const res = await fetchWithTimeout(url, {
       method: 'GET',
       headers: {
-        'User-Agent': BOT_USER_AGENT,
+        'User-Agent': CRAWLREADY_USER_AGENT,
         'Accept': 'text/markdown, text/plain;q=0.9, text/html;q=0.8',
       },
       redirect: 'follow',
@@ -141,5 +148,6 @@ export async function botFetch(url: string): Promise<BotFetchResult> {
     negotiatedMarkdown: mdResult.markdown,
     hasLlmsTxt: llmsResult.exists,
     llmsTxtContent: llmsResult.content,
+    responseHeaders: botResult.headers,
   };
 }
