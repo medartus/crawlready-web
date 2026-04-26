@@ -11,6 +11,7 @@ export const Env = createEnv({
     BILLING_PLAN_ENV: z.enum(['dev', 'test', 'prod']),
     SUPABASE_URL: z.string().optional(),
     SUPABASE_SERVICE_KEY: z.string().optional(),
+    FIRECRAWL_API_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().optional(),
@@ -31,6 +32,7 @@ export const Env = createEnv({
     BILLING_PLAN_ENV: process.env.BILLING_PLAN_ENV,
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
+    FIRECRAWL_API_KEY: process.env.FIRECRAWL_API_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
