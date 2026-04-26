@@ -106,7 +106,7 @@ export function ScanForm({ className = '', size = 'default' }: ScanFormProps) {
       }
 
       sessionStorage.setItem('scanResult', JSON.stringify(data));
-      router.push(`/score/${data.domain}`);
+      router.push(`/scan/${data.id}`);
     } catch {
       setError('Network error. Check your connection and try again.');
       setLoading(false);
