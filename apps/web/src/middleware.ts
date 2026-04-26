@@ -22,6 +22,7 @@ const publicApiRoutes = [
   '/api/waitlist/count',
   '/api/v1/scan',
   '/api/v1/subscribe',
+  '/api/v1/ingest',
 ];
 
 // Protected page routes that require authentication

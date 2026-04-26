@@ -92,3 +92,9 @@ export const subscribeRateLimiter = createRateLimiter({
   windowMs: 60 * 60 * 1000,
   maxRequests: 5,
 });
+
+// Ingest endpoint: 100 requests per second per site key
+export const ingestRateLimiter = createRateLimiter({
+  windowMs: 1000,
+  maxRequests: 100,
+});
