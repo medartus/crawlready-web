@@ -4,6 +4,7 @@ import { ArrowLeft, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+import { EmailGate } from '@/components/score/EmailGate';
 import { EuAiActChecklist } from '@/components/score/EuAiActChecklist';
 import { RecommendationsList } from '@/components/score/RecommendationsList';
 import { ScanForm } from '@/components/score/ScanForm';
@@ -66,9 +67,12 @@ type ScanResultPageClientProps = {
   scan: ScanData;
 };
 
+const FREE_RECOMMENDATION_COUNT = 3;
+
 export function ScanResultPageClient({ scan }: ScanResultPageClientProps) {
   const [visualDiff, setVisualDiff] = useState<VisualDiffData | null>(null);
   const [shareText, setShareText] = useState('Share');
+  const [unlocked, setUnlocked] = useState(false);
   const band = getScoreBand(scan.aiReadinessScore);
   const message = SCORE_MESSAGES[band.label] ?? '';
 
@@ -207,12 +211,31 @@ export function ScanResultPageClient({ scan }: ScanResultPageClientProps) {
           generatable={scan.schemaPreview.generatable}
         />
 
-        {/* Recommendations */}
+        {/* Recommendations — top 3 free, rest behind email gate */}
         <div>
           <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
             Recommendations
+            {scan.recommendations.length > 0 && (
+              <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                (
+                {scan.recommendations.length}
+                {' '}
+                total)
+              </span>
+            )}
           </h3>
-          <RecommendationsList recommendations={scan.recommendations} />
+          <RecommendationsList
+            recommendations={
+              unlocked
+                ? scan.recommendations
+                : scan.recommendations.slice(0, FREE_RECOMMENDATION_COUNT)
+            }
+          />
+          {!unlocked && scan.recommendations.length > FREE_RECOMMENDATION_COUNT && (
+            <div className="mt-6">
+              <EmailGate domain={scan.domain} onUnlocked={() => setUnlocked(true)} />
+            </div>
+          )}
         </div>
 
         {/* CTA: Scan another URL */}

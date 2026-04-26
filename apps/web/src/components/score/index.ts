@@ -1,3 +1,4 @@
+export { EmailGate } from './EmailGate';
 export { EuAiActChecklist } from './EuAiActChecklist';
 export { RecommendationsList } from './RecommendationsList';
 export { ScanForm } from './ScanForm';
