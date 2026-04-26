@@ -8,6 +8,7 @@ import { EmailGate } from '@/components/score/EmailGate';
 import { EuAiActChecklist } from '@/components/score/EuAiActChecklist';
 import { RecommendationsList } from '@/components/score/RecommendationsList';
 import { ScanForm } from '@/components/score/ScanForm';
+import { ScanWarnings } from '@/components/score/ScanWarnings';
 import { SchemaPreviewCard } from '@/components/score/SchemaPreviewCard';
 import { getScoreBand, SCORE_MESSAGES } from '@/components/score/score-utils';
 import { ScoreGauge } from '@/components/score/ScoreGauge';
@@ -61,6 +62,8 @@ type ScanData = {
   markdownSize: number | null;
   scannedAt: string;
   scoreUrl: string;
+  warnings: Array<{ code: string; message: string }>;
+  visualDiff: VisualDiffData | null;
 };
 
 type ScanResultPageClientProps = {
@@ -70,13 +73,13 @@ type ScanResultPageClientProps = {
 const FREE_RECOMMENDATION_COUNT = 3;
 
 export function ScanResultPageClient({ scan }: ScanResultPageClientProps) {
-  const [visualDiff, setVisualDiff] = useState<VisualDiffData | null>(null);
+  const [visualDiff, setVisualDiff] = useState<VisualDiffData | null>(scan.visualDiff);
   const [shareText, setShareText] = useState('Share');
   const [unlocked, setUnlocked] = useState(false);
   const band = getScoreBand(scan.aiReadinessScore);
   const message = SCORE_MESSAGES[band.label] ?? '';
 
-  // Try to load visual diff from sessionStorage (only available right after a scan)
+  // Override with sessionStorage if available (fresher data from just-completed scan)
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem('scanResult');
@@ -84,6 +87,7 @@ export function ScanResultPageClient({ scan }: ScanResultPageClientProps) {
         const parsed = JSON.parse(stored);
         if (parsed.id === scan.id && parsed.visualDiff) {
           setVisualDiff(parsed.visualDiff);
+          sessionStorage.removeItem('scanResult');
         }
       }
     } catch {
@@ -175,6 +179,11 @@ export function ScanResultPageClient({ scan }: ScanResultPageClientProps) {
             </Link>
           </div>
         </div>
+
+        {/* Warnings */}
+        {scan.warnings && scan.warnings.length > 0 && (
+          <ScanWarnings warnings={scan.warnings} />
+        )}
 
         {/* Visual Diff */}
         {visualDiff

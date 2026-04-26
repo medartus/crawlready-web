@@ -14,6 +14,7 @@ export async function POST(request: Request) {
   if (!limit.allowed) {
     return rateLimitError(limit);
   }
+  const rateLimitRemaining = limit.remaining;
 
   // Parse body
   let body: { url?: string };
@@ -38,9 +39,12 @@ export async function POST(request: Request) {
       score_url: `https://crawlready.app/score/${result.domain}`,
     };
 
-    return NextResponse.json(response, {
+    const res = NextResponse.json(response, {
       status: result.cached ? 200 : 201,
     });
+    res.headers.set('X-RateLimit-Remaining', String(rateLimitRemaining));
+    res.headers.set('X-RateLimit-Limit', '3');
+    return res;
   } catch (error) {
     if (error instanceof CrawlProviderError) {
       return apiError('PROVIDER_ERROR', error.message, 502);

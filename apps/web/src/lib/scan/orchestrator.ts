@@ -34,6 +34,11 @@ import { computeVisualDiff } from '@/lib/scoring/visual-diff';
 
 import { getDb } from './db-helper';
 
+export type ScanWarning = {
+  code: string;
+  message: string;
+};
+
 export type ScanResult = {
   id: number;
   url: string;
@@ -60,6 +65,7 @@ export type ScanResult = {
   markdownSize: number | null;
   scannedAt: string;
   cached: boolean;
+  warnings: ScanWarning[];
 };
 
 const CACHE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -94,11 +100,12 @@ async function checkCache(url: string): Promise<ScanResult | null> {
     euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as ScanResult['euAiAct'],
     recommendations: (row.recommendations ?? []) as ScanResult['recommendations'],
     schemaPreview: (row.schemaPreview ?? { detectedTypes: [], generatable: [] }) as ScanResult['schemaPreview'],
-    visualDiff: null,
+    visualDiff: (row.visualDiff ?? null) as VisualDiffResult | null,
     rawHtmlSize: row.rawHtmlSize,
     markdownSize: row.markdownSize,
     scannedAt: row.scannedAt.toISOString(),
     cached: true,
+    warnings: (row.warnings ?? []) as ScanWarning[],
   };
 }
 
@@ -124,6 +131,54 @@ export async function runScan(
     botFetch(url),
     runStandardsProbes(url),
   ]);
+
+  // 3b. Detect edge cases and collect warnings
+  const warnings: ScanWarning[] = [];
+
+  // Bot blocked (403/429)
+  if (botResult.botStatusCode === 403 || botResult.botStatusCode === 429) {
+    warnings.push({
+      code: 'BOT_BLOCKED',
+      message: `This site blocks AI crawlers (HTTP ${botResult.botStatusCode}). Bot-view scoring is limited.`,
+    });
+  }
+
+  // Bot fetch timeout / network failure
+  if (botResult.botStatusCode === 0) {
+    warnings.push({
+      code: 'BOT_TIMEOUT',
+      message: 'Bot-view fetch failed or timed out. Bot-view scoring may be inaccurate.',
+    });
+  }
+
+  // Empty page
+  if (crawlResult.html.length < 50) {
+    warnings.push({
+      code: 'EMPTY_PAGE',
+      message: 'This page appears to be empty — very little content was found.',
+    });
+  }
+
+  // Login wall detection (common patterns)
+  const htmlLower = crawlResult.html.toLowerCase();
+  if (
+    (htmlLower.includes('sign in') || htmlLower.includes('log in') || htmlLower.includes('login'))
+    && crawlResult.html.length < 5000
+  ) {
+    warnings.push({
+      code: 'LOGIN_WALL',
+      message: 'This page may require authentication — scoring the public version.',
+    });
+  }
+
+  // Redirect to different domain
+  const crawledDomain = new URL(crawlResult.url).hostname.replace(/^www\./, '');
+  if (crawledDomain !== domain) {
+    warnings.push({
+      code: 'REDIRECT_DOMAIN',
+      message: `Redirected to ${crawledDomain}. Scoring the redirected content.`,
+    });
+  }
 
   // 4. Score
   const crawlabilityResult = scoreCrawlability(
@@ -177,6 +232,8 @@ export async function runScan(
       schemaPreview: schemaPreviewResult,
       rawHtmlSize: crawlResult.html.length,
       markdownSize: crawlResult.markdown.length,
+      visualDiff,
+      warnings,
     })
     .returning({ id: schema.scans.id });
 
@@ -197,5 +254,6 @@ export async function runScan(
     markdownSize: crawlResult.markdown.length,
     scannedAt: new Date().toISOString(),
     cached: false,
+    warnings,
   };
 }

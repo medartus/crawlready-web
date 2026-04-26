@@ -47,6 +47,7 @@ export function ScanForm({ className = '', size = 'default' }: ScanFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [progressIdx, setProgressIdx] = useState(0);
+  const [rateLimitInfo, setRateLimitInfo] = useState<{ remaining: number; limit: number } | null>(null);
   const router = useRouter();
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -103,6 +104,13 @@ export function ScanForm({ className = '', size = 'default' }: ScanFormProps) {
         setError(getErrorMessage(data));
         setLoading(false);
         return;
+      }
+
+      // Read rate limit headers
+      const remaining = response.headers.get('X-RateLimit-Remaining');
+      const limit = response.headers.get('X-RateLimit-Limit');
+      if (remaining !== null && limit !== null) {
+        setRateLimitInfo({ remaining: Number(remaining), limit: Number(limit) });
       }
 
       sessionStorage.setItem('scanResult', JSON.stringify(data));
@@ -175,7 +183,9 @@ export function ScanForm({ className = '', size = 'default' }: ScanFormProps) {
       {/* Helper text */}
       {!error && !loading && (
         <p className={`mt-2 text-center text-gray-500 dark:text-gray-400 ${isHero ? 'text-sm' : 'text-xs'}`}>
-          Free scan — no signup required
+          {rateLimitInfo !== null
+            ? `Free scan — ${rateLimitInfo.remaining} of ${rateLimitInfo.limit} scans remaining this hour`
+            : 'Free scan — no signup required'}
         </p>
       )}
     </form>

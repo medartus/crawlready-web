@@ -110,6 +110,24 @@ export default async function ScanResultPage({ params }: Props) {
     markdownSize: row.markdownSize,
     scannedAt: row.scannedAt.toISOString(),
     scoreUrl: `https://crawlready.app/score/${row.domain}`,
+    warnings: (row.warnings ?? []) as Array<{ code: string; message: string }>,
+    visualDiff: (row.visualDiff ?? null) as {
+      blocks: Array<{
+        text: string;
+        inBotView: boolean;
+        inRenderedView: boolean;
+        status: 'visible' | 'js-invisible' | 'bot-only';
+      }>;
+      stats: {
+        renderedBlockCount: number;
+        botBlockCount: number;
+        jsInvisibleCount: number;
+        botOnlyCount: number;
+        visibilityRatio: number;
+        renderedTextLength: number;
+        botTextLength: number;
+      };
+    } | null,
   };
 
   return <ScanResultPageClient scan={scanData} />;

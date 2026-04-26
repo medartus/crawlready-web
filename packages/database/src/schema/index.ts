@@ -81,6 +81,8 @@ export const scans = pgTable('scans', {
   schemaPreview: jsonb('schema_preview'),
   rawHtmlSize: integer('raw_html_size'),
   markdownSize: integer('markdown_size'),
+  visualDiff: jsonb('visual_diff'),
+  warnings: jsonb('warnings'),
   scannedAt: timestamp('scanned_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => ({
   domainScannedAtIdx: index('idx_scans_domain').on(table.domain, table.scannedAt),
