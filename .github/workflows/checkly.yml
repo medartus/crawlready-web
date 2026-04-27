@@ -30,7 +30,7 @@ jobs:
       - name: Set branch name # workaround to detect branch name in "deployment_status" actions
         run: echo "CHECKLY_TEST_REPO_BRANCH=$(git show -s --pretty=%D HEAD | tr -s ',' '\n' | sed 's/^ //' | grep -e 'origin/' | head -1 | sed 's/\origin\///g')" >> $GITHUB_ENV
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
