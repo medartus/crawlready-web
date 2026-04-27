@@ -73,40 +73,58 @@ const CACHE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 /**
  * Check the DB for a recent scan of this URL within 24h.
  */
+function isDbAvailable(): boolean {
+  try {
+    const db = getDb();
+    return db != null;
+  } catch {
+    return false;
+  }
+}
+
 async function checkCache(url: string): Promise<ScanResult | null> {
-  const db = getDb();
-  const cutoff = new Date(Date.now() - CACHE_WINDOW_MS);
-
-  const rows = await db
-    .select()
-    .from(schema.scans)
-    .where(and(eq(schema.scans.url, url), gte(schema.scans.scannedAt, cutoff)))
-    .orderBy(desc(schema.scans.scannedAt))
-    .limit(1);
-
-  const row = rows[0];
-  if (!row) {
+  if (!isDbAvailable()) {
     return null;
   }
 
-  return {
-    id: row.id,
-    url: row.url,
-    domain: row.domain,
-    aiReadinessScore: row.aiReadinessScore,
-    crawlabilityScore: row.crawlabilityScore,
-    agentReadinessScore: row.agentReadinessScore,
-    agentInteractionScore: row.agentInteractionScore,
-    euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as ScanResult['euAiAct'],
-    recommendations: (row.recommendations ?? []) as ScanResult['recommendations'],
-    schemaPreview: (row.schemaPreview ?? { detectedTypes: [], generatable: [] }) as ScanResult['schemaPreview'],
-    visualDiff: (row.visualDiff ?? null) as VisualDiffResult | null,
-    rawHtmlSize: row.rawHtmlSize,
-    markdownSize: row.markdownSize,
-    scannedAt: row.scannedAt.toISOString(),
-    cached: true,
-    warnings: (row.warnings ?? []) as ScanWarning[],
-  };
+  try {
+    const db = getDb();
+    const cutoff = new Date(Date.now() - CACHE_WINDOW_MS);
+
+    const rows = await db
+      .select()
+      .from(schema.scans)
+      .where(and(eq(schema.scans.url, url), gte(schema.scans.scannedAt, cutoff)))
+      .orderBy(desc(schema.scans.scannedAt))
+      .limit(1);
+
+    const row = rows[0];
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      url: row.url,
+      domain: row.domain,
+      aiReadinessScore: row.aiReadinessScore,
+      crawlabilityScore: row.crawlabilityScore,
+      agentReadinessScore: row.agentReadinessScore,
+      agentInteractionScore: row.agentInteractionScore,
+      euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as ScanResult['euAiAct'],
+      recommendations: (row.recommendations ?? []) as ScanResult['recommendations'],
+      schemaPreview: (row.schemaPreview ?? { detectedTypes: [], generatable: [] }) as ScanResult['schemaPreview'],
+      visualDiff: (row.visualDiff ?? null) as VisualDiffResult | null,
+      rawHtmlSize: row.rawHtmlSize,
+      markdownSize: row.markdownSize,
+      scannedAt: row.scannedAt.toISOString(),
+      cached: true,
+      warnings: (row.warnings ?? []) as ScanWarning[],
+    };
+  } catch (err) {
+    console.warn('Cache check failed (DB unavailable), proceeding without cache:', err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 /**
@@ -214,32 +232,40 @@ export async function runScan(
     agentInteraction: agentInteractionResult,
   });
 
-  // 6. Store in DB
-  const db = getDb();
-  const [inserted] = await db
-    .insert(schema.scans)
-    .values({
-      url,
-      domain,
-      scoringVersion: 2,
-      aiReadinessScore: composite.aiReadinessScore,
-      crawlabilityScore: composite.crawlabilityScore,
-      agentReadinessScore: composite.agentReadinessScore,
-      agentInteractionScore: composite.agentInteractionScore,
-      euAiActPassed: euAiActResult.passed,
-      euAiAct: euAiActResult,
-      recommendations,
-      schemaPreview: schemaPreviewResult,
-      rawHtmlSize: crawlResult.html.length,
-      markdownSize: crawlResult.markdown.length,
-      visualDiff,
-      warnings,
-    })
-    .returning({ id: schema.scans.id });
+  // 6. Store in DB (best-effort)
+  let insertedId = 0;
+  if (isDbAvailable()) {
+    try {
+      const db = getDb();
+      const [inserted] = await db
+        .insert(schema.scans)
+        .values({
+          url,
+          domain,
+          scoringVersion: 2,
+          aiReadinessScore: composite.aiReadinessScore,
+          crawlabilityScore: composite.crawlabilityScore,
+          agentReadinessScore: composite.agentReadinessScore,
+          agentInteractionScore: composite.agentInteractionScore,
+          euAiActPassed: euAiActResult.passed,
+          euAiAct: euAiActResult,
+          recommendations,
+          schemaPreview: schemaPreviewResult,
+          rawHtmlSize: crawlResult.html.length,
+          markdownSize: crawlResult.markdown.length,
+          visualDiff,
+          warnings,
+        })
+        .returning({ id: schema.scans.id });
+      insertedId = inserted!.id;
+    } catch (err) {
+      console.warn('DB write failed (DB unavailable), returning result without persistence:', err instanceof Error ? err.message : err);
+    }
+  }
 
   // 7. Return
   return {
-    id: inserted!.id,
+    id: insertedId,
     url,
     domain,
     aiReadinessScore: composite.aiReadinessScore,

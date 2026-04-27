@@ -61,7 +61,10 @@ async function scanSite(
   try {
     const res = await fetch(`${baseUrl}/api/v1/scan`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-preseed-key': 'crawlready-dev-seed',
+      },
       body: JSON.stringify({ url }),
     });
 

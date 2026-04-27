@@ -9,13 +9,19 @@ import { scanRateLimiter } from '@/lib/utils/rate-limit';
 import { getBaseUrl } from '@/utils/Helpers';
 
 export async function POST(request: Request) {
-  // Rate limit
-  const ip = getClientIp(request);
-  const limit = scanRateLimiter.check(ip);
-  if (!limit.allowed) {
-    return rateLimitError(limit);
+  // Rate limit (bypass for local pre-seed scripts)
+  const bypassHeader = request.headers.get('x-preseed-key');
+  const isPreseedBypass = bypassHeader === 'crawlready-dev-seed' && process.env.NODE_ENV !== 'production';
+
+  let rateLimitRemaining = 0;
+  if (!isPreseedBypass) {
+    const ip = getClientIp(request);
+    const limit = scanRateLimiter.check(ip);
+    if (!limit.allowed) {
+      return rateLimitError(limit);
+    }
+    rateLimitRemaining = limit.remaining;
   }
-  const rateLimitRemaining = limit.remaining;
 
   // Parse body
   let body: { url?: string };
@@ -60,7 +66,11 @@ export async function POST(request: Request) {
       return apiError('INVALID_URL', error.message, 400);
     }
 
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const errStack = error instanceof Error ? error.stack : undefined;
     console.error('Scan error:', error);
-    return apiError('INTERNAL_ERROR', 'An unexpected error occurred.', 500);
+    return apiError('INTERNAL_ERROR', errMsg || 'An unexpected error occurred.', 500, {
+      ...(process.env.NODE_ENV !== 'production' && { stack: errStack }),
+    });
   }
 }
