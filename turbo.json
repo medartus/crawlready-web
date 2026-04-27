@@ -25,6 +25,7 @@
     "UPSTASH_*",
     "SUPABASE_*",
     "NODE_ENV",
-    "AUTO_MIGRATE"
+    "AUTO_MIGRATE",
+    "FIRECRAWL_API_KEY"
   ]
 }
