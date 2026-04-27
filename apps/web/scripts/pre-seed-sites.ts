@@ -16,33 +16,33 @@
 const SITES = [
   // CSR / SPA heavy
   { url: 'https://app.netlify.com', category: 'CSR SPA' },
-  { url: 'https://figma.com', category: 'CSR SPA' },
-  { url: 'https://linear.app', category: 'CSR SPA' },
+  // { url: 'https://figma.com', category: 'CSR SPA' },
+  // { url: 'https://linear.app', category: 'CSR SPA' },
 
   // SSR / Hybrid
   { url: 'https://vercel.com', category: 'SSR' },
-  { url: 'https://nextjs.org', category: 'SSR' },
-  { url: 'https://stripe.com', category: 'SSR' },
-  { url: 'https://supabase.com', category: 'SSR' },
-  { url: 'https://tailwindcss.com', category: 'SSR' },
+  // { url: 'https://nextjs.org', category: 'SSR' },
+  // { url: 'https://stripe.com', category: 'SSR' },
+  // { url: 'https://supabase.com', category: 'SSR' },
+  // { url: 'https://tailwindcss.com', category: 'SSR' },
 
   // Documentation sites
   { url: 'https://docs.github.com', category: 'Docs' },
-  { url: 'https://react.dev', category: 'Docs' },
-  { url: 'https://developer.mozilla.org', category: 'Docs' },
-  { url: 'https://docs.python.org/3/', category: 'Docs' },
+  // { url: 'https://react.dev', category: 'Docs' },
+  // { url: 'https://developer.mozilla.org', category: 'Docs' },
+  // { url: 'https://docs.python.org/3/', category: 'Docs' },
 
   // SaaS marketing
   { url: 'https://notion.so', category: 'SaaS' },
-  { url: 'https://slack.com', category: 'SaaS' },
-  { url: 'https://github.com', category: 'SaaS' },
-  { url: 'https://gitlab.com', category: 'SaaS' },
-  { url: 'https://sentry.io', category: 'SaaS' },
-  { url: 'https://datadog.com', category: 'SaaS' },
+  // { url: 'https://slack.com', category: 'SaaS' },
+  // { url: 'https://github.com', category: 'SaaS' },
+  // { url: 'https://gitlab.com', category: 'SaaS' },
+  // { url: 'https://sentry.io', category: 'SaaS' },
+  // { url: 'https://datadog.com', category: 'SaaS' },
 
   // Static / Blog
   { url: 'https://astro.build', category: 'Static' },
-  { url: 'https://svelte.dev', category: 'Static' },
+  // { url: 'https://svelte.dev', category: 'Static' },
 ];
 
 type ScanResponse = {

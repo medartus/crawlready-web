@@ -11,7 +11,7 @@ import { getBaseUrl } from '@/utils/Helpers';
 import { ScanResultPageClient } from './ScanResultPageClient';
 
 type Props = {
-  params: { id: string; locale: string };
+  params: Promise<{ id: string; locale: string }>;
 };
 
 async function getScanById(id: string) {
@@ -29,8 +29,9 @@ async function getScanById(id: string) {
   return rows[0] ?? null;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const row = await getScanById(params.id);
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const { id } = await props.params;
+  const row = await getScanById(id);
   const baseUrl = getBaseUrl();
 
   if (!row) {
@@ -65,8 +66,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ScanResultPage({ params }: Props) {
-  const row = await getScanById(params.id);
+export default async function ScanResultPage(props: Props) {
+  const { id } = await props.params;
+  const row = await getScanById(id);
 
   if (!row) {
     notFound();

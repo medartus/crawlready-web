@@ -30,13 +30,13 @@ export default withSentryConfig(
   bundleAnalyzer(
     withNextIntl({
       eslint: {
+        // ESLint runs separately via CI - disable during build to avoid ESLint 8/9 incompatibility with Next.js 15
+        ignoreDuringBuilds: true,
         dirs: ['.'],
       },
       poweredByHeader: false,
       reactStrictMode: true,
-      experimental: {
-        serverComponentsExternalPackages: ['@electric-sql/pglite'],
-      },
+      serverExternalPackages: ['@electric-sql/pglite', 'next-mdx-remote'],
       webpack: (config) => {
         // Ensure proper resolution of TypeScript path aliases
         config.resolve.alias = {

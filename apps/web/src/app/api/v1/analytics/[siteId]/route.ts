@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/utils/api-helpers';
 import { db } from '@/libs/DB';
 
-type RouteParams = { params: { siteId: string } };
+type RouteParams = { params: Promise<{ siteId: string }> };
 
 /**
  * GET /api/v1/analytics/[siteId] — Basic visit analytics for a site.
@@ -15,11 +15,13 @@ type RouteParams = { params: { siteId: string } };
  * Auth: Clerk JWT, user must own the site.
  * Query params: ?days=30 (default 30, max 90)
  */
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(request: Request, routeParams: RouteParams) {
   const { userId } = await auth();
   if (!userId) {
     return apiError('UNAUTHORIZED', 'Authentication required.', 401);
   }
+
+  const { siteId } = await routeParams.params;
 
   // Verify site ownership
   const siteRows = await db
@@ -27,7 +29,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     .from(schema.sites)
     .where(
       and(
-        eq(schema.sites.id, params.siteId),
+        eq(schema.sites.id, siteId),
         eq(schema.sites.clerkUserId, userId),
       ),
     )

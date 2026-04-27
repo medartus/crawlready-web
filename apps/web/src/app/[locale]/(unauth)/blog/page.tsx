@@ -1,6 +1,6 @@
 import { ArrowRight, Calendar, Clock } from 'lucide-react';
 import Link from 'next/link';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { badgeVariants } from '@/components/ui/badgeVariants';
 import { buttonVariants } from '@/components/ui/buttonVariants';
@@ -9,9 +9,10 @@ import { getAllPosts, getFeaturedPost } from '@/libs/mdx/blog';
 import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 
-export async function generateMetadata(props: { params: { locale: string } }) {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }) {
+  const { locale } = await props.params;
   const t = await getTranslations({
-    locale: props.params.locale,
+    locale,
     namespace: 'Blog',
   });
 
@@ -21,8 +22,9 @@ export async function generateMetadata(props: { params: { locale: string } }) {
   };
 }
 
-const BlogPage = async (props: { params: { locale: string } }) => {
-  unstable_setRequestLocale(props.params.locale);
+const BlogPage = async (props: { params: Promise<{ locale: string }> }) => {
+  const { locale } = await props.params;
+  setRequestLocale(locale);
 
   const allPosts = await getAllPosts();
   const featuredPost = await getFeaturedPost();

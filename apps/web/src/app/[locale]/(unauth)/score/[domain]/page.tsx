@@ -14,7 +14,7 @@ import type { EuAiActData, RecommendationData, VisualDiffData } from '@/types/sc
 import { getBaseUrl } from '@/utils/Helpers';
 
 type Props = {
-  params: { domain: string; locale: string };
+  params: Promise<{ domain: string; locale: string }>;
 };
 
 async function getLatestScan(rawDomain: string) {
@@ -35,10 +35,11 @@ async function getLatestScan(rawDomain: string) {
   return rows[0] ?? null;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const row = await getLatestScan(params.domain);
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const { domain: rawDomain } = await props.params;
+  const row = await getLatestScan(rawDomain);
   const baseUrl = getBaseUrl();
-  const domain = decodeURIComponent(params.domain);
+  const domain = decodeURIComponent(rawDomain);
 
   if (!row) {
     return {
@@ -87,9 +88,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ScoreResultPage({ params }: Props) {
-  const row = await getLatestScan(params.domain);
-  const domain = decodeURIComponent(params.domain);
+export default async function ScoreResultPage(props: Props) {
+  const { domain: rawDomain } = await props.params;
+  const row = await getLatestScan(rawDomain);
+  const domain = decodeURIComponent(rawDomain);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">

@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, Calendar, Clock, Share2 } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { unstable_setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 
 import { badgeVariants } from '@/components/ui/badgeVariants';
@@ -12,8 +12,9 @@ import { getAllPostSlugs, getPostBySlug } from '@/libs/mdx/blog';
 import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 
-export async function generateMetadata(props: { params: { locale: string; slug: string } }) {
-  const post = await getPostBySlug(props.params.slug);
+export async function generateMetadata(props: { params: Promise<{ locale: string; slug: string }> }) {
+  const { slug } = await props.params;
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     return {
@@ -32,10 +33,11 @@ export async function generateStaticParams() {
   return slugs.map(slug => ({ slug }));
 }
 
-const BlogPostPage = async (props: { params: { locale: string; slug: string } }) => {
-  unstable_setRequestLocale(props.params.locale);
+const BlogPostPage = async (props: { params: Promise<{ locale: string; slug: string }> }) => {
+  const { locale, slug } = await props.params;
+  setRequestLocale(locale);
 
-  const post = await getPostBySlug(props.params.slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     notFound();
@@ -105,7 +107,7 @@ const BlogPostPage = async (props: { params: { locale: string; slug: string } })
             </div>
             <div className="flex gap-3">
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://crawlready.com/blog/${props.params.slug}`)}&via=medartus`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(`https://crawlready.com/blog/${slug}`)}&via=medartus`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`${buttonVariants({ variant: 'outline', size: 'sm' })} gap-2`}

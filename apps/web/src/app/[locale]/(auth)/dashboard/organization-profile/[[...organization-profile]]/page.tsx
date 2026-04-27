@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { TitleBar } from '@/features/dashboard/TitleBar';
 import { getI18nPath } from '@/utils/Helpers';
 
-const OrganizationProfilePage = (props: { params: { locale: string } }) => {
+const OrganizationProfilePage = async (props: { params: Promise<{ locale: string }> }) => {
+  const { locale } = await props.params;
   const t = useTranslations('OrganizationProfile');
 
   return (
@@ -18,7 +19,7 @@ const OrganizationProfilePage = (props: { params: { locale: string } }) => {
         routing="path"
         path={getI18nPath(
           '/dashboard/organization-profile',
-          props.params.locale,
+          locale,
         )}
         afterLeaveOrganizationUrl="/onboarding/organization-selection"
         appearance={{

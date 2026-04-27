@@ -1,15 +1,16 @@
 import { ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { buttonVariants } from '@/components/ui/buttonVariants';
 import { Section } from '@/features/landing/Section';
 import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 
-export async function generateMetadata(props: { params: { locale: string } }) {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }) {
+  const { locale } = await props.params;
   const t = await getTranslations({
-    locale: props.params.locale,
+    locale,
     namespace: 'About',
   });
 
@@ -19,8 +20,9 @@ export async function generateMetadata(props: { params: { locale: string } }) {
   };
 }
 
-const AboutPage = (props: { params: { locale: string } }) => {
-  unstable_setRequestLocale(props.params.locale);
+const AboutPage = async (props: { params: Promise<{ locale: string }> }) => {
+  const { locale } = await props.params;
+  setRequestLocale(locale);
 
   return (
     <>

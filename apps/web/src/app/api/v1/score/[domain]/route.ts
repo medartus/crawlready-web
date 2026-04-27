@@ -9,11 +9,12 @@ import { getBaseUrl } from '@/utils/Helpers';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { domain: string } },
+  routeParams: { params: Promise<{ domain: string }> },
 ) {
+  const { domain: rawDomain } = await routeParams.params;
   let domain: string;
   try {
-    domain = normalizeDomain(params.domain);
+    domain = normalizeDomain(rawDomain);
   } catch {
     return apiError('INVALID_DOMAIN', 'Invalid domain format.', 400);
   }

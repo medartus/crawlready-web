@@ -1,5 +1,5 @@
 import { Sparkles } from 'lucide-react';
-import { unstable_setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 
 import { CrawlerCheckerForm } from '@/components/CrawlerCheckerForm';
 import { badgeVariants } from '@/components/ui/badgeVariants';
@@ -12,8 +12,9 @@ export const metadata = {
   description: 'Check if ChatGPT, Claude, and Perplexity can properly crawl and index your website. Free tool, instant results, no signup required.',
 };
 
-const CrawlerCheckerPage = (props: { params: { locale: string } }) => {
-  unstable_setRequestLocale(props.params.locale);
+const CrawlerCheckerPage = async (props: { params: Promise<{ locale: string }> }) => {
+  const { locale } = await props.params;
+  setRequestLocale(locale);
 
   return (
     <>

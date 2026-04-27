@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { DocsSidebar } from '@/components/DocsSidebar';
 import { buttonVariants } from '@/components/ui/buttonVariants';
@@ -9,9 +9,10 @@ import { getDocsSidebar } from '@/libs/mdx/docs';
 import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 
-export async function generateMetadata(props: { params: { locale: string } }) {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }) {
+  const { locale } = await props.params;
   const t = await getTranslations({
-    locale: props.params.locale,
+    locale,
     namespace: 'Docs',
   });
 
@@ -21,8 +22,9 @@ export async function generateMetadata(props: { params: { locale: string } }) {
   };
 }
 
-const DocsPage = async (props: { params: { locale: string } }) => {
-  unstable_setRequestLocale(props.params.locale);
+const DocsPage = async (props: { params: Promise<{ locale: string }> }) => {
+  const { locale } = await props.params;
+  setRequestLocale(locale);
 
   const navigation = await getDocsSidebar();
 

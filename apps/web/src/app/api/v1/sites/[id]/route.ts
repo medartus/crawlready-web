@@ -7,23 +7,25 @@ import { apiError } from '@/lib/utils/api-helpers';
 import { getSnippets } from '@/lib/utils/snippets';
 import { db } from '@/libs/DB';
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 /**
  * GET /api/v1/sites/[id] — Get a single site's details
  */
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, routeParams: RouteParams) {
   const { userId } = await auth();
   if (!userId) {
     return apiError('UNAUTHORIZED', 'Authentication required.', 401);
   }
+
+  const { id } = await routeParams.params;
 
   const rows = await db
     .select()
     .from(schema.sites)
     .where(
       and(
-        eq(schema.sites.id, params.id),
+        eq(schema.sites.id, id),
         eq(schema.sites.clerkUserId, userId),
       ),
     )
@@ -47,11 +49,13 @@ export async function GET(_request: Request, { params }: RouteParams) {
 /**
  * DELETE /api/v1/sites/[id] — Delete a site (cascades to crawler_visits)
  */
-export async function DELETE(_request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, routeParams: RouteParams) {
   const { userId } = await auth();
   if (!userId) {
     return apiError('UNAUTHORIZED', 'Authentication required.', 401);
   }
+
+  const { id } = await routeParams.params;
 
   // Verify ownership before deleting
   const rows = await db
@@ -59,7 +63,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     .from(schema.sites)
     .where(
       and(
-        eq(schema.sites.id, params.id),
+        eq(schema.sites.id, id),
         eq(schema.sites.clerkUserId, userId),
       ),
     )
@@ -71,7 +75,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
 
   await db
     .delete(schema.sites)
-    .where(eq(schema.sites.id, params.id));
+    .where(eq(schema.sites.id, id));
 
   return new NextResponse(null, { status: 204 });
 }

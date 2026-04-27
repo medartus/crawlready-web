@@ -1,12 +1,13 @@
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Section } from '@/features/landing/Section';
 import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 
-export async function generateMetadata(props: { params: { locale: string } }) {
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }) {
+  const { locale } = await props.params;
   const t = await getTranslations({
-    locale: props.params.locale,
+    locale,
     namespace: 'Privacy',
   });
 
@@ -16,8 +17,9 @@ export async function generateMetadata(props: { params: { locale: string } }) {
   };
 }
 
-const PrivacyPage = (props: { params: { locale: string } }) => {
-  unstable_setRequestLocale(props.params.locale);
+const PrivacyPage = async (props: { params: Promise<{ locale: string }> }) => {
+  const { locale } = await props.params;
+  setRequestLocale(locale);
 
   return (
     <>

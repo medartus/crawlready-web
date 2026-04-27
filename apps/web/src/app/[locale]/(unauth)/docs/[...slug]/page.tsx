@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { unstable_setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 
 import { DocsNavigationLinks, DocsSidebar } from '@/components/DocsSidebar';
@@ -13,15 +13,15 @@ import { LandingFooter } from '@/templates/LandingFooter';
 import { LandingNavbar } from '@/templates/LandingNavbar';
 
 type DocsPageProps = {
-  params: {
+  params: Promise<{
     locale: string;
     slug: string[];
-  };
+  }>;
 };
 
 export async function generateMetadata(props: DocsPageProps) {
-  const slug = props.params.slug.join('/');
-  const doc = await getDocBySlug(slug);
+  const { slug } = await props.params;
+  const doc = await getDocBySlug(slug.join('/'));
 
   if (!doc) {
     return {
@@ -43,13 +43,14 @@ export async function generateStaticParams() {
 }
 
 const DocsContentPage = async (props: DocsPageProps) => {
-  unstable_setRequestLocale(props.params.locale);
+  const { locale, slug } = await props.params;
+  setRequestLocale(locale);
 
-  const slug = props.params.slug.join('/');
+  const slugPath = slug.join('/');
   const [doc, navigation, docNavigation] = await Promise.all([
-    getDocBySlug(slug),
+    getDocBySlug(slugPath),
     getDocsSidebar(),
-    getDocNavigation(slug),
+    getDocNavigation(slugPath),
   ]);
 
   if (!doc) {
