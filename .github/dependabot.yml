@@ -1,0 +1,95 @@
+version: 2
+
+updates:
+  # npm (pnpm monorepo — root lockfile covers all workspaces)
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '08:00'
+      timezone: Europe/Paris
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - npm
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+    groups:
+      next-js:
+        patterns:
+          - next
+          - next-*
+          - '@next/*'
+      react:
+        patterns:
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
+      clerk:
+        patterns:
+          - '@clerk/*'
+      supabase:
+        patterns:
+          - '@supabase/*'
+      eslint:
+        patterns:
+          - eslint
+          - eslint-*
+          - '@eslint/*'
+          - '@typescript-eslint/*'
+      testing:
+        patterns:
+          - jest
+          - jest-*
+          - '@jest/*'
+          - playwright
+          - '@playwright/*'
+          - checkly
+          - '@checkly/*'
+      tailwind:
+        patterns:
+          - tailwindcss
+          - tailwind-*
+          - '@tailwindcss/*'
+          - postcss
+          - autoprefixer
+      typescript:
+        patterns:
+          - typescript
+          - ts-*
+          - tsconfig-*
+      turbo:
+        patterns:
+          - turbo
+          - turbo-*
+          - '@turbo/*'
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - next
+          - next-*
+          - '@next/*'
+          - react
+          - react-dom
+          - '@clerk/*'
+          - '@supabase/*'
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '08:00'
+      timezone: Europe/Paris
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: chore(ci)
