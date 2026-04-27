@@ -43,6 +43,13 @@
       "when": 1736632800000,
       "tag": "0005_add_sites",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1745700000000,
+      "tag": "0006_add_visual_diff_and_warnings",
+      "breakpoints": true
     }
   ]
 }

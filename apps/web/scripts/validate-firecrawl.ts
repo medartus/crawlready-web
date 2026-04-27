@@ -16,7 +16,8 @@
  *   - Success rate > 90%
  */
 
-import FirecrawlApp from '@mendable/firecrawl-js';
+import type { CrawlProvider } from '../src/lib/crawl/provider';
+import { CrawlProviderError } from '../src/lib/crawl/provider';
 
 type Category = 'CSR SPA' | 'SSR' | 'Documentation' | 'SaaS Marketing';
 
@@ -157,9 +158,33 @@ async function main() {
   const outputArg = process.argv.find(a => a.startsWith('--output='));
   const outputFile = outputArg?.split('=')[1] ?? null;
 
-  const client = new FirecrawlApp({ apiKey });
+  // Use the CrawlProvider abstraction — dynamically import firecrawl adapter
+  // to avoid coupling this script to a specific provider.
+  const { createFirecrawlProvider } = await import('../src/lib/crawl/firecrawl');
+  let provider: CrawlProvider;
+  try {
+    provider = createFirecrawlProvider();
+  } catch {
+    // Fallback: construct a minimal provider using the raw API key
+    // (createFirecrawlProvider reads from Env which may not be set in scripts)
+    const FirecrawlApp = (await import('@mendable/firecrawl-js')).default;
+    const client = new FirecrawlApp({ apiKey });
+    provider = {
+      name: 'firecrawl',
+      scrape: async (url: string) => {
+        const doc = await client.scrape(url, { formats: ['html', 'markdown'] });
+        return {
+          html: doc.html ?? '',
+          markdown: doc.markdown ?? '',
+          url: doc.metadata?.sourceURL ?? url,
+          statusCode: doc.metadata?.statusCode ?? 200,
+        };
+      },
+    };
+  }
 
   console.log(`\n🔥 Firecrawl 100-Crawl Validation (M1 Hard Gate)\n`);
+  console.log(`   Provider: ${provider.name}`);
   console.log(`   Sites: ${TEST_SITES.length}`);
   console.log(`   Categories: CSR SPA (25), SSR (25), Documentation (25), SaaS Marketing (25)\n`);
   console.log('─'.repeat(90));
@@ -174,24 +199,20 @@ async function main() {
 
     const start = Date.now();
     try {
-      const doc = await client.scrape(site.url, { formats: ['html', 'markdown'] });
+      const result = await provider.scrape(site.url);
       const latencyMs = Date.now() - start;
-
-      const htmlLen = (doc.html ?? '').length;
-      const mdLen = (doc.markdown ?? '').length;
-      const statusCode = doc.metadata?.statusCode ?? 200;
 
       records.push({
         url: site.url,
         category: site.category,
         success: true,
         latencyMs,
-        htmlLength: htmlLen,
-        markdownLength: mdLen,
-        statusCode,
+        htmlLength: result.html.length,
+        markdownLength: result.markdown.length,
+        statusCode: result.statusCode,
       });
 
-      console.log(`✅ ${latencyMs}ms | HTML:${htmlLen} MD:${mdLen} | ${statusCode}`);
+      console.log(`✅ ${latencyMs}ms | HTML:${result.html.length} MD:${result.markdown.length} | ${result.statusCode}`);
     } catch (err) {
       const latencyMs = Date.now() - start;
       const errorMsg = err instanceof Error ? err.message : 'Unknown error';
@@ -203,7 +224,7 @@ async function main() {
         latencyMs,
         htmlLength: 0,
         markdownLength: 0,
-        statusCode: 0,
+        statusCode: err instanceof CrawlProviderError ? (err.statusCode ?? 0) : 0,
         error: errorMsg,
       });
 

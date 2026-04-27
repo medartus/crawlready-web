@@ -7,8 +7,10 @@ import Link from 'next/link';
 import { ScanForm } from '@/components/score/ScanForm';
 import { ScanResultCard } from '@/components/score/ScanResultCard';
 import { getScoreBand } from '@/components/score/score-utils';
+import { VisualDiff } from '@/components/score/VisualDiff';
 import { normalizeDomain } from '@/lib/crawl/normalize-url';
 import { db } from '@/libs/DB';
+import type { EuAiActData, RecommendationData, VisualDiffData } from '@/types/scan';
 import { getBaseUrl } from '@/utils/Helpers';
 
 type Props = {
@@ -131,31 +133,30 @@ export default async function ScoreResultPage({ params }: Props) {
         )}
 
         {row && (
-          <ScanResultCard
-            result={{
-              url: row.url,
-              domain: row.domain,
-              aiReadinessScore: row.aiReadinessScore,
-              crawlabilityScore: row.crawlabilityScore,
-              agentReadinessScore: row.agentReadinessScore,
-              agentInteractionScore: row.agentInteractionScore,
-              euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as {
-                passed: number;
-                total: number;
-                checks: Array<{ name: string; passed: boolean }>;
-              },
-              recommendations: (row.recommendations ?? []) as Array<{
-                id: string;
-                severity: string;
-                category: string;
-                title: string;
-                description: string;
-                impact: string;
-              }>,
-              scannedAt: row.scannedAt.toISOString(),
-              scoreUrl: `https://crawlready.app/score/${row.domain}`,
-            }}
-          />
+          <>
+            <ScanResultCard
+              result={{
+                url: row.url,
+                domain: row.domain,
+                aiReadinessScore: row.aiReadinessScore,
+                crawlabilityScore: row.crawlabilityScore,
+                agentReadinessScore: row.agentReadinessScore,
+                agentInteractionScore: row.agentInteractionScore,
+                euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as EuAiActData,
+                recommendations: (row.recommendations ?? []) as RecommendationData[],
+                scannedAt: row.scannedAt.toISOString(),
+                scoreUrl: `${getBaseUrl()}/score/${row.domain}`,
+              }}
+            />
+            {(row.visualDiff as VisualDiffData | null) && (
+              <div className="mt-8">
+                <VisualDiff
+                  blocks={(row.visualDiff as VisualDiffData).blocks}
+                  stats={(row.visualDiff as VisualDiffData).stats}
+                />
+              </div>
+            )}
+          </>
         )}
 
         {/* CTA: Check your site */}

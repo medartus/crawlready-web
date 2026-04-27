@@ -52,34 +52,38 @@ export function analyzeSchemaPreview(botHtml: string, renderedHtml: string): Sch
   const generatable: SchemaGeneratable[] = [];
   const text = extractVisibleText(renderedHtml);
 
-  // Detect FAQ-like content
+  // Detect FAQ-like content — require both explicit FAQ heading AND question marks
   const questionMarks = (text.match(/\?/g) || []).length;
-  if (FAQ_PATTERN.test(text) || questionMarks >= 3) {
-    const confidence = FAQ_PATTERN.test(text) ? 0.87 : 0.6;
+  if (FAQ_PATTERN.test(text) && questionMarks >= 3) {
     generatable.push({
       type: 'FAQPage',
-      confidence,
-      reason: `${questionMarks} question patterns detected`,
+      confidence: 0.87,
+      reason: `FAQ section with ${questionMarks} questions detected`,
     });
   }
 
-  // Detect Product/Pricing content
+  // Detect Product/Pricing content — require pricing keywords AND actual price tokens
   if (PRODUCT_PATTERN.test(text)) {
     const priceMatches = (text.match(/\$[\d,.]+|\u20AC[\d,.]+|\u00A3[\d,.]+/g) || []).length;
-    generatable.push({
-      type: 'Product',
-      confidence: priceMatches >= 2 ? 0.92 : 0.7,
-      reason: `${priceMatches} price points detected`,
-    });
+    if (priceMatches >= 1) {
+      generatable.push({
+        type: 'Product',
+        confidence: priceMatches >= 2 ? 0.92 : 0.7,
+        reason: `${priceMatches} price points detected`,
+      });
+    }
   }
 
-  // Detect HowTo content
+  // Detect HowTo content — require keyword AND numbered steps
   if (HOWTO_PATTERN.test(text)) {
-    generatable.push({
-      type: 'HowTo',
-      confidence: 0.75,
-      reason: 'Step-by-step content patterns detected',
-    });
+    const stepMatches = (text.match(/step\s+\d|^\d+\./gim) || []).length;
+    if (stepMatches >= 2) {
+      generatable.push({
+        type: 'HowTo',
+        confidence: 0.75,
+        reason: `${stepMatches} step-by-step patterns detected`,
+      });
+    }
   }
 
   // Detect Article content

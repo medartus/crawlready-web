@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { normalizeDomain } from '@/lib/crawl/normalize-url';
 import { apiError } from '@/lib/utils/api-helpers';
 import { db } from '@/libs/DB';
+import { getBaseUrl } from '@/utils/Helpers';
 
 export async function GET(
   _request: Request,
@@ -29,6 +30,8 @@ export async function GET(
     return apiError('NOT_FOUND', `No scan found for domain: ${domain}`, 404);
   }
 
+  const baseUrl = getBaseUrl();
+
   return NextResponse.json({
     id: row.id,
     url: row.url,
@@ -40,6 +43,9 @@ export async function GET(
     euAiAct: row.euAiAct ?? { passed: 0, total: 4, checks: [] },
     recommendations: row.recommendations ?? [],
     schemaPreview: row.schemaPreview ?? { detectedTypes: [], generatable: [] },
+    visualDiff: row.visualDiff ?? null,
+    warnings: row.warnings ?? [],
+    scoreUrl: `${baseUrl}/score/${row.domain}`,
     rawHtmlSize: row.rawHtmlSize,
     markdownSize: row.markdownSize,
     scannedAt: row.scannedAt.toISOString(),

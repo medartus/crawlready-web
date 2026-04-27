@@ -1,9 +1,11 @@
 import { schema } from '@crawlready/database';
 import { eq } from 'drizzle-orm';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
 import { getScoreBand } from '@/components/score/score-utils';
 import { db } from '@/libs/DB';
+import type { EuAiActData, RecommendationData, ScanWarningData, SchemaPreviewData, VisualDiffData } from '@/types/scan';
 import { getBaseUrl } from '@/utils/Helpers';
 
 import { ScanResultPageClient } from './ScanResultPageClient';
@@ -67,18 +69,7 @@ export default async function ScanResultPage({ params }: Props) {
   const row = await getScanById(params.id);
 
   if (!row) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="mx-auto max-w-md rounded-xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-950/20">
-          <p className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
-            Scan Not Found
-          </p>
-          <p className="text-sm text-red-600 dark:text-red-400">
-            This scan result does not exist or has expired.
-          </p>
-        </div>
-      </div>
-    );
+    notFound();
   }
 
   const scanData = {
@@ -89,45 +80,15 @@ export default async function ScanResultPage({ params }: Props) {
     crawlabilityScore: row.crawlabilityScore,
     agentReadinessScore: row.agentReadinessScore,
     agentInteractionScore: row.agentInteractionScore,
-    euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as {
-      passed: number;
-      total: number;
-      checks: Array<{ name: string; passed: boolean }>;
-    },
-    recommendations: (row.recommendations ?? []) as Array<{
-      id: string;
-      severity: string;
-      category: string;
-      title: string;
-      description: string;
-      impact: string;
-    }>,
-    schemaPreview: (row.schemaPreview ?? { detectedTypes: [], generatable: [] }) as {
-      detectedTypes: Array<{ type: string; properties: number }>;
-      generatable: Array<{ type: string; confidence: number; reason: string }>;
-    },
+    euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as EuAiActData,
+    recommendations: (row.recommendations ?? []) as RecommendationData[],
+    schemaPreview: (row.schemaPreview ?? { detectedTypes: [], generatable: [] }) as SchemaPreviewData,
     rawHtmlSize: row.rawHtmlSize,
     markdownSize: row.markdownSize,
     scannedAt: row.scannedAt.toISOString(),
-    scoreUrl: `https://crawlready.app/score/${row.domain}`,
-    warnings: (row.warnings ?? []) as Array<{ code: string; message: string }>,
-    visualDiff: (row.visualDiff ?? null) as {
-      blocks: Array<{
-        text: string;
-        inBotView: boolean;
-        inRenderedView: boolean;
-        status: 'visible' | 'js-invisible' | 'bot-only';
-      }>;
-      stats: {
-        renderedBlockCount: number;
-        botBlockCount: number;
-        jsInvisibleCount: number;
-        botOnlyCount: number;
-        visibilityRatio: number;
-        renderedTextLength: number;
-        botTextLength: number;
-      };
-    } | null,
+    scoreUrl: `${getBaseUrl()}/score/${row.domain}`,
+    warnings: (row.warnings ?? []) as ScanWarningData[],
+    visualDiff: (row.visualDiff ?? null) as VisualDiffData | null,
   };
 
   return <ScanResultPageClient scan={scanData} />;

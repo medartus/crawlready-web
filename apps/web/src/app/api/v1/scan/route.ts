@@ -6,6 +6,7 @@ import { CrawlProviderError } from '@/lib/crawl/provider';
 import { runScan } from '@/lib/scan/orchestrator';
 import { apiError, getClientIp, rateLimitError } from '@/lib/utils/api-helpers';
 import { scanRateLimiter } from '@/lib/utils/rate-limit';
+import { getBaseUrl } from '@/utils/Helpers';
 
 export async function POST(request: Request) {
   // Rate limit
@@ -34,9 +35,10 @@ export async function POST(request: Request) {
     const provider = createFirecrawlProvider();
     const result = await runScan(url, provider);
 
+    const baseUrl = getBaseUrl();
     const response = {
       ...result,
-      score_url: `https://crawlready.app/score/${result.domain}`,
+      scoreUrl: `${baseUrl}/score/${result.domain}`,
     };
 
     const res = NextResponse.json(response, {

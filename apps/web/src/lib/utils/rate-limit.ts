@@ -5,6 +5,13 @@
  * serverless (per-isolate scope). Replace with Redis/Upstash if
  * multiple instances are needed.
  *
+ * **Known limitation:** On Vercel serverless, each cold start creates a
+ * fresh Map — counters reset when the isolate is recycled (typically
+ * after a few minutes of inactivity). This means the effective rate
+ * limit is per-isolate, not globally consistent. Acceptable for Phase 0
+ * abuse prevention; migrate to Upstash Redis in Phase 1 for strict
+ * enforcement across all isolates.
+ *
  * Usage:
  *   const result = rateLimiter.check(ip);
  *   if (!result.allowed) return NextResponse.json({ … }, { status: 429 });

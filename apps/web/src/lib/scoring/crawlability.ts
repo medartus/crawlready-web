@@ -76,13 +76,14 @@ function scoreStructuralClarity(botHtml: string): number {
   }
 
   // Has heading hierarchy (at least one <h2>, no skipped levels)
+  const hasH1 = countTag(botHtml, 'h1') >= 1;
   const hasH2 = countTag(botHtml, 'h2') >= 1;
   const hasH3 = countTag(botHtml, 'h3') >= 1;
-  const hasH1 = countTag(botHtml, 'h1') >= 1;
-  if (hasH2) {
-    // Check for skipped levels: h1→h3 without h2 would fail, but h2 exists so ok
-    const skipOk = !hasH3 || hasH2; // h3 requires h2
-    if (hasH1 && skipOk) {
+  const hasH4 = countTag(botHtml, 'h4') >= 1;
+  if (hasH1 && hasH2) {
+    // No skipped levels: h3 requires h2 (guaranteed), h4 requires h3
+    const noSkippedLevels = !hasH4 || hasH3;
+    if (noSkippedLevels) {
       score += 5;
     }
   }

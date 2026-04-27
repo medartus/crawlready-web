@@ -14,60 +14,10 @@ import { getScoreBand, SCORE_MESSAGES } from '@/components/score/score-utils';
 import { ScoreGauge } from '@/components/score/ScoreGauge';
 import { SubScoreBars } from '@/components/score/SubScoreBars';
 import { VisualDiff } from '@/components/score/VisualDiff';
-
-type VisualDiffData = {
-  blocks: Array<{
-    text: string;
-    inBotView: boolean;
-    inRenderedView: boolean;
-    status: 'visible' | 'js-invisible' | 'bot-only';
-  }>;
-  stats: {
-    renderedBlockCount: number;
-    botBlockCount: number;
-    jsInvisibleCount: number;
-    botOnlyCount: number;
-    visibilityRatio: number;
-    renderedTextLength: number;
-    botTextLength: number;
-  };
-};
-
-type ScanData = {
-  id: number;
-  url: string;
-  domain: string;
-  aiReadinessScore: number;
-  crawlabilityScore: number;
-  agentReadinessScore: number;
-  agentInteractionScore: number;
-  euAiAct: {
-    passed: number;
-    total: number;
-    checks: Array<{ name: string; passed: boolean }>;
-  };
-  recommendations: Array<{
-    id: string;
-    severity: string;
-    category: string;
-    title: string;
-    description: string;
-    impact: string;
-  }>;
-  schemaPreview: {
-    detectedTypes: Array<{ type: string; properties: number }>;
-    generatable: Array<{ type: string; confidence: number; reason: string }>;
-  };
-  rawHtmlSize: number | null;
-  markdownSize: number | null;
-  scannedAt: string;
-  scoreUrl: string;
-  warnings: Array<{ code: string; message: string }>;
-  visualDiff: VisualDiffData | null;
-};
+import type { ScanResultData, VisualDiffData } from '@/types/scan';
 
 type ScanResultPageClientProps = {
-  scan: ScanData;
+  scan: ScanResultData;
 };
 
 const FREE_RECOMMENDATION_COUNT = 3;

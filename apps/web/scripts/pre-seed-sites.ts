@@ -89,7 +89,7 @@ async function main() {
     : 'http://localhost:3000';
 
   console.log(`\n🚀 Pre-seeding ${SITES.length} sites via ${baseUrl}\n`);
-  console.log('%-4s %-12s %-35s %-6s %-6s %-6s %-6s %s', '#', 'Category', 'URL', 'AI', 'Crawl', 'Agent', 'Inter', 'Status');
+  console.log(`${'#'.padEnd(4)} ${'Category'.padEnd(12)} ${'URL'.padEnd(35)} ${'AI'.padEnd(6)} ${'Crawl'.padEnd(6)} ${'Agent'.padEnd(6)} ${'Inter'.padEnd(6)} Status`);
   console.log('-'.repeat(100));
 
   const results: Array<{
@@ -104,11 +104,11 @@ async function main() {
     const result = await scanSite(baseUrl, site.url);
 
     if ('error' in result && typeof result.error === 'string') {
-      console.log('%-4d %-12s %-35s %-6s %-6s %-6s %-6s %s', i + 1, site.category, site.url, '-', '-', '-', '-', `❌ ${result.error}`);
+      console.log(`${String(i + 1).padEnd(4)} ${site.category.padEnd(12)} ${site.url.padEnd(35)} ${'-'.padEnd(6)} ${'-'.padEnd(6)} ${'-'.padEnd(6)} ${'-'.padEnd(6)} ❌ ${result.error}`);
       results.push({ url: site.url, category: site.category, score: null, status: result.error });
     } else {
       const r = result as ScanResponse;
-      console.log('%-4d %-12s %-35s %-6d %-6d %-6d %-6d %s', i + 1, site.category, site.url, r.aiReadinessScore, r.crawlabilityScore, r.agentReadinessScore, r.agentInteractionScore, '✅');
+      console.log(`${String(i + 1).padEnd(4)} ${site.category.padEnd(12)} ${site.url.padEnd(35)} ${String(r.aiReadinessScore).padEnd(6)} ${String(r.crawlabilityScore).padEnd(6)} ${String(r.agentReadinessScore).padEnd(6)} ${String(r.agentInteractionScore).padEnd(6)} ✅`);
       results.push({ url: site.url, category: site.category, score: r.aiReadinessScore, status: 'ok' });
     }
 
