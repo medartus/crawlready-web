@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, Check, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, ChevronRight, Eye, EyeOff, Layers } from 'lucide-react';
 import { useState } from 'react';
 
 type DiffBlock = {
@@ -26,6 +26,7 @@ type VisualDiffProps = {
 };
 
 export function VisualDiff({ blocks, stats }: VisualDiffProps) {
+  const [expanded, setExpanded] = useState(false);
   const [view, setView] = useState<'overlay' | 'side-by-side'>('overlay');
   const [showOnlyMissing, setShowOnlyMissing] = useState(false);
 
@@ -41,122 +42,149 @@ export function VisualDiff({ blocks, stats }: VisualDiffProps) {
       ? 'text-yellow-600'
       : 'text-red-600';
 
+  const summaryText = stats.jsInvisibleCount === 0
+    ? 'All content is visible to AI crawlers'
+    : `AI crawlers miss ${stats.jsInvisibleCount} of ${stats.renderedBlockCount} content blocks`;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Visual Content Diff
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            What humans see vs what AI crawlers receive
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+      {/* Collapsible Header */}
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full cursor-pointer items-center gap-4 p-5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+      >
+        <Layers className="size-5 shrink-0 text-indigo-500" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+              Visual Content Diff
+            </h3>
+            <span className={`text-sm font-bold ${visibilityColor}`}>
+              {stats.visibilityRatio}
+              %
+            </span>
+          </div>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+            {summaryText}
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setView('overlay')}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              view === 'overlay'
-                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
-            }`}
-          >
-            Overlay
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('side-by-side')}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              view === 'side-by-side'
-                ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
-            }`}
-          >
-            Side-by-Side
-          </button>
-        </div>
-      </div>
+        {expanded
+          ? <ChevronDown className="size-5 shrink-0 text-gray-400" />
+          : <ChevronRight className="size-5 shrink-0 text-gray-400" />}
+      </button>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-          <div className={`text-2xl font-bold ${visibilityColor}`}>
-            {stats.visibilityRatio}
-            %
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Visibility Ratio
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
-            {stats.renderedBlockCount}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Content Blocks
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-          <div className="text-2xl font-bold text-red-600">
-            {stats.jsInvisibleCount}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            JS-Invisible
-          </div>
-        </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
-            {Math.round(stats.renderedTextLength / 1024)}
-            KB
-            {' / '}
-            {Math.round(stats.botTextLength / 1024)}
-            KB
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            Rendered / Bot Text
-          </div>
-        </div>
-      </div>
+      {/* Expanded content */}
+      {expanded && (
+        <div className="border-t border-gray-100 p-5 dark:border-gray-700">
+          <div className="space-y-6">
+            {/* View toggle + filter */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setView('overlay')}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    view === 'overlay'
+                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  Overlay
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('side-by-side')}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    view === 'side-by-side'
+                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
+                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  Side-by-Side
+                </button>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={showOnlyMissing}
+                  onChange={e => setShowOnlyMissing(e.target.checked)}
+                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-gray-700 dark:text-gray-300">
+                  Show only missing content
+                </span>
+              </label>
+            </div>
 
-      {/* Filter */}
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={showOnlyMissing}
-          onChange={e => setShowOnlyMissing(e.target.checked)}
-          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-        />
-        <span className="text-gray-700 dark:text-gray-300">
-          Show only missing/invisible content
-        </span>
-      </label>
+            {/* Stats Bar */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
+                <div className={`text-xl font-bold ${visibilityColor}`}>
+                  {stats.visibilityRatio}
+                  %
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Visibility
+                </div>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
+                <div className="text-xl font-bold text-gray-900 dark:text-white">
+                  {stats.renderedBlockCount}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Content Blocks
+                </div>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
+                <div className="text-xl font-bold text-red-600">
+                  {stats.jsInvisibleCount}
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  JS-Invisible
+                </div>
+              </div>
+              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
+                <div className="text-xl font-bold text-gray-900 dark:text-white">
+                  {Math.round(stats.renderedTextLength / 1024)}
+                  KB
+                  {' / '}
+                  {Math.round(stats.botTextLength / 1024)}
+                  KB
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Rendered / Bot
+                </div>
+              </div>
+            </div>
 
-      {/* Content */}
-      {view === 'overlay'
-        ? (
-            <OverlayView blocks={displayBlocks} />
-          )
-        : (
-            <SideBySideView renderedBlocks={renderedBlocks} botBlocks={botBlocks} />
-          )}
+            {/* Content */}
+            {view === 'overlay'
+              ? (
+                  <OverlayView blocks={displayBlocks} />
+                )
+              : (
+                  <SideBySideView renderedBlocks={renderedBlocks} botBlocks={botBlocks} />
+                )}
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-800/50">
-        <div className="flex items-center gap-2">
-          <span className="inline-block size-3 rounded-sm bg-emerald-100 ring-1 ring-emerald-300" />
-          <span className="text-gray-600 dark:text-gray-400">Visible to bots</span>
+            {/* Legend */}
+            <div className="flex flex-wrap gap-4 rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-900/50">
+              <div className="flex items-center gap-2">
+                <span className="inline-block size-3 rounded-sm bg-emerald-100 ring-1 ring-emerald-300" />
+                <span className="text-gray-600 dark:text-gray-400">Visible to bots</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block size-3 rounded-sm bg-red-100 ring-1 ring-red-300" />
+                <span className="text-gray-600 dark:text-gray-400">JS-invisible (bots miss this)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block size-3 rounded-sm bg-blue-100 ring-1 ring-blue-300" />
+                <span className="text-gray-600 dark:text-gray-400">Bot-only (e.g. noscript)</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-block size-3 rounded-sm bg-red-100 ring-1 ring-red-300" />
-          <span className="text-gray-600 dark:text-gray-400">JS-invisible (bots miss this)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-block size-3 rounded-sm bg-blue-100 ring-1 ring-blue-300" />
-          <span className="text-gray-600 dark:text-gray-400">Bot-only (e.g. noscript)</span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

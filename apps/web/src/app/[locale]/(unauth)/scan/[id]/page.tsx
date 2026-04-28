@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 
 import { getScoreBand } from '@/components/score/score-utils';
 import { db } from '@/libs/DB';
-import type { EuAiActData, RecommendationData, ScanWarningData, SchemaPreviewData, VisualDiffData } from '@/types/scan';
+import type { EuAiActData, RecommendationData, ScanWarningData, SchemaPreviewData, ScoreBreakdown, VisualDiffData } from '@/types/scan';
 import { getBaseUrl } from '@/utils/Helpers';
 
 import { ScanResultPageClient } from './ScanResultPageClient';
@@ -91,6 +91,7 @@ export default async function ScanResultPage(props: Props) {
     scoreUrl: `${getBaseUrl()}/score/${row.domain}`,
     warnings: (row.warnings ?? []) as ScanWarningData[],
     visualDiff: (row.visualDiff ?? null) as VisualDiffData | null,
+    scoreBreakdown: (row.scoreBreakdown ?? null) as ScoreBreakdown | null,
   };
 
   return <ScanResultPageClient scan={scanData} />;

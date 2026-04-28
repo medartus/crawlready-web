@@ -83,6 +83,14 @@ export const scans = pgTable('scans', {
   markdownSize: integer('markdown_size'),
   visualDiff: jsonb('visual_diff'),
   warnings: jsonb('warnings'),
+  // Raw crawl data (cached to avoid re-crawling during scoring iteration)
+  crawlHtml: text('crawl_html'),
+  crawlMarkdown: text('crawl_markdown'),
+  botHtml: text('bot_html'),
+  botStatusCode: integer('bot_status_code'),
+  botHeaders: jsonb('bot_headers'),
+  standardsProbes: jsonb('standards_probes'),
+  scoreBreakdown: jsonb('score_breakdown'),
   scannedAt: timestamp('scanned_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => ({
   domainScannedAtIdx: index('idx_scans_domain').on(table.domain, table.scannedAt),

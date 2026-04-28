@@ -51,6 +51,27 @@ export type ScanWarningData = {
   message: string;
 };
 
+export type SubCheckScore = {
+  id: string;
+  label: string;
+  score: number;
+  maxScore: number;
+  status: 'pass' | 'partial' | 'fail';
+};
+
+export type SubScoreBreakdown = {
+  label: string;
+  score: number;
+  weight: string;
+  checks: SubCheckScore[];
+};
+
+export type ScoreBreakdown = {
+  crawlability: SubScoreBreakdown;
+  agentReadiness: SubScoreBreakdown;
+  agentInteraction: SubScoreBreakdown;
+};
+
 export type ScanResultData = {
   id: number;
   url: string;
@@ -68,4 +89,5 @@ export type ScanResultData = {
   scannedAt: string;
   scoreUrl: string;
   warnings: ScanWarningData[];
+  scoreBreakdown: ScoreBreakdown | null;
 };

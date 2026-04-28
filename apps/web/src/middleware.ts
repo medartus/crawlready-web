@@ -106,5 +106,7 @@ export default function middleware(
 }
 
 export const config = {
-  matcher: ['/((?!.+\\.[\\w]+$|_next|monitoring).*)', '/', '/(api|trpc)(.*)'], // Also exclude tunnelRoute used in Sentry from the matcher
+  // Run middleware on all routes except static files (_next, monitoring, files with extensions)
+  // BUT always run on /score/ paths (domains contain dots, e.g. /score/vercel.com)
+  matcher: ['/((?!_next|monitoring)(?:score/.+|(?!.+\\.[\\w]+$).*))', '/', '/(api|trpc)(.*)'],
 };

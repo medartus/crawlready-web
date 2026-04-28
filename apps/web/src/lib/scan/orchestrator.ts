@@ -27,10 +27,13 @@ import {
   scoreCrawlability,
   scoreEuAiAct,
 } from '@/lib/scoring';
-import type { AgentReadinessInput } from '@/lib/scoring/agent-readiness';
+import type { AgentInteractionResult } from '@/lib/scoring/agent-interaction';
+import type { AgentReadinessInput, AgentReadinessResult } from '@/lib/scoring/agent-readiness';
+import type { CrawlabilityResult } from '@/lib/scoring/crawlability';
 import { analyzeSchemaPreview } from '@/lib/scoring/schema-preview';
 import type { VisualDiffResult } from '@/lib/scoring/visual-diff';
 import { computeVisualDiff } from '@/lib/scoring/visual-diff';
+import type { ScoreBreakdown, SubCheckScore } from '@/types/scan';
 
 import { getDb } from './db-helper';
 
@@ -66,9 +69,54 @@ export type ScanResult = {
   scannedAt: string;
   cached: boolean;
   warnings: ScanWarning[];
+  scoreBreakdown: ScoreBreakdown | null;
 };
 
 const CACHE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function checkStatus(score: number, maxScore: number): 'pass' | 'partial' | 'fail' {
+  const ratio = maxScore > 0 ? score / maxScore : 0;
+  if (ratio >= 0.8) {
+    return 'pass';
+  }
+  if (ratio >= 0.4) {
+    return 'partial';
+  }
+  return 'fail';
+}
+
+function buildScoreBreakdown(
+  crawlability: CrawlabilityResult,
+  agentReadiness: AgentReadinessResult,
+  agentInteraction: AgentInteractionResult,
+): ScoreBreakdown {
+  const c: SubCheckScore[] = [
+    { id: 'c1', label: 'Content Visibility', score: crawlability.c1ContentVisibility, maxScore: 35, status: checkStatus(crawlability.c1ContentVisibility, 35) },
+    { id: 'c2', label: 'Structural Clarity', score: crawlability.c2StructuralClarity, maxScore: 25, status: checkStatus(crawlability.c2StructuralClarity, 25) },
+    { id: 'c3', label: 'Noise Ratio', score: crawlability.c3NoiseRatio, maxScore: 20, status: checkStatus(crawlability.c3NoiseRatio, 20) },
+    { id: 'c4', label: 'Schema.org Presence', score: crawlability.c4SchemaPresence, maxScore: 20, status: checkStatus(crawlability.c4SchemaPresence, 20) },
+  ];
+
+  const a: SubCheckScore[] = [
+    { id: 'a1', label: 'Structured Data', score: agentReadiness.a1StructuredData, maxScore: 25, status: checkStatus(agentReadiness.a1StructuredData, 25) },
+    { id: 'a2', label: 'Content Negotiation', score: agentReadiness.a2ContentNegotiation, maxScore: 25, status: checkStatus(agentReadiness.a2ContentNegotiation, 25) },
+    { id: 'a3', label: 'Machine-Actionable Data', score: agentReadiness.a3MachineActionable, maxScore: 30, status: checkStatus(agentReadiness.a3MachineActionable, 30) },
+    { id: 'a4', label: 'Standards Adoption', score: agentReadiness.a4StandardsAdoption, maxScore: 20, status: checkStatus(agentReadiness.a4StandardsAdoption, 20) },
+  ];
+
+  const i: SubCheckScore[] = [
+    { id: 'i1', label: 'Semantic HTML', score: agentInteraction.i1SemanticHtml, maxScore: 25, status: checkStatus(agentInteraction.i1SemanticHtml, 25) },
+    { id: 'i2', label: 'Accessibility', score: agentInteraction.i2Accessibility, maxScore: 30, status: checkStatus(agentInteraction.i2Accessibility, 30) },
+    { id: 'i3', label: 'Navigation & Structure', score: agentInteraction.i3Navigation, maxScore: 25, status: checkStatus(agentInteraction.i3Navigation, 25) },
+    { id: 'i4', label: 'Visual-Semantic Consistency', score: agentInteraction.i4VisualSemantic, maxScore: 20, status: checkStatus(agentInteraction.i4VisualSemantic, 20) },
+  ];
+
+  return {
+    crawlability: { label: 'Crawlability', score: crawlability.score, weight: '50%', checks: c },
+    agentReadiness: { label: 'Agent Readiness', score: agentReadiness.score, weight: '25%', checks: a },
+    agentInteraction: { label: 'Agent Interaction', score: agentInteraction.score, weight: '25%', checks: i },
+  };
+}
 
 /**
  * Check the DB for a recent scan of this URL within 24h.
@@ -120,6 +168,7 @@ async function checkCache(url: string): Promise<ScanResult | null> {
       scannedAt: row.scannedAt.toISOString(),
       cached: true,
       warnings: (row.warnings ?? []) as ScanWarning[],
+      scoreBreakdown: (row.scoreBreakdown ?? null) as ScoreBreakdown | null,
     };
   } catch (err) {
     console.warn('Cache check failed (DB unavailable), proceeding without cache:', err instanceof Error ? err.message : err);
@@ -232,7 +281,14 @@ export async function runScan(
     agentInteraction: agentInteractionResult,
   });
 
-  // 6. Store in DB (best-effort)
+  // 6. Build score breakdown for progressive disclosure UI
+  const scoreBreakdown = buildScoreBreakdown(
+    crawlabilityResult,
+    agentReadinessResult,
+    agentInteractionResult,
+  );
+
+  // 6b. Store in DB (best-effort)
   let insertedId = 0;
   if (isDbAvailable()) {
     try {
@@ -255,6 +311,14 @@ export async function runScan(
           markdownSize: crawlResult.markdown.length,
           visualDiff,
           warnings,
+          scoreBreakdown,
+          // Raw crawl data for offline re-scoring
+          crawlHtml: crawlResult.html,
+          crawlMarkdown: crawlResult.markdown,
+          botHtml: botResult.botHtml,
+          botStatusCode: botResult.botStatusCode,
+          botHeaders: botResult.responseHeaders,
+          standardsProbes,
         })
         .returning({ id: schema.scans.id });
       insertedId = inserted!.id;
@@ -281,5 +345,6 @@ export async function runScan(
     scannedAt: new Date().toISOString(),
     cached: false,
     warnings,
+    scoreBreakdown,
   };
 }
