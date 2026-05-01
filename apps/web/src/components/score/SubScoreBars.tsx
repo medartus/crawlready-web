@@ -37,8 +37,8 @@ function SubScoreRow({ label, score, weight }: SubScore) {
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-gray-900 dark:text-white">{label}</span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-cr-fg font-medium">{label}</span>
+          <span className="text-cr-fg-muted text-xs">
             (
             {weight}
             )
@@ -49,7 +49,7 @@ function SubScoreRow({ label, score, weight }: SubScore) {
           /100
         </span>
       </div>
-      <div className="h-2.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+      <div className="bg-cr-surface-raised h-2.5 overflow-hidden rounded-full">
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${band.barColor}`}
           style={{ width: `${Math.max(score, 2)}%` }}

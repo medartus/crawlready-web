@@ -21,23 +21,23 @@ export function EuAiActChecklist({ passed, total, checks }: EuAiActChecklistProp
   const failingChecks = checks.filter(c => !c.passed);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <div className="border-cr-border-subtle bg-cr-surface overflow-hidden rounded-xl border">
       {/* Header */}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full cursor-pointer items-center gap-4 p-5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+        className="hover:bg-cr-surface-raised flex w-full cursor-pointer items-center gap-4 p-5 text-left transition-colors"
       >
-        <Shield className="size-5 shrink-0 text-indigo-500" />
+        <Shield className="text-cr-primary size-5 shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-cr-fg text-base font-semibold">
               EU AI Act Transparency
             </h3>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
               passed === total
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                ? 'bg-cr-score-excellent-soft text-cr-score-excellent'
+                : 'bg-cr-score-fair-soft text-cr-score-fair'
             }`}
             >
               {passed}
@@ -45,30 +45,30 @@ export function EuAiActChecklist({ passed, total, checks }: EuAiActChecklistProp
               {total}
             </span>
           </div>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-cr-fg-secondary mt-0.5 text-sm">
             {passed === total
               ? 'All transparency checks passing'
               : `${failingChecks.length} check${failingChecks.length > 1 ? 's' : ''} need attention`}
           </p>
         </div>
         {expanded
-          ? <ChevronDown className="size-5 shrink-0 text-gray-400" />
-          : <ChevronRight className="size-5 shrink-0 text-gray-400" />}
+          ? <ChevronDown className="text-cr-fg-muted size-5 shrink-0" />
+          : <ChevronRight className="text-cr-fg-muted size-5 shrink-0" />}
       </button>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-gray-100 dark:border-gray-700">
+        <div className="border-cr-border-subtle border-t">
           {/* Intro */}
-          <div className="border-b border-gray-100 px-5 py-3 dark:border-gray-700">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+          <div className="border-cr-border-subtle border-b px-5 py-3">
+            <p className="text-cr-fg-muted text-xs">
               The EU AI Act (Article 50) requires transparency about AI-generated content.
               These checks verify whether your site provides the metadata AI systems need.
             </p>
           </div>
 
           {/* Check rows */}
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          <div className="divide-cr-border-subtle divide-y">
             {checks.map(check => (
               <EuAiActCheckRow key={check.name} check={check} />
             ))}
@@ -87,14 +87,14 @@ function EuAiActCheckRow({ check }: { check: Check }) {
     <div className="px-5 py-4">
       <div className="flex items-start gap-3">
         {check.passed
-          ? <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-500" />
-          : <XCircle className="mt-0.5 size-5 shrink-0 text-red-400" />}
+          ? <CheckCircle2 className="text-cr-score-excellent mt-0.5 size-5 shrink-0" />
+          : <XCircle className="text-cr-score-critical mt-0.5 size-5 shrink-0" />}
         <div className="min-w-0 flex-1">
-          <span className={`text-sm font-medium ${check.passed ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+          <span className={`text-sm font-medium ${check.passed ? 'text-cr-fg' : 'text-cr-fg-secondary'}`}>
             {content?.label ?? check.name}
           </span>
           {content && (
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-cr-fg-muted mt-1 text-xs">
               {content.description}
             </p>
           )}
@@ -103,12 +103,12 @@ function EuAiActCheckRow({ check }: { check: Check }) {
               <button
                 type="button"
                 onClick={() => setShowHint(!showHint)}
-                className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="text-cr-primary hover:text-cr-primary-hover inline-flex cursor-pointer items-center gap-1 text-xs font-medium transition-colors"
               >
                 {showHint ? 'Hide fix' : 'How to fix'}
               </button>
               {showHint && (
-                <div className="mt-2 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300">
+                <div className="bg-cr-primary-soft text-cr-primary mt-2 rounded-lg px-3 py-2 text-xs">
                   {content.fixHint}
                   {content.learnMoreUrl && (
                     <a

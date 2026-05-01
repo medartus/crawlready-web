@@ -37,46 +37,42 @@ export function VisualDiff({ blocks, stats }: VisualDiffProps) {
     : blocks;
 
   const visibilityColor = stats.visibilityRatio >= 80
-    ? 'text-emerald-600'
+    ? 'text-cr-score-excellent'
     : stats.visibilityRatio >= 50
-      ? 'text-yellow-600'
-      : 'text-red-600';
+      ? 'text-cr-score-fair'
+      : 'text-cr-score-critical';
 
   const summaryText = stats.jsInvisibleCount === 0
     ? 'All content is visible to AI crawlers'
     : `AI crawlers miss ${stats.jsInvisibleCount} of ${stats.renderedBlockCount} content blocks`;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <div className="border-cr-border-subtle bg-cr-surface overflow-hidden rounded-xl border">
       {/* Collapsible Header */}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full cursor-pointer items-center gap-4 p-5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+        className="hover:bg-cr-surface-raised flex w-full cursor-pointer items-center gap-4 p-5 text-left transition-colors"
       >
-        <Layers className="size-5 shrink-0 text-indigo-500" />
+        <Layers className="text-cr-primary size-5 shrink-0" />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Visual Content Diff
-            </h3>
-            <span className={`text-sm font-bold ${visibilityColor}`}>
-              {stats.visibilityRatio}
-              %
-            </span>
+          <div className="flex flex-wrap gap-3 px-5 py-3">
+            <StatBadge label="Visibility" value={`${stats.visibilityRatio}%`} />
+            <StatBadge label="Content blocks" value={String(stats.renderedBlockCount)} />
+            <StatBadge label="JS-invisible" value={String(stats.jsInvisibleCount)} warn={stats.jsInvisibleCount > 0} />
           </div>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-cr-fg-secondary mt-0.5 text-sm">
             {summaryText}
           </p>
         </div>
         {expanded
-          ? <ChevronDown className="size-5 shrink-0 text-gray-400" />
-          : <ChevronRight className="size-5 shrink-0 text-gray-400" />}
+          ? <ChevronDown className="text-cr-fg-muted size-5 shrink-0" />
+          : <ChevronRight className="text-cr-fg-muted size-5 shrink-0" />}
       </button>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-gray-100 p-5 dark:border-gray-700">
+        <div className="border-cr-border-subtle border-t">
           <div className="space-y-6">
             {/* View toggle + filter */}
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -84,10 +80,10 @@ export function VisualDiff({ blocks, stats }: VisualDiffProps) {
                 <button
                   type="button"
                   onClick={() => setView('overlay')}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     view === 'overlay'
-                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                      ? 'bg-cr-primary-soft text-cr-primary'
+                      : 'text-cr-fg-muted hover:text-cr-fg'
                   }`}
                 >
                   Overlay
@@ -95,10 +91,10 @@ export function VisualDiff({ blocks, stats }: VisualDiffProps) {
                 <button
                   type="button"
                   onClick={() => setView('side-by-side')}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     view === 'side-by-side'
-                      ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'
-                      : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+                      ? 'bg-cr-primary-soft text-cr-primary'
+                      : 'text-cr-fg-muted hover:text-cr-fg'
                   }`}
                 >
                   Side-by-Side
@@ -109,9 +105,9 @@ export function VisualDiff({ blocks, stats }: VisualDiffProps) {
                   type="checkbox"
                   checked={showOnlyMissing}
                   onChange={e => setShowOnlyMissing(e.target.checked)}
-                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  className="border-cr-border text-cr-primary focus:ring-cr-primary rounded"
                 />
-                <span className="text-gray-700 dark:text-gray-300">
+                <span className="text-cr-fg-secondary">
                   Show only missing content
                 </span>
               </label>
@@ -119,40 +115,40 @@ export function VisualDiff({ blocks, stats }: VisualDiffProps) {
 
             {/* Stats Bar */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
+              <div className="bg-cr-surface-raised rounded-lg p-3">
                 <div className={`text-xl font-bold ${visibilityColor}`}>
                   {stats.visibilityRatio}
                   %
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-cr-fg-muted text-xs">
                   Visibility
                 </div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
-                <div className="text-xl font-bold text-gray-900 dark:text-white">
+              <div className="bg-cr-surface-raised rounded-lg p-3">
+                <div className="text-cr-fg text-xl font-bold">
                   {stats.renderedBlockCount}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-cr-fg-muted text-xs">
                   Content Blocks
                 </div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
-                <div className="text-xl font-bold text-red-600">
+              <div className="bg-cr-surface-raised rounded-lg p-3">
+                <div className="text-cr-score-critical text-xl font-bold">
                   {stats.jsInvisibleCount}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-cr-fg-muted text-xs">
                   JS-Invisible
                 </div>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-900/50">
-                <div className="text-xl font-bold text-gray-900 dark:text-white">
+              <div className="bg-cr-surface-raised rounded-lg p-3">
+                <div className="text-cr-fg text-xl font-bold">
                   {Math.round(stats.renderedTextLength / 1024)}
                   KB
                   {' / '}
                   {Math.round(stats.botTextLength / 1024)}
                   KB
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-cr-fg-muted text-xs">
                   Rendered / Bot
                 </div>
               </div>
@@ -168,18 +164,18 @@ export function VisualDiff({ blocks, stats }: VisualDiffProps) {
                 )}
 
             {/* Legend */}
-            <div className="flex flex-wrap gap-4 rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-900/50">
+            <div className="bg-cr-surface-raised flex flex-wrap gap-4 rounded-lg p-3 text-sm">
               <div className="flex items-center gap-2">
-                <span className="inline-block size-3 rounded-sm bg-emerald-100 ring-1 ring-emerald-300" />
-                <span className="text-gray-600 dark:text-gray-400">Visible to bots</span>
+                <span className="bg-cr-score-excellent-soft inline-block size-3 rounded-sm" />
+                <span className="text-cr-fg-muted text-xs">Visible to bots</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-block size-3 rounded-sm bg-red-100 ring-1 ring-red-300" />
-                <span className="text-gray-600 dark:text-gray-400">JS-invisible (bots miss this)</span>
+                <span className="bg-cr-score-critical-soft inline-block size-3 rounded-sm" />
+                <span className="text-cr-fg-muted text-xs">JS-invisible (bots miss this)</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-block size-3 rounded-sm bg-blue-100 ring-1 ring-blue-300" />
-                <span className="text-gray-600 dark:text-gray-400">Bot-only (e.g. noscript)</span>
+                <span className="bg-cr-primary-soft inline-block size-3 rounded-sm" />
+                <span className="text-cr-fg-muted text-xs">Bot-only (e.g. noscript)</span>
               </div>
             </div>
           </div>
@@ -189,12 +185,27 @@ export function VisualDiff({ blocks, stats }: VisualDiffProps) {
   );
 }
 
+function StatBadge({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
+  return (
+    <div className={`rounded-lg px-3 py-1.5 text-sm ${
+      warn
+        ? 'bg-cr-score-critical-soft text-cr-score-critical'
+        : 'bg-cr-surface-raised text-cr-fg-secondary'
+    }`}
+    >
+      <span className="font-semibold">{value}</span>
+      {' '}
+      <span className="text-xs opacity-70">{label}</span>
+    </div>
+  );
+}
+
 function OverlayView({ blocks }: { blocks: DiffBlock[] }) {
   if (blocks.length === 0) {
     return (
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-8 text-center dark:border-emerald-800 dark:bg-emerald-950/20">
-        <Check className="mx-auto mb-2 size-8 text-emerald-600" />
-        <p className="font-medium text-emerald-800 dark:text-emerald-300">
+      <div className="bg-cr-score-excellent-soft border-cr-score-excellent/20 rounded-lg border p-8 text-center">
+        <Check className="text-cr-score-excellent mx-auto mb-2 size-8" />
+        <p className="text-cr-score-excellent font-medium">
           All content is visible to AI crawlers
         </p>
       </div>
@@ -202,31 +213,31 @@ function OverlayView({ blocks }: { blocks: DiffBlock[] }) {
   }
 
   return (
-    <div className="max-h-[600px] overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="border-cr-border-subtle max-h-[600px] overflow-auto rounded-lg border">
       <div className="space-y-0.5 p-4">
         {blocks.map(block => (
           <div
             key={`${block.status}-${block.text.slice(0, 30)}`}
             className={`flex items-start gap-3 rounded-md px-3 py-2 ${
               block.status === 'visible'
-                ? 'bg-emerald-50 dark:bg-emerald-950/10'
+                ? 'bg-cr-score-excellent-soft'
                 : block.status === 'js-invisible'
-                  ? 'bg-red-50 dark:bg-red-950/20'
-                  : 'bg-blue-50 dark:bg-blue-950/20'
+                  ? 'bg-cr-score-critical-soft'
+                  : 'bg-cr-primary-soft'
             }`}
           >
             {block.status === 'visible'
-              ? <Eye className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+              ? <Eye className="text-cr-score-excellent mt-0.5 size-4 shrink-0" />
               : block.status === 'js-invisible'
-                ? <EyeOff className="mt-0.5 size-4 shrink-0 text-red-500" />
-                : <AlertTriangle className="mt-0.5 size-4 shrink-0 text-blue-500" />}
+                ? <EyeOff className="text-cr-score-critical mt-0.5 size-4 shrink-0" />
+                : <AlertTriangle className="text-cr-primary mt-0.5 size-4 shrink-0" />}
             <span
               className={`text-sm ${
                 block.status === 'visible'
-                  ? 'text-gray-700 dark:text-gray-300'
+                  ? 'text-cr-fg-secondary'
                   : block.status === 'js-invisible'
-                    ? 'font-medium text-red-800 dark:text-red-300'
-                    : 'text-blue-800 dark:text-blue-300'
+                    ? 'text-cr-score-critical font-medium'
+                    : 'text-cr-primary'
               }`}
             >
               {block.text}
@@ -248,22 +259,22 @@ function SideBySideView({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {/* Rendered view */}
-      <div className="rounded-lg border-2 border-emerald-300 dark:border-emerald-700">
-        <div className="border-b border-emerald-200 bg-emerald-50 px-4 py-2 dark:border-emerald-800 dark:bg-emerald-950/30">
+      <div className="border-cr-score-excellent/40 rounded-lg border-2">
+        <div className="bg-cr-score-excellent-soft border-cr-score-excellent/20 border-b px-4 py-2">
           <div className="flex items-center gap-2">
-            <Eye className="size-4 text-emerald-600" />
-            <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+            <Eye className="text-cr-score-excellent size-4" />
+            <span className="text-cr-score-excellent text-sm font-semibold">
               Browser View (JS Rendered)
             </span>
           </div>
         </div>
-        <div className="max-h-[400px] overflow-auto p-4 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+        <div className="text-cr-fg-secondary max-h-[400px] overflow-auto p-4 text-sm leading-relaxed">
           {renderedBlocks.map(block => (
             <span
               key={`rendered-${block.text.slice(0, 30)}`}
               className={
                 block.status === 'js-invisible'
-                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                  ? 'bg-cr-score-critical-soft text-cr-score-critical'
                   : ''
               }
             >
@@ -275,16 +286,16 @@ function SideBySideView({
       </div>
 
       {/* Bot view */}
-      <div className="rounded-lg border-2 border-red-300 dark:border-red-700">
-        <div className="border-b border-red-200 bg-red-50 px-4 py-2 dark:border-red-800 dark:bg-red-950/30">
+      <div className="border-cr-score-critical/40 rounded-lg border-2">
+        <div className="bg-cr-score-critical-soft border-cr-score-critical/20 border-b px-4 py-2">
           <div className="flex items-center gap-2">
-            <EyeOff className="size-4 text-red-600" />
-            <span className="text-sm font-semibold text-red-800 dark:text-red-300">
+            <EyeOff className="text-cr-score-critical size-4" />
+            <span className="text-cr-score-critical text-sm font-semibold">
               Bot View (GPTBot — No JS)
             </span>
           </div>
         </div>
-        <div className="max-h-[400px] overflow-auto p-4 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+        <div className="text-cr-fg-secondary max-h-[400px] overflow-auto p-4 text-sm leading-relaxed">
           {botBlocks.map(block => (
             <span key={`bot-${block.text.slice(0, 30)}`}>
               {block.text}

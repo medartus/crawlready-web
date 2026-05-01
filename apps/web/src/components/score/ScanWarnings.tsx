@@ -27,10 +27,10 @@ export function ScanWarnings({ warnings }: { warnings: ScanWarning[] }) {
         return (
           <div
             key={w.code}
-            className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/20"
+            className="bg-cr-score-fair-soft border-cr-score-fair/20 flex items-start gap-3 rounded-lg border px-4 py-3"
           >
-            <Icon className="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-sm text-amber-800 dark:text-amber-300">
+            <Icon className="text-cr-score-fair mt-0.5 size-5 shrink-0" />
+            <p className="text-cr-score-fair text-sm">
               {w.message}
             </p>
           </div>

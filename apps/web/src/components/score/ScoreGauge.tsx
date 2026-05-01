@@ -30,9 +30,8 @@ export function ScoreGauge({ score, size = 'md', label }: ScoreGaugeProps) {
             cy={s.outer / 2}
             r={radius}
             fill="none"
-            stroke="currentColor"
             strokeWidth={s.stroke}
-            className="text-gray-200 dark:text-gray-700"
+            className="stroke-cr-border"
           />
           <circle
             cx={s.outer / 2}
@@ -51,7 +50,7 @@ export function ScoreGauge({ score, size = 'md', label }: ScoreGaugeProps) {
         </div>
       </div>
       {label && (
-        <span className={`font-medium text-gray-600 dark:text-gray-400 ${s.labelSize}`}>
+        <span className={`text-cr-fg-secondary font-medium ${s.labelSize}`}>
           {label}
         </span>
       )}

@@ -21,35 +21,29 @@ const STATUS_ICON = {
 } as const;
 
 const STATUS_COLOR = {
-  pass: 'text-emerald-500',
-  partial: 'text-amber-500',
-  fail: 'text-red-500',
+  pass: 'text-cr-score-excellent',
+  partial: 'text-cr-score-fair',
+  fail: 'text-cr-score-critical',
 } as const;
 
 const STATUS_BAR_COLOR = {
-  pass: 'bg-emerald-500',
-  partial: 'bg-amber-500',
-  fail: 'bg-red-500',
+  pass: 'bg-cr-score-excellent',
+  partial: 'bg-cr-score-fair',
+  fail: 'bg-cr-score-critical',
 } as const;
 
 function countIssues(checks: SubCheckScore[]): number {
   return checks.filter(c => c.status !== 'pass').length;
 }
 
-function getBorderColor(color: string): string {
-  if (color === 'text-red-600 dark:text-red-400') {
-    return 'border-red-300 dark:border-red-700';
+function getBorderColor(bandLabel: string): string {
+  switch (bandLabel) {
+    case 'Critical': return 'border-cr-score-critical/40';
+    case 'Poor': return 'border-cr-score-poor/40';
+    case 'Fair': return 'border-cr-score-fair/40';
+    case 'Good': return 'border-cr-score-good/40';
+    default: return 'border-cr-score-excellent/40';
   }
-  if (color === 'text-orange-600 dark:text-orange-400') {
-    return 'border-orange-300 dark:border-orange-700';
-  }
-  if (color === 'text-yellow-600 dark:text-yellow-400') {
-    return 'border-yellow-300 dark:border-yellow-700';
-  }
-  if (color === 'text-green-600 dark:text-green-400') {
-    return 'border-green-300 dark:border-green-700';
-  }
-  return 'border-emerald-300 dark:border-emerald-700';
 }
 
 export function SubScoreCard({
@@ -63,31 +57,31 @@ export function SubScoreCard({
   const issueCount = countIssues(breakdown.checks);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+    <div className="border-cr-border-subtle bg-cr-surface overflow-hidden rounded-xl border">
       {/* Card Header — always visible */}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full cursor-pointer items-center gap-4 p-5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+        className="hover:bg-cr-surface-raised flex w-full cursor-pointer items-center gap-4 p-5 text-left transition-colors"
       >
         {/* Score circle */}
-        <div className={`flex size-14 shrink-0 items-center justify-center rounded-full border-2 ${getBorderColor(band.color)}`}>
+        <div className={`flex size-14 shrink-0 items-center justify-center rounded-full border-2 ${getBorderColor(band.label)}`}>
           <span className={`text-lg font-bold ${band.color}`}>{breakdown.score}</span>
         </div>
 
         {/* Label + description */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-cr-fg text-base font-semibold">
               {breakdown.label}
             </h3>
-            <span className="text-xs text-gray-400 dark:text-gray-500">
+            <span className="text-cr-fg-muted text-xs">
               (
               {breakdown.weight}
               )
             </span>
           </div>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-cr-fg-secondary mt-0.5 text-sm">
             {issueCount === 0
               ? 'All checks passing'
               : `${issueCount} issue${issueCount > 1 ? 's' : ''} found`}
@@ -97,7 +91,7 @@ export function SubScoreCard({
 
         {/* Score bar (compact) */}
         <div className="hidden w-24 sm:block">
-          <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+          <div className="bg-cr-surface-raised h-2 overflow-hidden rounded-full">
             <div
               className={`h-full rounded-full transition-all duration-500 ease-out ${band.barColor}`}
               style={{ width: `${Math.max(breakdown.score, 2)}%` }}
@@ -111,14 +105,14 @@ export function SubScoreCard({
 
         {/* Expand icon */}
         {expanded
-          ? <ChevronDown className="size-5 shrink-0 text-gray-400" />
-          : <ChevronRight className="size-5 shrink-0 text-gray-400" />}
+          ? <ChevronDown className="text-cr-fg-muted size-5 shrink-0" />
+          : <ChevronRight className="text-cr-fg-muted size-5 shrink-0" />}
       </button>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-gray-100 dark:border-gray-700">
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
+        <div className="border-cr-border-subtle border-t">
+          <div className="divide-cr-border-subtle divide-y">
             {breakdown.checks.map(check => (
               <CheckRow
                 key={check.id}
@@ -146,7 +140,7 @@ function CheckRow({ check, categoryKey: _categoryKey }: { check: SubCheckScore; 
         <div className="min-w-0 flex-1">
           {/* Check label + score */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
+            <span className="text-cr-fg text-sm font-medium">
               {check.label}
             </span>
             <span className={`shrink-0 text-sm font-semibold tabular-nums ${STATUS_COLOR[check.status]}`}>
@@ -157,7 +151,7 @@ function CheckRow({ check, categoryKey: _categoryKey }: { check: SubCheckScore; 
           </div>
 
           {/* Progress bar */}
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+          <div className="bg-cr-surface-raised mt-2 h-1.5 overflow-hidden rounded-full">
             <div
               className={`h-full rounded-full transition-all duration-500 ease-out ${STATUS_BAR_COLOR[check.status]}`}
               style={{ width: `${Math.max(pct, 2)}%` }}
@@ -166,7 +160,7 @@ function CheckRow({ check, categoryKey: _categoryKey }: { check: SubCheckScore; 
 
           {/* Description */}
           {content && (
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-cr-fg-muted mt-2 text-xs">
               {content.description}
             </p>
           )}
@@ -177,12 +171,12 @@ function CheckRow({ check, categoryKey: _categoryKey }: { check: SubCheckScore; 
               <button
                 type="button"
                 onClick={() => setShowHint(!showHint)}
-                className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                className="text-cr-primary hover:text-cr-primary-hover inline-flex cursor-pointer items-center gap-1 text-xs font-medium transition-colors"
               >
                 {showHint ? 'Hide' : 'How to fix'}
               </button>
               {showHint && (
-                <div className="mt-2 rounded-lg bg-indigo-50 px-3 py-2 text-xs text-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300">
+                <div className="bg-cr-primary-soft text-cr-primary mt-2 rounded-lg px-3 py-2 text-xs">
                   {content.fixHint}
                   {content.learnMoreUrl && (
                     <a

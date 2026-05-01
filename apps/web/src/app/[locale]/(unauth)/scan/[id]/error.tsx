@@ -9,25 +9,25 @@ export default function ScanResultError({
   reset: () => void;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-      <div className="mx-auto max-w-md space-y-4 rounded-xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-950/20">
-        <p className="text-lg font-semibold text-red-800 dark:text-red-300">
+    <div className="bg-cr-bg flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="border-cr-score-critical/20 bg-cr-score-critical-soft mx-auto max-w-md space-y-4 rounded-xl border p-8 text-center">
+        <h2 className="text-cr-fg text-xl font-bold">
           Something went wrong
-        </p>
-        <p className="text-sm text-red-600 dark:text-red-400">
+        </h2>
+        <p className="text-cr-fg-secondary mt-2">
           We couldn&apos;t load this scan result. Please try again.
         </p>
         <div className="flex items-center justify-center gap-4 pt-2">
           <button
             type="button"
             onClick={reset}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+            className="bg-cr-primary text-cr-primary-fg hover:bg-cr-primary-hover rounded-lg px-6 py-2 transition-colors"
           >
             Try again
           </button>
           <Link
             href="/"
-            className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400"
+            className="border-cr-border text-cr-fg-secondary hover:bg-cr-surface-raised rounded-lg border px-6 py-2 transition-colors"
           >
             Back to home
           </Link>

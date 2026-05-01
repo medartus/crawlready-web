@@ -51,9 +51,9 @@ export function EmailGate({ domain, onUnlocked }: EmailGateProps) {
 
   if (success) {
     return (
-      <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-6 dark:border-emerald-800 dark:bg-emerald-950/20">
-        <CheckCircle2 className="size-5 text-emerald-600" />
-        <span className="font-medium text-emerald-700 dark:text-emerald-300">
+      <div className="bg-cr-score-excellent-soft border-cr-score-excellent/20 flex items-center justify-center gap-2 rounded-xl border p-6">
+        <CheckCircle2 className="text-cr-score-excellent size-5" />
+        <span className="text-cr-score-excellent font-medium">
           Unlocked! Loading full results...
         </span>
       </div>
@@ -61,14 +61,14 @@ export function EmailGate({ domain, onUnlocked }: EmailGateProps) {
   }
 
   return (
-    <div className="rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 p-6 dark:border-indigo-800 dark:from-indigo-950/30 dark:to-purple-950/30">
+    <div className="border-cr-primary/20 bg-cr-primary-soft rounded-xl border p-6">
       <div className="mb-4 flex items-center gap-2">
-        <Lock className="size-5 text-indigo-600 dark:text-indigo-400" />
-        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <Lock className="text-cr-primary size-5" />
+        <h4 className="text-cr-fg text-lg font-semibold">
           Unlock Full Report
         </h4>
       </div>
-      <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+      <p className="text-cr-fg-secondary mb-4 text-sm">
         Enter your email to see all recommendations, schema generation preview,
         and get notified when your score changes.
       </p>
@@ -81,24 +81,24 @@ export function EmailGate({ domain, onUnlocked }: EmailGateProps) {
             onChange={e => setEmail(e.target.value)}
             placeholder="you@company.com"
             disabled={loading}
-            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            className="border-cr-border bg-cr-surface text-cr-fg placeholder:text-cr-fg-muted focus:border-cr-primary focus:ring-cr-primary/20 w-full rounded-lg border py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 disabled:opacity-50"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="shrink-0 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+          className="bg-cr-primary text-cr-primary-fg hover:bg-cr-primary-hover shrink-0 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50"
         >
           {loading ? 'Unlocking...' : 'Unlock'}
         </button>
       </form>
       {error && (
-        <div className="mt-2 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
+        <div className="text-cr-score-critical mt-2 flex items-center gap-1.5 text-sm">
           <AlertCircle className="size-3.5" />
           {error}
         </div>
       )}
-      <p className="mt-3 text-xs text-gray-500 dark:text-gray-500">
+      <p className="text-cr-fg-muted mt-3 text-xs">
         No spam. We&apos;ll only send score change notifications.
       </p>
     </div>
