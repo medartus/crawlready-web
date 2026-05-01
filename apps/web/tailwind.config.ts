@@ -40,6 +40,50 @@ const config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        cr: {
+          primary: {
+            DEFAULT: 'oklch(var(--cr-primary) / <alpha-value>)',
+            hover: 'oklch(var(--cr-primary-hover) / <alpha-value>)',
+            soft: 'oklch(var(--cr-primary-soft) / <alpha-value>)',
+            fg: 'oklch(var(--cr-primary-fg) / <alpha-value>)',
+          },
+          bg: 'oklch(var(--cr-bg) / <alpha-value>)',
+          surface: {
+            DEFAULT: 'oklch(var(--cr-surface) / <alpha-value>)',
+            raised: 'oklch(var(--cr-surface-raised) / <alpha-value>)',
+          },
+          border: {
+            DEFAULT: 'oklch(var(--cr-border) / <alpha-value>)',
+            subtle: 'oklch(var(--cr-border-subtle) / <alpha-value>)',
+          },
+          fg: {
+            DEFAULT: 'oklch(var(--cr-fg) / <alpha-value>)',
+            secondary: 'oklch(var(--cr-fg-secondary) / <alpha-value>)',
+            muted: 'oklch(var(--cr-fg-muted) / <alpha-value>)',
+          },
+          score: {
+            critical: {
+              DEFAULT: 'oklch(var(--cr-score-critical) / <alpha-value>)',
+              soft: 'oklch(var(--cr-score-critical-soft) / <alpha-value>)',
+            },
+            poor: {
+              DEFAULT: 'oklch(var(--cr-score-poor) / <alpha-value>)',
+              soft: 'oklch(var(--cr-score-poor-soft) / <alpha-value>)',
+            },
+            fair: {
+              DEFAULT: 'oklch(var(--cr-score-fair) / <alpha-value>)',
+              soft: 'oklch(var(--cr-score-fair-soft) / <alpha-value>)',
+            },
+            good: {
+              DEFAULT: 'oklch(var(--cr-score-good) / <alpha-value>)',
+              soft: 'oklch(var(--cr-score-good-soft) / <alpha-value>)',
+            },
+            excellent: {
+              DEFAULT: 'oklch(var(--cr-score-excellent) / <alpha-value>)',
+              soft: 'oklch(var(--cr-score-excellent-soft) / <alpha-value>)',
+            },
+          },
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

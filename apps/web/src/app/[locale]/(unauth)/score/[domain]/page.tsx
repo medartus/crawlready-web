@@ -1,21 +1,35 @@
 import { schema } from '@crawlready/database';
 import { desc, eq } from 'drizzle-orm';
-import { ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
 import { ScanForm } from '@/components/score/ScanForm';
-import { ScanResultCard } from '@/components/score/ScanResultCard';
-import { getScoreBand } from '@/components/score/score-utils';
-import { VisualDiff } from '@/components/score/VisualDiff';
 import { normalizeDomain } from '@/lib/crawl/normalize-url';
 import { db } from '@/libs/DB';
-import type { EuAiActData, RecommendationData, VisualDiffData } from '@/types/scan';
+import type { RecommendationData, VisualDiffData, VisualDiffStatsData } from '@/types/scan';
 import { getBaseUrl } from '@/utils/Helpers';
+
+import { ScorePageContent } from './ScorePageContent';
 
 type Props = {
   params: Promise<{ domain: string; locale: string }>;
 };
+
+const BAND_LABELS = ['Critical', 'Poor', 'Fair', 'Good', 'Excellent'] as const;
+function bandLabel(score: number) {
+  if (score <= 20) {
+    return BAND_LABELS[0];
+  }
+  if (score <= 40) {
+    return BAND_LABELS[1];
+  }
+  if (score <= 60) {
+    return BAND_LABELS[2];
+  }
+  if (score <= 80) {
+    return BAND_LABELS[3];
+  }
+  return BAND_LABELS[4];
+}
 
 async function getLatestScan(rawDomain: string) {
   let domain: string;
@@ -25,14 +39,18 @@ async function getLatestScan(rawDomain: string) {
     return null;
   }
 
-  const rows = await db
-    .select()
-    .from(schema.scans)
-    .where(eq(schema.scans.domain, domain))
-    .orderBy(desc(schema.scans.scannedAt))
-    .limit(1);
+  try {
+    const rows = await db
+      .select()
+      .from(schema.scans)
+      .where(eq(schema.scans.domain, domain))
+      .orderBy(desc(schema.scans.scannedAt))
+      .limit(1);
 
-  return rows[0] ?? null;
+    return rows[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -63,9 +81,9 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     };
   }
 
-  const band = getScoreBand(row.aiReadinessScore);
+  const label = bandLabel(row.aiReadinessScore);
   const title = `${domain} scored ${row.aiReadinessScore}/100 on AI Readiness | CrawlReady`;
-  const description = `${domain} AI Readiness Score: ${row.aiReadinessScore}/100 (${band.label}). Crawlability: ${row.crawlabilityScore}, Agent Readiness: ${row.agentReadinessScore}, Agent Interaction: ${row.agentInteractionScore}.`;
+  const description = `${domain} AI Readiness Score: ${row.aiReadinessScore}/100 (${label}). Crawlability: ${row.crawlabilityScore}, Agent Readiness: ${row.agentReadinessScore}, Agent Interaction: ${row.agentInteractionScore}.`;
 
   return {
     title,
@@ -92,87 +110,45 @@ export default async function ScoreResultPage(props: Props) {
   const { domain: rawDomain } = await props.params;
   const row = await getLatestScan(rawDomain);
   const domain = decodeURIComponent(rawDomain);
+  const baseUrl = getBaseUrl();
+
+  /* ── No scan found ───────────────────────────────────────── */
+  if (!row) {
+    return (
+      <div
+        className="bg-cr-bg flex min-h-screen flex-col items-center justify-center px-5"
+        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif' }}
+      >
+        <div className="w-full max-w-md text-center">
+          <p className="text-cr-fg-muted text-sm font-medium">No scan found for</p>
+          <p className="text-cr-fg mt-1 font-mono text-lg">{domain}</p>
+          <p className="text-cr-fg-secondary mt-3 text-sm">
+            Run a scan to see how AI crawlers see this site.
+          </p>
+          <div className="mt-8">
+            <ScanForm />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Has scan data ───────────────────────────────────────── */
+  const visualDiff = row.visualDiff as VisualDiffData | null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-        <div className="mx-auto flex max-w-5xl items-center justify-between p-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-          >
-            <ArrowLeft className="size-4" />
-            Back
-          </Link>
-          <span className="text-lg font-bold text-gray-900 dark:text-white">
-            CrawlReady
-          </span>
-          <div className="w-16" />
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        {!row && (
-          <div className="mx-auto max-w-lg space-y-8 py-12">
-            <div className="rounded-xl border border-red-200 bg-red-50 p-8 text-center dark:border-red-800 dark:bg-red-950/20">
-              <p className="mb-2 text-lg font-semibold text-red-800 dark:text-red-300">
-                No scan found for
-                {' '}
-                <span className="font-mono">{domain}</span>
-              </p>
-              <p className="text-sm text-red-600 dark:text-red-400">
-                Run a scan to generate a score for this domain.
-              </p>
-            </div>
-            <div>
-              <h3 className="mb-4 text-center text-lg font-semibold text-gray-900 dark:text-white">
-                Scan a URL
-              </h3>
-              <ScanForm />
-            </div>
-          </div>
-        )}
-
-        {row && (
-          <>
-            <ScanResultCard
-              result={{
-                url: row.url,
-                domain: row.domain,
-                aiReadinessScore: row.aiReadinessScore,
-                crawlabilityScore: row.crawlabilityScore,
-                agentReadinessScore: row.agentReadinessScore,
-                agentInteractionScore: row.agentInteractionScore,
-                euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as EuAiActData,
-                recommendations: (row.recommendations ?? []) as RecommendationData[],
-                scannedAt: row.scannedAt.toISOString(),
-                scoreUrl: `${getBaseUrl()}/score/${row.domain}`,
-              }}
-            />
-            {(row.visualDiff as VisualDiffData | null) && (
-              <div className="mt-8">
-                <VisualDiff
-                  blocks={(row.visualDiff as VisualDiffData).blocks}
-                  stats={(row.visualDiff as VisualDiffData).stats}
-                />
-              </div>
-            )}
-          </>
-        )}
-
-        {/* CTA: Check your site */}
-        {row && (
-          <div className="mt-12 rounded-xl border border-gray-200 bg-white p-8 dark:border-gray-700 dark:bg-gray-800">
-            <h3 className="mb-4 text-center text-lg font-semibold text-gray-900 dark:text-white">
-              Check your site&apos;s AI readiness
-            </h3>
-            <div className="mx-auto max-w-xl">
-              <ScanForm />
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
+    <ScorePageContent
+      domain={row.domain}
+      url={row.url}
+      aiReadinessScore={row.aiReadinessScore}
+      crawlabilityScore={row.crawlabilityScore}
+      agentReadinessScore={row.agentReadinessScore}
+      agentInteractionScore={row.agentInteractionScore}
+      recommendations={(row.recommendations ?? []) as RecommendationData[]}
+      visualDiffStats={visualDiff?.stats as VisualDiffStatsData | null ?? null}
+      scannedAt={row.scannedAt.toISOString()}
+      scoreUrl={`${baseUrl}/score/${row.domain}`}
+      scanId={row.id}
+    />
   );
 }

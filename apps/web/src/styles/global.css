@@ -66,6 +66,36 @@
   }
 }
 
+/* ── CrawlReady Design System (OKLCH) ──────────────── */
+@layer base {
+  :root {
+    --cr-primary: 52% 0.14 275;
+    --cr-primary-hover: 45% 0.16 275;
+    --cr-primary-soft: 92% 0.03 275;
+    --cr-primary-fg: 98% 0.005 275;
+
+    --cr-bg: 98.5% 0.004 275;
+    --cr-surface: 96% 0.006 275;
+    --cr-surface-raised: 93.5% 0.008 275;
+    --cr-border: 90% 0.01 275;
+    --cr-border-subtle: 93% 0.006 275;
+    --cr-fg: 22% 0.02 275;
+    --cr-fg-secondary: 45% 0.015 275;
+    --cr-fg-muted: 60% 0.01 275;
+
+    --cr-score-critical: 55% 0.22 25;
+    --cr-score-critical-soft: 95% 0.015 25;
+    --cr-score-poor: 62% 0.16 55;
+    --cr-score-poor-soft: 95% 0.015 55;
+    --cr-score-fair: 72% 0.14 85;
+    --cr-score-fair-soft: 95% 0.02 85;
+    --cr-score-good: 58% 0.14 155;
+    --cr-score-good-soft: 95% 0.02 155;
+    --cr-score-excellent: 55% 0.15 165;
+    --cr-score-excellent-soft: 94% 0.025 165;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
