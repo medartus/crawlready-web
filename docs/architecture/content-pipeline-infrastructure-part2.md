@@ -29,12 +29,12 @@ Incoming HTTP Request
 │  │   → bot_type = "human" → passthrough to origin   │    │
 │  └─────────────────────────────────────────────────┘    │
 │                                                         │
-│  Step 2: Format Selection             │
+│  Step 2: Format Selection                              │
 │  ┌─────────────────────────────────────────────────┐    │
-│  │ Google-Extended           → Enriched HTML+Schema │    │
-│  │ Everything else           → Markdown             │    │
+│  │ Accept: text/markdown?   → Markdown              │    │
+│  │ Everything else          → Optimized HTML        │    │
 │  │   (GPTBot, ClaudeBot, PerplexityBot,             │    │
-│  │    Accept: text/markdown, unverified bots)       │    │
+│  │    Google-Extended, unverified bots)              │    │
 │  └─────────────────────────────────────────────────┘    │
 │                                                         │
 │  Step 3: Cache Lookup (L1 → L2 → Fallback)             │
@@ -189,7 +189,8 @@ def should_pre_crawl(page, tenant):
 | Dimension | Starter ($29/mo) | Pro ($49/mo) | Business ($199/mo) | Enterprise (custom) |
 |---|---|---|---|---|
 | **Pre-crawl scope** | Homepage + top 5 by traffic | All sitemap pages | All discovered pages | Everything, always warm |
-| **Default TTL** | 7 days | 24 hours | 12 hours | 6 hours |
+| **Default TTL** | 14 days | 7 days | 3 days | 24 hours |
+| **TTL configurable** | Yes (1d-30d range) | Yes (6h-30d range) | Yes (1h-30d range) | Yes (5m-90d range) |
 | **Change detection** | Webhook + TTL | + ETag/HEAD polling | + Content hash | + RSS monitoring |
 | **Budget priority** | Maximize coverage | Balance freshness & coverage | Maximize freshness | Near-real-time |
 | **HTMLRewriter for SSR** | No | No | Yes | Yes (default for SSR routes) |
@@ -312,21 +313,61 @@ Cloudflare wins on cold start, cost, native KV, HTMLRewriter (SSR transform), an
 
 **Cloudflare Markdown for Bots (Feb 2026):** Cloudflare natively converts HTML→Markdown at the edge when a request includes `Accept: text/markdown`. This is a Cloudflare platform feature, not CrawlReady code.
 
-### SSR/CSR Auto-Detection
+### SSR/CSR Auto-Detection (Dual-Fetch Comparison)
 
-**Detection algorithm (runs on site registration + periodic re-check):**
+**Why not text-length heuristic:** Measuring `<body>` text content length fails on any modern hybrid site. A Next.js page with SSR layout shell (header, nav, footer = 500+ chars) but CSR main content area gets classified as SSR — but the actual content bots need isn't in the raw HTML. Per-component rendering (React Server Components, Nuxt islands, Astro islands) makes page-level classification meaningless without comparing rendered output.
+
+**Detection algorithm (runs on site registration + weekly re-check):**
 
 ```
-1. Lightweight HTTP fetch of homepage (no JS rendering)
-2. Parse response HTML
-3. Measure: text content length of <body> (excluding <script>, <style>)
-   - If > 500 chars of substantive text → classify as SSR
-   - If < 100 chars (typical: empty <div id="root"></div>) → classify as CSR
-   - If 100-500 chars → classify as Hybrid, probe 5 additional pages
-4. Store classification: site.rendering_type = 'ssr' | 'csr' | 'hybrid'
-5. For Hybrid sites: per-route classification based on same heuristic
-6. Customer can override: "My site is SSR" or mark specific routes
+1. Select sample URLs:
+   - Homepage
+   - 3-5 URLs from sitemap (diverse route patterns)
+   - Any customer-specified important pages
+
+2. For each sample URL, execute two fetches:
+   Fetch A: Lightweight HTTP GET (raw HTML, no JS)
+     → Strip layout elements: <nav>, <header>, <footer>, <aside>
+     → Extract remaining text content
+     → Call this: raw_content_text
+
+   Fetch B: Headless browser render (full JS, wait for network idle)
+     → Strip same layout elements
+     → Extract remaining text content
+     → Call this: rendered_content_text
+
+3. Compare:
+   content_ratio = len(raw_content_text) / max(len(rendered_content_text), 1)
+
+   - content_ratio >= 0.85 → ROUTE IS SSR
+     (raw HTML has ≥85% of rendered content — JS adds little)
+
+   - content_ratio <= 0.15 → ROUTE IS CSR
+     (raw HTML has ≤15% of rendered content — JS renders everything)
+
+   - 0.15 < content_ratio < 0.85 → ROUTE IS HYBRID
+     (some content server-rendered, some client-rendered)
+
+4. Supplementary: framework signal detection
+   - <script id="__NEXT_DATA__"> → Next.js (SSR/SSG likely)
+   - window.__NUXT__ → Nuxt.js (SSR hydration)
+   - data-reactroot without content → React SPA (CSR likely)
+   - meta[name="generator"] content="Astro" → Island architecture (hybrid)
+
+5. Classify site:
+   - All routes SSR → site is SSR
+   - All routes CSR → site is CSR
+   - Mixed → site is HYBRID (per-route strategy applies)
+
+6. Store per-route:
+   { "/": "ssr", "/blog/*": "ssr", "/app/*": "csr", "/products/*": "hybrid" }
+
+7. Customer can override any route classification via dashboard.
 ```
+
+**Why strip layout elements before comparison:** `<nav>`, `<header>`, `<footer>` are almost always SSR even on CSR sites. Including them inflates `raw_content_text` and masks CSR main content — exactly the failure mode of the text-length heuristic. We want to measure whether the *main content region* is server-rendered.
+
+**Cost:** $0.05-0.25 per site registration (5 headless renders). Negligible vs. crawl compute.
 
 ### Per-Route Strategy Selection
 
@@ -338,31 +379,35 @@ A hybrid site may have SSR marketing pages and CSR dashboard routes:
 | `/app/*`, `/dashboard/*` | CSR | CrawlReady cache (headless rendered) | CrawlReady cache |
 | Customer-excluded paths | N/A | Not served | Not served |
 
-### HTMLRewriter Path for SSR (Google-Extended)
+### HTMLRewriter Path for SSR (Optimized HTML)
 
 ```
-Bot request for SSR page (Google-Extended detected)
-  → Edge worker fetches origin HTML
-  → Parallel: lookup pre-computed Schema from KV
-    (Schema generated on last crawl, stored separately in KV)
-  → HTMLRewriter:
-    - Inject Schema.org JSON-LD into <head>
-    - Strip <nav>, <footer>, tracking scripts
-    - Clean content structure
-  → Serve transformed HTML
-  → Always fresh, ~$0 COGS
+Bot request for SSR page (no Accept: text/markdown)
+  → Check L1 for pre-generated Optimized HTML
+  → HIT: serve from cache
+  → MISS: Edge worker checks L0 for cached origin HTML
+    → L0 HIT or fetch origin
+    → Parallel: lookup pre-computed Schema + ARIA rules from KV
+      (Schema + ARIA generated on last crawl, stored separately)
+    → HTMLRewriter:
+      - Inject Schema.org JSON-LD into <head>
+      - Add ARIA enrichments (role, aria-label on landmarks/interactive)
+      - Strip noise (<nav>, <footer>, tracking scripts)
+      - Clean semantic structure
+    → Serve transformed HTML
+    → Always fresh, ~$0 COGS
 ```
 
-**Key insight:** SSR pages still need periodic crawling — not for content caching, but for Schema generation. The HTMLRewriter path eliminates the content cache but not the Schema cache.
+**Key insight:** SSR pages still need periodic crawling — not for content caching, but for Schema generation and ARIA rule computation. The HTMLRewriter path eliminates the content cache but not the Schema/ARIA cache.
 
-### Cloudflare Markdown for Bots Path for SSR (Text Crawlers)
+### Cloudflare Markdown for Bots Path for SSR (Accept: text/markdown)
 
 ```
-Bot request for SSR page (GPTBot/ClaudeBot/PerplexityBot)
-  → CrawlReady edge checks L1/L2 cache
-  → HIT: serve CrawlReady-optimized Markdown (with YAML frontmatter, token-optimized)
+Bot request for SSR page with Accept: text/markdown
+  → CrawlReady edge checks L1/L2 cache for Markdown variant
+  → HIT: serve CrawlReady-optimized Markdown (YAML frontmatter, token-optimized)
   → MISS: Cloudflare's native Markdown for Bots handles conversion as graceful degradation
-         + CrawlReady enqueues P0 crawl for optimized version
+         + CrawlReady enqueues P0 crawl for optimized Markdown version
   → Next hit: warm cache with CrawlReady-quality Markdown
 ```
 
@@ -375,12 +420,13 @@ Bot request for SSR page (GPTBot/ClaudeBot/PerplexityBot)
 | Freshness | TTL-dependent | Always live | Always live |
 | COGS | $0.01-0.05/page | ~$0/request | ~$0/request |
 | Schema injection | Pre-generated | Real-time via `<head>` append | No |
-| Content quality | High (extracted, curated) | Medium (noise stripped) | Low (raw conversion) |
-| YAML frontmatter | Yes | No | No |
-| Token optimization | Yes (< 8K target) | No | No |
+| ARIA enrichments | Pre-generated | Real-time via HTMLRewriter | No |
+| Content quality | High (extracted, curated) | Medium (noise stripped + ARIA) | Low (raw conversion) |
+| YAML frontmatter | Yes (Markdown only) | No | No |
+| Token optimization | Yes (< 8K target, Markdown) | No | No |
 | Analytics/metering | Yes | Yes (edge worker) | No (platform-level) |
 
-**Recommendation:** For Business+ SSR customers, offer HTMLRewriter as default for Google-Extended (cheaper, fresher). For text crawlers, always prefer CrawlReady cache; use Cloudflare native Markdown as SSR fallback on cache miss. CSR routes always go through pre-generated cache (no alternative).
+**Recommendation:** For Business+ SSR customers, offer HTMLRewriter as default for Optimized HTML (cheaper, fresher, includes ARIA + Schema). For `Accept: text/markdown` requests, always prefer CrawlReady cache; use Cloudflare native Markdown as SSR fallback on cache miss. CSR routes always go through pre-generated cache (no alternative).
 
 ---
 
@@ -415,6 +461,7 @@ Bot request for SSR page (GPTBot/ClaudeBot/PerplexityBot)
            ▼                                   │
 ┌──────────────────────────┐                  │
 │    Cache Layer            │                  │
+│  L0: Cache API (origin)   │                  │
 │  L1: Workers KV (edge)    │                  │
 │  L2: R2 (durable)         │                  │
 └──────────┬───────────────┘                  │
@@ -428,11 +475,11 @@ Bot request for SSR page (GPTBot/ClaudeBot/PerplexityBot)
 │    Level 2: middleware → edge.crawlready.app/serve/...
 │    Level 3: DNS proxy → bot detection → cache lookup
 │
-│  Format routing (binary decision):
-│    Google-Extended  → Enriched HTML + Schema
-│    Everything else  → Markdown
+│  Format routing:
+│    Accept: text/markdown  → Markdown
+│    Everything else        → Optimized HTML
 │      (GPTBot, ClaudeBot, PerplexityBot,
-│       Accept: text/md, unverified bots)
+│       Google-Extended, unverified bots)
 │
 │  Fallback: stale-while-revalidate → origin passthrough
 └─────────────────────────────────────────────┘
@@ -468,23 +515,25 @@ Bot request for SSR page (GPTBot/ClaudeBot/PerplexityBot)
 ## Decisions
 
 - **Serving topology:** Hybrid — Level 2 (middleware) and Level 3 (DNS proxy) from the same content pipeline.
-- **Edge platform:** Cloudflare Workers for serving (0ms cold start, native KV, HTMLRewriter, R2 integration, $0.30/M requests).
-- **Cache topology:** L1 (Workers KV) → L2 (R2) → L3 (on-the-fly generation).
+- **Edge platform:** Cloudflare Workers for serving (0ms cold start, native KV, HTMLRewriter, R2 integration, $0.30/M requests). No separate CDN — Cloudflare all-in-one eliminates inter-service hops and cache coherence issues.
+- **Cache topology:** L0 (Cache API, origin HTML) → L1 (Workers KV, generated content) → L2 (R2, durable) → L3 (OTF generation). L0 eliminates 80-95% of origin hits for HTMLRewriter path at $0 cost.
 - **Change detection:** Tiered approach (webhooks → ETag/HEAD → content hash → full re-crawl). CSR depends on webhooks.
-- **Polite crawling:** Max 2 concurrent per origin, 1s delay, honor `Crawl-delay`. Non-negotiable. Now with customer-configurable overrides.
+- **Polite crawling:** Max 2 concurrent per origin, 1s delay, honor `Crawl-delay`. Non-negotiable. Customer-configurable overrides.
 - **Fail-open:** Middleware serves origin on CrawlReady failure. Human traffic never affected.
 - **Crawl engine migration:** Firecrawl → self-hosted Playwright at 100K pages/mo or $500/mo COGS.
-- **Format count:** 2, not 4. Markdown (text-extraction crawlers) + Enriched HTML (Google-Extended). ARIA HTML removed (no delivery mechanism). Structured JSON deferred (no consumer). Extension policy requires real consumer + working delivery mechanism + meaningfully different output.
+- **Format routing:** HTML-first, Markdown opt-in. Optimized HTML (Schema.org + ARIA enrichments + noise-stripped + OG/meta) is the default for all requests. Markdown served only when `Accept: text/markdown` is present. Structured JSON deferred (no consumer).
+- **ARIA enrichments:** Integrated into the Optimized HTML format, not a separate format. Scoped to elements where ARIA adds semantic value (landmarks, interactive elements, ambiguous buttons). Never overwrites existing ARIA attributes.
 - **Tier-aware strategy:** Each tier gets different pre-crawl/OTF/TTL/change-detection profiles. Starter is budget-conservative. Enterprise is freshness-maximizing.
+- **TTL defaults:** Starter 14d, Pro 7d, Business 3d, Enterprise 24h. Customer-configurable with per-tier guardrails (min/max).
 - **Traffic-adaptive caching:** Bot traffic feeds back into page priority and TTL multipliers. Estimated 30-40% crawl cost reduction.
 - **Cache decay:** Hot/warm/cold/frozen tiers based on 90-day bot traffic. Frozen pages never proactively refreshed.
 - **Removed page retention:** 30 days (not 7). Alert customer if bots still visit removed pages.
 - **Discovery reframing:** Customer sees "Coverage" (percentage, optimized pages list, time-to-first-optimization). Discovery mechanics are internal.
-- **Cloudflare Markdown for Bots:** Complement, not replace. Used as graceful degradation for SSR cache misses. CrawlReady differentiates on Schema, CSR rendering, content quality, analytics.
-- **SSR/CSR auto-detection:** Heuristic based on raw HTML body text content length. Customer can override. Hybrid sites get per-route classification.
-- **HTMLRewriter scope:** Business+ SSR customers for Google-Extended. Requires periodic crawls for Schema generation (Schema cache, not content cache).
+- **Cloudflare Markdown for Bots:** Complement, not replace. Graceful degradation for SSR Markdown cache misses. CrawlReady differentiates on Schema, ARIA, CSR rendering, content quality, analytics.
+- **SSR/CSR auto-detection:** Dual-fetch content comparison (raw HTML vs headless-rendered, with layout elements stripped). Framework signal detection as supplementary. Customer override available. Per-route classification for hybrid sites.
+- **HTMLRewriter scope:** Business+ SSR customers for Optimized HTML. Includes Schema injection and ARIA enrichments. Requires periodic crawls for Schema generation and ARIA rule computation.
 - **Content parity:** Token-based Jaccard index with dynamic content exclusion. Threshold: 0.90.
 - **Pipeline versioning:** Global version counter. Re-processing on major bumps only, does not consume customer budget.
-- **Customer crawl controls:** Concurrency limits, time windows, path exclusions, priority pages, OTF toggle. Table stakes.
+- **Customer crawl controls:** Concurrency limits, time windows, path exclusions, priority pages, OTF toggle, TTL overrides.
 - **Bulk restructure handling:** Detect >20% inventory change, map redirects, offer one-time bulk re-crawl.
 - **OTF fallback policy:** Cache miss consumes crawl credit. Budget exhaustion → origin passthrough. Customer can disable OTF.

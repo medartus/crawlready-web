@@ -13,7 +13,7 @@ Long-term target architecture for CrawlReady's content ingestion, transformation
 1. **Pre-crawl what you know, generate on-the-fly what you don't.** Warm cache for discovered pages. Synthesize on cache miss with async backfill. Never let a bot request go unserved.
 2. **The content pipeline is the product.** Every other component consumes pipeline output. Pipeline quality determines competitive differentiation.
 3. **Edge-native serving.** Bot responses served from nearest PoP. The pipeline writes to the edge; the edge never calls origin.
-4. **Two formats, two consumers.** Pipeline produces Markdown (for text-extraction crawlers) and Enriched HTML + Schema (for Google-Extended). New formats added only when a real consumer exists with a working delivery mechanism.
+4. **HTML-first, Markdown opt-in.** Pipeline produces Optimized HTML (Schema.org + ARIA enrichments + noise-stripped) as the default for all requests. Markdown served only when explicitly requested via `Accept: text/markdown`. New formats added only when a real consumer exists with a working delivery mechanism.
 5. **Cost scales with value, not traffic.** Cached responses cost ~$0 to serve. Only fresh crawls incur meaningful cost. Decouple "serve" cost from "generate" cost.
 6. **Tier-aware resource allocation.** Starter customers get budget-conservative defaults (mostly on-the-fly). Business/Enterprise get aggressive pre-crawling. One algorithm does not fit all price points.
 7. **Leverage platform primitives.** Cloudflare Markdown for Bots handles basic HTML→Markdown conversion for SSR sites natively. CrawlReady adds value on top: Schema.org injection, CSR rendering, content quality, analytics, and optimization intelligence.
@@ -37,8 +37,8 @@ Long-term target architecture for CrawlReady's content ingestion, transformation
 │                      DATA PLANE                             │
 │                                                             │
 │  Crawl Workers │ Transform Pipeline │ Cache Store │ Change  │
-│  (headless     │ (Schema gen,       │ (2 formats: │ Detect  │
-│   browser)     │  Md + HTML+Schema) │  Md + HTML) │ (diff)  │
+│  (headless     │ (Schema gen, ARIA, │ (HTML+Md    │ Detect  │
+│   browser)     │  Md + Enriched HTML)│  per-page)  │ (diff)  │
 └───────────────────────────┬────────────────────────────────┘
                             │
                             ▼
@@ -255,23 +255,25 @@ Raw Crawl Output (HTML + metadata)
 │  Output: SchemaResult {generated, existing, merged}     │
 └────────────────────────┬───────────────────────────────┘
                          ▼
-┌─ Stage 3: Dual-Format Renderer ────────────────────────┐
+┌─ Stage 3: Output Renderer ─────────────────────────┐
 │                                                         │
-│  Format A — Markdown                                    │
-│    For: GPTBot, ClaudeBot, PerplexityBot, Accept: md    │
+│  Primary — Optimized HTML (default for ALL requests)    │
+│    clean_html + Schema.org JSON-LD in <head>             │
+│    + ARIA enrichments on semantic/interactive elements   │
+│    + noise stripped (<nav>, ads, tracking scripts)       │
+│    + OG/meta tags verified and enriched                  │
+│                                                         │
+│  Secondary — Markdown (opt-in via Accept header)        │
+│    ONLY when Accept: text/markdown is present            │
 │    GFM with YAML frontmatter. Target < 8K tokens.       │
 │    See §3a below for Cloudflare Markdown interaction.    │
 │                                                         │
-│  Format B — Enriched HTML + Schema.org                  │
-│    For: Google-Extended (AI Overviews)                   │
-│    clean_html + injected Schema.org JSON-LD in <head>   │
-│                                                         │
 │  Output: CacheEntry[] (one per format)                   │
 │                                                         │
-│  Format routing at edge is a binary decision:            │
-│    Google-Extended? → Enriched HTML + Schema             │
-│    Everything else? → Markdown                           │
-└────────────────────────┬───────────────────────────────┘
+│  Format routing at edge:                                 │
+│    Accept: text/markdown? → Markdown                     │
+│    Everything else?       → Optimized HTML               │
+└────────────────────────┬──────────────────────────────┘
                          ▼
 ┌─ Stage 4: Content Parity Verification ─────────────────┐
 │  Algorithm: Token-based Jaccard similarity              │
@@ -327,13 +329,14 @@ Cloudflare (Feb 2026) introduced automatic HTML→Markdown conversion at the edg
 
 | Dimension | Cloudflare Markdown for Bots | CrawlReady Pipeline |
 |---|---|---|
-| SSR content conversion | Yes (basic) | Yes (optimized, curated) |
+| SSR content conversion | Yes (basic Markdown only) | Yes (Optimized HTML + Markdown) |
 | CSR/SPA rendering | No | Yes (headless browser) |
 | Schema.org injection | No | Yes (generated + merged) |
+| ARIA enrichments | No | Yes (semantic/interactive elements) |
 | Content quality control | No (raw conversion) | Yes (extraction + parity check) |
 | Analytics & coverage | No | Yes |
-| YAML frontmatter | No | Yes (structured metadata) |
-| Token budget optimization | No | Yes (< 8K target) |
+| YAML frontmatter (Md) | No | Yes (structured metadata) |
+| Token budget optimization | No | Yes (< 8K target for Markdown) |
 
 **Decision:** Cloudflare's native markdown is a **fallback for SSR cache misses** (Path 3), not a replacement for the pipeline. CrawlReady's differentiation is Schema generation, CSR support, content quality, and analytics — none of which Cloudflare provides. For customers not yet on CrawlReady, Cloudflare's feature is "good enough" for SSR; our pitch becomes: "You need us for CSR, Schema, and intelligence."
 
@@ -345,8 +348,9 @@ New formats are added only when:
 3. **The format produces meaningfully different output** from existing formats
 
 Candidates on watch:
-- **Structured JSON (Format D):** Deferred. Re-evaluate when programmatic agent standards emerge or `Accept: application/json` becomes a crawler convention.
-- **ARIA-Enhanced HTML (Format C):** Permanently removed from pipeline scope. Visual agents cannot be served via proxy/middleware. The Agent Interaction Score remains as a diagnostic-only metric with improvement recommendations.
+- **Structured JSON:** Deferred. Re-evaluate when programmatic agent standards emerge or `Accept: application/json` becomes a crawler convention.
+
+**ARIA enrichments** are NOT a separate format. They are integrated into the primary Optimized HTML output. ARIA attributes (`role`, `aria-label`, landmark roles) are added to semantic and interactive elements where they improve the DOM's clarity for any consumer — bots, screen readers, and agents alike. Never overwrites existing ARIA attributes. The Agent Interaction Score remains as a diagnostic metric with improvement recommendations.
 
 ### Pipeline Execution Modes
 
@@ -387,18 +391,37 @@ When a bot hits a page with no cache:
 
 ## 4. Cache Layer & Storage
 
-### 3-Tier Cache Topology
+### 4-Tier Cache Topology
+
+L0 and L1 serve fundamentally different purposes: **L0 caches the input** (raw origin HTML), **L1 caches the output** (CrawlReady's processed content). L0 cannot replace L1 — Cache API is per-PoP (no global consistency), has no persistence guarantee (Cloudflare evicts at will), supports no metadata/enumeration, and doesn't store processed content. L1 (Workers KV) provides global reads, guaranteed persistence, structured metadata (pipeline version, parity score), and bulk operations needed for tenant management and pipeline upgrades.
 
 ```
-L1: Edge Cache (Cloudflare Workers KV)
-    - Global read: < 50ms from any PoP
+L0: Origin HTML Cache (Cloudflare Cache API)
+    - STORES: Customer's raw origin HTML (the INPUT to transforms)
+    - Purpose: Avoid hitting customer origin on L1 miss (HTMLRewriter path)
+    - TTL: Respects origin Cache-Control headers (or 5-15 min default)
+    - Key: Origin URL (standard HTTP cache key)
+    - Scope: Per-PoP (not globally consistent — 300+ independent caches)
+    - Cost: $0 (included in Workers plan)
+    - Persistence: NOT guaranteed — Cloudflare evicts based on popularity
+    - Used by: HTMLRewriter real-time path, OTF generation input
+    - Useless for CSR: origin HTML is an empty shell
+         │ (miss → fetch origin, cache.put())
+         ▼
+L1: Product Cache (Cloudflare Workers KV)
+    - STORES: CrawlReady's PROCESSED output (Optimized HTML, Markdown)
+    - Purpose: Serve bot requests with zero compute — the core serving layer
+    - Contains: Schema.org, ARIA enrichments, noise-stripped content
+    - Global read: < 50ms from any PoP (globally replicated)
     - Key: cr:{tenant_hash}:{url_hash}:{format}
-    - Eventually consistent (60s propagation)
-    - 99%+ of bot requests served here
+    - Metadata: pipeline_version, parity_score, generated_at, tenant_id
+    - Persistence: Guaranteed until explicitly deleted
+    - Supports: Enumeration, bulk purge, per-tenant operations
+    - 99%+ of bot requests served here at steady state
+    - Cost: ~$0.50/GB-month storage + $0.50/M reads
          │ (miss)
          ▼
-L2: Origin Cache (Cloudflare R2)
-    - Durable, consistent
+L2: Durable Store (Cloudflare R2)
     - All format variants + metadata + parity report
     - Key: {tenant}/{domain}/{url_hash}/{format}/{ts}.ext
     - Source-of-truth for L1 rehydration
@@ -407,32 +430,47 @@ L2: Origin Cache (Cloudflare R2)
          ▼
 L3: On-the-Fly Generation
     - Page never crawled
+    - For SSR: use L0 cached origin HTML as input (fast)
     - Enqueue P0 crawl, serve fallback
     - Write to L2 → propagate to L1
 ```
+
+### L1 Cost at Scale
+
+Average per-page: ~60KB Optimized HTML + ~15KB Markdown = ~75KB.
+
+| Scale | Pages | L1 Storage | L1 Reads | L1 Writes | **L1 Total/mo** | Revenue (est.) | L1 % Revenue |
+|---|---|---|---|---|---|---|---|
+| 100 × 500 pages | 50K | $1.88 | $0.25 | free | **~$2** | $3K | 0.07% |
+| 1K × 1K | 1M | $37.50 | $2.50 | $5 | **~$45** | $49K | 0.09% |
+| 10K × 2K | 20M | $750 | $25 | $50 | **~$825** | $490K | 0.17% |
+
+L1 cost is negligible at every scale. Removing it would save $45/month at 1K customers but require running HTMLRewriter on every request (~$0.30/M Workers invocations + CPU time + origin fetches for CSR). The math doesn't favor removal.
 
 ### Cache Invalidation (4 triggers)
 
 | Trigger | Mechanism | Latency |
 |---|---|---|
-| **Customer webhook** (`POST /api/v1/recache`) | L1 purge + P1 re-crawl | < 30s |
-| **Content change detected** (ETag mismatch) | L1 purge + P2 re-crawl | < 5min |
-| **TTL expiry** | L1 auto-expires | Per-tier TTL |
+| **Customer webhook** (`POST /api/v1/recache`) | L0 + L1 purge + P1 re-crawl | < 30s |
+| **Content change detected** (ETag mismatch) | L0 + L1 purge + P2 re-crawl | < 5min |
+| **TTL expiry** | L1 auto-expires. L0 short-TTL handles itself. | Per-tier TTL |
 | **Pipeline version upgrade** | Background re-process from L2 HTML | Hours |
 
 ### Stale-While-Revalidate
 
 TTL expired → serve stale content immediately + enqueue background re-crawl (P3, deduplicated). Bot gets fast response; cache refreshes asynchronously. Prevents thundering herd on TTL expiry.
 
-### Storage Cost (Projected)
+### L2 Storage Cost (R2)
 
-| Scale | Pages | L1 KV/mo | L2 R2/mo | Total |
-|---|---|---|---|---|
-| 100 tenants × 500 pages | 50K | ~$5 | ~$2 | ~$7 |
-| 1K × 1K | 1M | ~$50 | ~$30 | ~$80 |
-| 10K × 2K | 20M | ~$500 | ~$300 | ~$800 |
+R2 adds durable storage for historical versions and metadata. Combined L1+L2 totals:
 
-Storage is negligible. Crawl compute is the dominant cost.
+| Scale | Pages | L1 (KV) | L2 (R2) | L0 (Cache API) | **Total Storage/mo** |
+|---|---|---|---|---|---|
+| 100 × 500 | 50K | ~$2 | ~$2 | $0 | **~$4** |
+| 1K × 1K | 1M | ~$45 | ~$30 | $0 | **~$75** |
+| 10K × 2K | 20M | ~$825 | ~$300 | $0 | **~$1,125** |
+
+Storage is negligible at every scale. Crawl compute is the dominant cost.
 
 ---
 
@@ -478,14 +516,27 @@ Storage is negligible. Crawl compute is the dominant cost.
 
 Pages receiving heavy bot traffic get shorter TTLs (fresher content matters more). Pages with zero traffic get extended TTLs (no point refreshing what nobody reads).
 
-| Bot visits / 30 days | TTL Multiplier | Effect on Starter (7d default) | Effect on Business (12h default) |
-|---|---|---|---|
-| 0 | 2.0x | 14 days | 24 hours |
-| 1-10 | 1.0x | 7 days | 12 hours |
-| 11-50 | 0.5x | 3.5 days | 6 hours |
-| 50+ | 0.25x | ~2 days | 3 hours |
+| Bot visits / 30 days | TTL Multiplier | Starter (14d default) | Pro (7d default) | Business (3d default) |
+|---|---|---|---|---|
+| 0 | 2.0x | 28 days | 14 days | 6 days |
+| 1-10 | 1.0x | 14 days | 7 days | 3 days |
+| 11-50 | 0.5x | 7 days | 3.5 days | 1.5 days |
+| 50+ | 0.25x | 3.5 days | ~2 days | ~18 hours |
 
 This alone reduces crawl costs by 30-40% — extending TTLs on unvisited pages and concentrating freshness budget on pages bots actually care about.
+
+### Customer-Configurable TTL
+
+TTL is customer-configurable. We set smart defaults; the customer tunes to their update cadence.
+
+**Override priority:** Per-page override > Site-level override > Tier default.
+
+| Tier | Min TTL | Max TTL | Default | Rationale |
+|---|---|---|---|---|
+| Starter | 1 day | 30 days | 14 days | Prevent budget self-destruction / serving ancient content |
+| Pro | 6 hours | 30 days | 7 days | Allow aggressive if customer chooses |
+| Business | 1 hour | 30 days | 3 days | Business can afford frequent refresh |
+| Enterprise | 5 minutes | 90 days | 24 hours | Full flexibility |
 
 ### Traffic-Weighted Priority (Feedback Loop)
 
