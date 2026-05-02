@@ -13,9 +13,11 @@ Long-term target architecture for CrawlReady's content ingestion, transformation
 1. **Pre-crawl what you know, generate on-the-fly what you don't.** Warm cache for discovered pages. Synthesize on cache miss with async backfill. Never let a bot request go unserved.
 2. **The content pipeline is the product.** Every other component consumes pipeline output. Pipeline quality determines competitive differentiation.
 3. **Edge-native serving.** Bot responses served from nearest PoP. The pipeline writes to the edge; the edge never calls origin.
-4. **Format-aware, not format-locked.** Pipeline produces multiple output formats (Markdown, enriched HTML, structured JSON) from a single crawl. Serving layer selects optimal format per client.
+4. **Two formats, two consumers.** Pipeline produces Markdown (for text-extraction crawlers) and Enriched HTML + Schema (for Google-Extended). New formats added only when a real consumer exists with a working delivery mechanism.
 5. **Cost scales with value, not traffic.** Cached responses cost ~$0 to serve. Only fresh crawls incur meaningful cost. Decouple "serve" cost from "generate" cost.
-6. **Customer infrastructure stays in control.** At Level 2 (middleware), the customer's stack calls CrawlReady. At Level 3 (DNS proxy), CrawlReady proxies but never modifies human traffic.
+6. **Tier-aware resource allocation.** Starter customers get budget-conservative defaults (mostly on-the-fly). Business/Enterprise get aggressive pre-crawling. One algorithm does not fit all price points.
+7. **Leverage platform primitives.** Cloudflare Markdown for Bots handles basic HTML→Markdown conversion for SSR sites natively. CrawlReady adds value on top: Schema.org injection, CSR rendering, content quality, analytics, and optimization intelligence.
+8. **Customer infrastructure stays in control.** At Level 2 (middleware), the customer's stack calls CrawlReady. At Level 3 (DNS proxy), CrawlReady proxies but never modifies human traffic.
 
 ---
 
@@ -35,8 +37,8 @@ Long-term target architecture for CrawlReady's content ingestion, transformation
 │                      DATA PLANE                             │
 │                                                             │
 │  Crawl Workers │ Transform Pipeline │ Cache Store │ Change  │
-│  (headless     │ (Schema gen,       │ (multi-fmt  │ Detect  │
-│   browser)     │  Markdown, enrich) │  per-page)  │ (diff)  │
+│  (headless     │ (Schema gen,       │ (2 formats: │ Detect  │
+│   browser)     │  Md + HTML+Schema) │  Md + HTML) │ (diff)  │
 └───────────────────────────┬────────────────────────────────┘
                             │
                             ▼
@@ -54,9 +56,11 @@ Long-term target architecture for CrawlReady's content ingestion, transformation
 
 ---
 
-## 1. Site Discovery & Page Tree Management
+## 1. Site Coverage & Page Discovery
 
-### Discovery Pipeline
+> **Framing note:** Internally this is "discovery." To the customer it's **coverage** — "how many of my pages are optimized?" The customer never sees discovery mechanics. They see a coverage percentage, a list of optimized pages, and time-to-first-optimization for new content.
+
+### Discovery Pipeline (Internal)
 
 ```
 Site Registration
@@ -122,12 +126,53 @@ CREATE INDEX idx_page_crawl_priority
   WHERE status = 'active';
 ```
 
-### Page Removal Detection
+### Page Removal & Decay Detection
 
-1. **Soft-delete** — `status = 'removed'`, retain cache 7 days
+**Removal flow (extended retention — 30 days, not 7):**
+
+1. **Soft-delete** — `status = 'removed'`, retain cache 30 days
 2. **Serve 410 to bots** — signals de-indexing
 3. **Alert customer** — "15 pages removed since last crawl"
-4. **Hard-delete cache** — after retention window
+4. **After 30 days with no bot visits:** hard-delete cache
+5. **After 30 days with bot visits:** alert customer — "This page was removed but bots are still visiting it. Do you want to redirect it?"
+
+**Cache decay tiers (for active pages with no traffic):**
+
+| Bot visits in last 90 days | Decay Tier | Cache behavior |
+|---|---|---|
+| 10+ | **Hot** | Normal TTL, pre-crawl priority |
+| 1-9 | **Warm** | Extended TTL (2x default), pre-crawl if budget allows |
+| 0 | **Cold** | On-the-fly only, 30-day TTL, no proactive refresh |
+| 0 for 180+ days | **Frozen** | Cache retained but never refreshed. Serve stale-if-requested. |
+
+### Coverage Dashboard (Customer-Facing)
+
+```
+Dashboard → "Site Coverage"
+┌─────────────────────────────────────────────────┐
+│  Pages Optimized: 347 / 412 (84%)               │
+│  [████████████████░░░░] 84%                      │
+│                                                   │
+│  ⚠ 65 pages not yet optimized:                   │
+│    - 42 discovered today (processing...)          │
+│    - 18 returned errors on crawl                  │
+│    - 5 blocked by robots.txt                      │
+│                                                   │
+│  New content pickup: ~6 hours (via sitemap)       │
+│  Fastest: add deploy webhook → < 30 seconds       │
+│  [Configure webhook →]                            │
+└─────────────────────────────────────────────────┘
+```
+
+### Bulk URL Restructure Detection
+
+When > 20% of inventory changes in one sitemap cycle:
+
+1. **Detect** — flag mass URL change event
+2. **Detect redirects** — if old URLs 301→new URLs, update inventory in-place (no re-crawl needed)
+3. **Alert customer** — "Your site structure changed significantly. 5,000 new pages detected."
+4. **Offer bulk re-crawl** — one-time overage charge, or included for Business+ tiers
+5. **Priority routing** — new URLs from restructure get P1.5 priority (between webhook and ETag-detected)
 
 ---
 
@@ -177,7 +222,7 @@ Priority levels (P0 = highest):
 
 ## 3. Content Transformation Pipeline
 
-### 4-Stage Pipeline
+### 3-Stage Pipeline
 
 ```
 Raw Crawl Output (HTML + metadata)
@@ -210,34 +255,98 @@ Raw Crawl Output (HTML + metadata)
 │  Output: SchemaResult {generated, existing, merged}     │
 └────────────────────────┬───────────────────────────────┘
                          ▼
-┌─ Stage 3: Multi-Format Renderer ───────────────────────┐
+┌─ Stage 3: Dual-Format Renderer ────────────────────────┐
 │                                                         │
 │  Format A — Markdown                                    │
 │    For: GPTBot, ClaudeBot, PerplexityBot, Accept: md    │
 │    GFM with YAML frontmatter. Target < 8K tokens.       │
+│    See §3a below for Cloudflare Markdown interaction.    │
 │                                                         │
-│  Format B — Enriched HTML                               │
+│  Format B — Enriched HTML + Schema.org                  │
 │    For: Google-Extended (AI Overviews)                   │
 │    clean_html + injected Schema.org JSON-LD in <head>   │
 │                                                         │
-│  Format C — ARIA-Enhanced HTML                          │
-│    For: Visual agents (Operator, Computer Use)           │
-│    Original HTML + injected ARIA attributes              │
-│                                                         │
-│  Format D — Structured JSON                             │
-│    For: Programmatic agents, MCP clients                 │
-│    Machine-readable content + Schema as top-level data   │
-│                                                         │
 │  Output: CacheEntry[] (one per format)                   │
+│                                                         │
+│  Format routing at edge is a binary decision:            │
+│    Google-Extended? → Enriched HTML + Schema             │
+│    Everything else? → Markdown                           │
 └────────────────────────┬───────────────────────────────┘
                          ▼
 ┌─ Stage 4: Content Parity Verification ─────────────────┐
-│  - Text coverage: extracted ⊇ 95% of origin text       │
-│  - Fact preservation: prices, dates, names in all fmts  │
-│  - No hallucination: Schema only from visible content   │
-│  - On failure: block cache write, serve stale/origin    │
+│  Algorithm: Token-based Jaccard similarity              │
+│  1. Extract text tokens from origin rendered page       │
+│  2. Extract text tokens from generated Markdown/HTML    │
+│  3. Exclude known-dynamic tokens (timestamps, session,  │
+│     CSRF, "5 minutes ago"-style relative dates)         │
+│  4. Compute token overlap ratio (Jaccard index)         │
+│  5. Threshold: >= 0.90 overlap = PASS                   │
+│  6. On fail: diff token sets, identify missing sections,│
+│     block cache write, serve stale/origin, log + alert  │
+│                                                         │
+│  Fact preservation: prices, dates, proper nouns must    │
+│  appear in all output formats.                          │
+│  Schema validation: JSON-LD only from visible content.  │
 └────────────────────────────────────────────────────────┘
 ```
+
+### 3a. Cloudflare Markdown for Bots — How It Fits
+
+Cloudflare (Feb 2026) introduced automatic HTML→Markdown conversion at the edge for requests with `Accept: text/markdown`. This overlaps with our Format A for SSR sites.
+
+**Position: Complement, not replace.**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                SSR Site (origin HTML has content)                  │
+│                                                                    │
+│  Path 1 — Cloudflare native (no CrawlReady):                      │
+│    Bot sends Accept: text/markdown → Cloudflare converts HTML→Md   │
+│    Result: Basic markdown. No Schema. No optimization. No analytics│
+│                                                                    │
+│  Path 2 — CrawlReady pre-generated cache (our primary path):      │
+│    Bot request → Edge worker serves pre-generated Md from cache    │
+│    Result: Optimized Md + YAML frontmatter + Schema in HTML path   │
+│           + analytics + coverage tracking                          │
+│                                                                    │
+│  Path 3 — CrawlReady fallback leveraging Cloudflare:              │
+│    Cache miss on SSR page → instead of serving raw HTML,           │
+│    let Cloudflare's native conversion handle it as graceful        │
+│    degradation while we enqueue P0 crawl for warm cache            │
+│    Result: Decent markdown immediately, optimized version next hit │
+├──────────────────────────────────────────────────────────────────┤
+│                CSR Site (origin HTML is empty shell)               │
+│                                                                    │
+│  Cloudflare native: USELESS (converts empty shell → empty Md)     │
+│  CrawlReady: ESSENTIAL (headless browser → rendered content → Md)  │
+│  This is where CrawlReady's value is most obvious to the customer │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Strategic implications:**
+
+| Dimension | Cloudflare Markdown for Bots | CrawlReady Pipeline |
+|---|---|---|
+| SSR content conversion | Yes (basic) | Yes (optimized, curated) |
+| CSR/SPA rendering | No | Yes (headless browser) |
+| Schema.org injection | No | Yes (generated + merged) |
+| Content quality control | No (raw conversion) | Yes (extraction + parity check) |
+| Analytics & coverage | No | Yes |
+| YAML frontmatter | No | Yes (structured metadata) |
+| Token budget optimization | No | Yes (< 8K target) |
+
+**Decision:** Cloudflare's native markdown is a **fallback for SSR cache misses** (Path 3), not a replacement for the pipeline. CrawlReady's differentiation is Schema generation, CSR support, content quality, and analytics — none of which Cloudflare provides. For customers not yet on CrawlReady, Cloudflare's feature is "good enough" for SSR; our pitch becomes: "You need us for CSR, Schema, and intelligence."
+
+### Future Format Extension Policy
+
+New formats are added only when:
+1. **A real consumer exists** that sends identifiable requests (User-Agent or Accept header)
+2. **A working delivery mechanism exists** (CrawlReady can intercept and serve the format)
+3. **The format produces meaningfully different output** from existing formats
+
+Candidates on watch:
+- **Structured JSON (Format D):** Deferred. Re-evaluate when programmatic agent standards emerge or `Accept: application/json` becomes a crawler convention.
+- **ARIA-Enhanced HTML (Format C):** Permanently removed from pipeline scope. Visual agents cannot be served via proxy/middleware. The Agent Interaction Score remains as a diagnostic-only metric with improvement recommendations.
 
 ### Pipeline Execution Modes
 
@@ -251,9 +360,28 @@ Raw Crawl Output (HTML + metadata)
 
 When a bot hits a page with no cache:
 
-- **SSR sites:** Serve lightweight Markdown conversion of raw-fetched HTML (fast, content-rich)
-- **CSR sites:** Serve origin HTML as-is (raw HTML is empty anyway — nothing to convert)
+- **SSR sites:** Cloudflare's native Markdown for Bots handles the conversion as graceful degradation. Bot gets decent markdown immediately. CrawlReady enqueues P0 crawl — next hit is served from warm cache with optimized content + Schema.
+- **CSR sites:** Serve origin HTML as-is (raw HTML is empty anyway — Cloudflare markdown also useless here). Enqueue P0 crawl with headless browser rendering.
 - Both: enqueue P0 crawl. Next bot request served from warm cache.
+
+### OTF Fallback Policy
+
+| Question | Answer |
+|---|---|
+| Does a cache miss consume a crawl credit? | YES — the async backfill crawl counts against budget |
+| What headers during fallback? | `X-CrawlReady: miss` + `X-CrawlReady-ETA: {seconds}` |
+| What if crawl budget exhausted? | Serve origin HTML passthrough with `X-CrawlReady: budget-exhausted`. No crawl enqueued. |
+| Can customer disable OTF? | YES — setting `otf_enabled: false` serves nothing from CrawlReady unless warm cache exists |
+
+### Pipeline Versioning & Re-Processing
+
+| Question | Answer |
+|---|---|
+| How is pipeline version tracked? | Global version counter. Each cache entry stores `pipeline_version` at write time. |
+| Does re-processing consume customer budget? | NO — it's our upgrade, not their content change. |
+| Can customer opt out? | YES — `pin_pipeline_version: true` keeps stable output until explicitly upgraded. |
+| What triggers re-processing? | Major version bumps only (e.g., new Schema detector, Markdown format change). Not every deploy. |
+| Execution | Background re-process from L2 stored HTML. Low-priority pool. Hours to complete. |
 
 ---
 
@@ -345,6 +473,56 @@ Storage is negligible. Crawl compute is the dominant cost.
 | **Static (SSG)** | Deploy webhook | `<lastmod>` |
 
 **Key insight for CSR:** ETag/hash detection is useless — server always returns the same HTML shell. Webhook integration is essential, not optional, for CSR customers.
+
+### Traffic-Adaptive TTL
+
+Pages receiving heavy bot traffic get shorter TTLs (fresher content matters more). Pages with zero traffic get extended TTLs (no point refreshing what nobody reads).
+
+| Bot visits / 30 days | TTL Multiplier | Effect on Starter (7d default) | Effect on Business (12h default) |
+|---|---|---|---|
+| 0 | 2.0x | 14 days | 24 hours |
+| 1-10 | 1.0x | 7 days | 12 hours |
+| 11-50 | 0.5x | 3.5 days | 6 hours |
+| 50+ | 0.25x | ~2 days | 3 hours |
+
+This alone reduces crawl costs by 30-40% — extending TTLs on unvisited pages and concentrating freshness budget on pages bots actually care about.
+
+### Traffic-Weighted Priority (Feedback Loop)
+
+```python
+def compute_page_priority(page, tenant):
+    """
+    Dynamic priority based on actual bot traffic.
+    Runs periodically (hourly for Pro+, daily for Starter).
+    """
+    # Base priority from sitemap (0.0-1.0)
+    base = page.sitemap_priority or 0.5
+
+    # Traffic signal: normalized bot visit count (0.0-1.0)
+    max_traffic = max(p.bot_traffic_30d for p in tenant.pages) or 1
+    traffic_signal = page.bot_traffic_30d / max_traffic
+
+    # Recency signal: recently visited pages get boost
+    days_since_last_bot_visit = (now() - page.last_bot_visit_at).days
+    recency_boost = max(0, 1.0 - (days_since_last_bot_visit / 30))
+
+    # Combined priority
+    priority = (0.3 * base) + (0.5 * traffic_signal) + (0.2 * recency_boost)
+
+    return clamp(priority, 0.0, 1.0)
+```
+
+### Customer Crawl Controls
+
+Table-stakes controls exposed to the customer:
+
+| Control | Description | Default |
+|---|---|---|
+| **Concurrency limit** | Max concurrent CrawlReady requests to origin | 2 (can increase to 10) |
+| **Crawl window** | Time-of-day restriction (e.g., "don't crawl 2am-4am UTC") | None (24/7) |
+| **Excluded paths** | Glob patterns to never crawl (`/admin/*`, `/api/*`, `/internal/*`) | None |
+| **Priority pages** | Customer-declared high-priority URLs (always pre-crawled) | Homepage only |
+| **OTF toggle** | Enable/disable on-the-fly generation | Enabled |
 
 ---
 

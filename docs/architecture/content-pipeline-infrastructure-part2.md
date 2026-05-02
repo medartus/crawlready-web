@@ -29,14 +29,12 @@ Incoming HTTP Request
 │  │   → bot_type = "human" → passthrough to origin   │    │
 │  └─────────────────────────────────────────────────┘    │
 │                                                         │
-│  Step 2: Format Selection                               │
+│  Step 2: Format Selection             │
 │  ┌─────────────────────────────────────────────────┐    │
-│  │ content_negotiation       → Markdown             │    │
-│  │ GPTBot/ClaudeBot/Perplexity → Markdown           │    │
 │  │ Google-Extended           → Enriched HTML+Schema │    │
-│  │ Visual agents (Operator)  → ARIA-enhanced HTML   │    │
-│  │ MCP / API clients         → Structured JSON      │    │
-│  │ unverified                → Markdown (safe default)│   │
+│  │ Everything else           → Markdown             │    │
+│  │   (GPTBot, ClaudeBot, PerplexityBot,             │    │
+│  │    Accept: text/markdown, unverified bots)       │    │
 │  └─────────────────────────────────────────────────┘    │
 │                                                         │
 │  Step 3: Cache Lookup (L1 → L2 → Fallback)             │
@@ -90,17 +88,15 @@ Customer Server → Middleware detects bot (UA check)
 
 ```typescript
 // Next.js
+// Cloudflare Worker
+import { crawlreadyWorker } from '@crawlready/cloudflare';
 import { withCrawlReady } from '@crawlready/next';
+// Express / Hono
+import { crawlready } from '@crawlready/node';
 export default withCrawlReady(nextConfig, {
   siteKey: process.env.CRAWLREADY_SITE_KEY,
 });
-
-// Express / Hono
-import { crawlready } from '@crawlready/node';
 app.use(crawlready({ siteKey: process.env.CRAWLREADY_SITE_KEY }));
-
-// Cloudflare Worker
-import { crawlreadyWorker } from '@crawlready/cloudflare';
 export default crawlreadyWorker({
   siteKey: '<key>',
   origin: '<origin_url>',
@@ -148,27 +144,56 @@ Neither pure pre-crawl nor pure on-the-fly is optimal. The architecture uses bot
 | **Pages with bot traffic history** | Pre-crawl, priority ∝ traffic | If bots visit it, keep it warm. |
 | **Long-tail pages** (low/no bot traffic) | On-the-fly + async backfill | Pre-crawling pages bots never visit is waste. |
 | **New pages** (just deployed) | Pre-crawl if webhook-triggered, OTF otherwise | Webhooks signal intent. |
-| **Removed pages** | Serve cached 410 for 7 days, then purge | Clean de-indexing signal. |
+| **Removed pages** | Serve cached 410 for 30 days, alert if bots still visit | Clean de-indexing + customer awareness. |
 
-### The Hybrid Algorithm
+### The Tier-Aware Hybrid Algorithm
 
 ```python
 def should_pre_crawl(page, tenant):
-    # Always pre-crawl
-    if page.url == tenant.homepage:          return True
-    if page.discovered_via == 'webhook':     return True  # explicit push
-    if page.priority >= 0.8:                 return True  # high sitemap priority
-
-    # Pre-crawl if bots care
-    if page.bot_traffic_30d >= 5:            return True
-
-    # Pre-crawl if in sitemap AND within budget
-    if page.discovered_via == 'sitemap' and tenant.crawl_budget_remaining > 0:
+    # Universal: always pre-crawl homepage
+    if page.url == tenant.homepage:
         return True
 
-    # Everything else: on-the-fly
+    # Universal: always pre-crawl webhook-pushed pages
+    if page.discovered_via == 'webhook':
+        return True
+
+    if tenant.tier == 'starter':
+        # Starter ($29/mo, 500 crawls): only pre-crawl top N by bot traffic
+        top_pages = get_top_pages_by_bot_traffic(tenant, limit=5)
+        return page.url in top_pages
+
+    elif tenant.tier == 'pro':
+        # Pro ($49/mo, 2500 crawls): pre-crawl sitemap + bot-visited
+        if page.discovered_via == 'sitemap':
+            return True
+        if page.bot_traffic_30d >= 3:
+            return True
+        return False
+
+    elif tenant.tier == 'business':
+        # Business ($199/mo, 10K crawls): pre-crawl all active pages
+        if page.status == 'active':
+            return True
+        return False
+
+    elif tenant.tier == 'enterprise':
+        # Enterprise (custom): pre-crawl everything, always warm
+        return True
+
     return False
 ```
+
+### Tier-Differentiated Strategy Overview
+
+| Dimension | Starter ($29/mo) | Pro ($49/mo) | Business ($199/mo) | Enterprise (custom) |
+|---|---|---|---|---|
+| **Pre-crawl scope** | Homepage + top 5 by traffic | All sitemap pages | All discovered pages | Everything, always warm |
+| **Default TTL** | 7 days | 24 hours | 12 hours | 6 hours |
+| **Change detection** | Webhook + TTL | + ETag/HEAD polling | + Content hash | + RSS monitoring |
+| **Budget priority** | Maximize coverage | Balance freshness & coverage | Maximize freshness | Near-real-time |
+| **HTMLRewriter for SSR** | No | No | Yes | Yes (default for SSR routes) |
+| **Traffic-adaptive TTL** | Daily recalc | Hourly recalc | Hourly recalc | Real-time |
 
 ### Why Not Pure Pre-Crawl
 
@@ -182,13 +207,13 @@ def should_pre_crawl(page, tenant):
 - **Thundering herd:** Google-Extended crawling 500 pages in 10 minutes overwhelms worker pool.
 - **No proactive optimization:** New pricing page sits unoptimized until first bot visit.
 
-### Cost Comparison
+### Cost Comparison (with tier-aware hybrid)
 
 | Strategy | 1K-page site (500 bot-visited) | 50K-page site (2K bot-visited) |
 |---|---|---|
 | Pure pre-crawl (weekly) | 4K crawls/mo = $40-200 | 200K crawls/mo = $2K-10K |
 | Pure on-the-fly | 500 crawls/mo = $5-25 | 2K crawls/mo = $20-100 |
-| **Balanced hybrid** | **~600 crawls/mo = $6-30** | **~3K crawls/mo = $30-150** |
+| **Tier-aware hybrid** | **~600 crawls/mo = $6-30** | **~3K crawls/mo = $30-150** |
 
 Hybrid is 5-60x cheaper than pure pre-crawl while eliminating cold starts for pages that matter.
 
@@ -279,32 +304,83 @@ Cloudflare wins on cold start, cost, native KV, HTMLRewriter (SSR transform), an
 
 ---
 
-## 12. SSR Sites: HTMLRewriter as a Complementary Fast Path
+## 12. SSR Sites: HTMLRewriter + Cloudflare Markdown for Bots
 
-For SSR sites where origin HTML already contains content, Cloudflare's HTMLRewriter enables a **zero-cache real-time path**:
+### The Two Complementary Edge Technologies
+
+**HTMLRewriter (Cloudflare Workers API):** Transforms HTML in-flight at the edge. CrawlReady controls the transformation logic (Schema injection, noise stripping). Available for any Cloudflare Workers deployment.
+
+**Cloudflare Markdown for Bots (Feb 2026):** Cloudflare natively converts HTML→Markdown at the edge when a request includes `Accept: text/markdown`. This is a Cloudflare platform feature, not CrawlReady code.
+
+### SSR/CSR Auto-Detection
+
+**Detection algorithm (runs on site registration + periodic re-check):**
 
 ```
-Bot request → Edge Worker
-  → Fetch origin HTML
-  → HTMLRewriter transforms in-flight:
+1. Lightweight HTTP fetch of homepage (no JS rendering)
+2. Parse response HTML
+3. Measure: text content length of <body> (excluding <script>, <style>)
+   - If > 500 chars of substantive text → classify as SSR
+   - If < 100 chars (typical: empty <div id="root"></div>) → classify as CSR
+   - If 100-500 chars → classify as Hybrid, probe 5 additional pages
+4. Store classification: site.rendering_type = 'ssr' | 'csr' | 'hybrid'
+5. For Hybrid sites: per-route classification based on same heuristic
+6. Customer can override: "My site is SSR" or mark specific routes
+```
+
+### Per-Route Strategy Selection
+
+A hybrid site may have SSR marketing pages and CSR dashboard routes:
+
+| Route Pattern | Rendering | Markdown Path | HTML Path |
+|---|---|---|---|
+| `/`, `/pricing`, `/blog/*` | SSR | CrawlReady cache (or Cloudflare Md fallback) | HTMLRewriter + Schema |
+| `/app/*`, `/dashboard/*` | CSR | CrawlReady cache (headless rendered) | CrawlReady cache |
+| Customer-excluded paths | N/A | Not served | Not served |
+
+### HTMLRewriter Path for SSR (Google-Extended)
+
+```
+Bot request for SSR page (Google-Extended detected)
+  → Edge worker fetches origin HTML
+  → Parallel: lookup pre-computed Schema from KV
+    (Schema generated on last crawl, stored separately in KV)
+  → HTMLRewriter:
     - Inject Schema.org JSON-LD into <head>
     - Strip <nav>, <footer>, tracking scripts
-    - Add ARIA attributes to interactive elements
+    - Clean content structure
   → Serve transformed HTML
-  → No cache needed, always fresh, ~$0 COGS
+  → Always fresh, ~$0 COGS
 ```
 
-**Trade-off:**
+**Key insight:** SSR pages still need periodic crawling — not for content caching, but for Schema generation. The HTMLRewriter path eliminates the content cache but not the Schema cache.
 
-| Dimension | Pre-Generated Cache | HTMLRewriter |
-|---|---|---|
-| CSR sites | Yes (renders JS) | **No** (can't execute JS) |
-| SSR sites | Yes (cache overhead) | Yes (real-time, no cache) |
-| Freshness | TTL-dependent | Always live |
-| COGS | $0.01-0.05/page | ~$0/request |
-| Schema injection | Pre-generated | Real-time via `<head>` append |
+### Cloudflare Markdown for Bots Path for SSR (Text Crawlers)
 
-**Recommendation:** Offer HTMLRewriter as the default path for SSR customers (cheaper, fresher). Fall back to pre-generated cache only for CSR routes. The pipeline architecture supports both — HTMLRewriter is just a "Stage 3 variant" that runs at the edge instead of in the worker pool.
+```
+Bot request for SSR page (GPTBot/ClaudeBot/PerplexityBot)
+  → CrawlReady edge checks L1/L2 cache
+  → HIT: serve CrawlReady-optimized Markdown (with YAML frontmatter, token-optimized)
+  → MISS: Cloudflare's native Markdown for Bots handles conversion as graceful degradation
+         + CrawlReady enqueues P0 crawl for optimized version
+  → Next hit: warm cache with CrawlReady-quality Markdown
+```
+
+### Trade-offs Summary
+
+| Dimension | CrawlReady Pre-Generated Cache | HTMLRewriter (real-time) | Cloudflare Md for Bots (native) |
+|---|---|---|---|
+| CSR sites | Yes (renders JS) | **No** (can't execute JS) | **No** (empty shell) |
+| SSR sites | Yes (cache overhead) | Yes (real-time, no cache) | Yes (basic conversion) |
+| Freshness | TTL-dependent | Always live | Always live |
+| COGS | $0.01-0.05/page | ~$0/request | ~$0/request |
+| Schema injection | Pre-generated | Real-time via `<head>` append | No |
+| Content quality | High (extracted, curated) | Medium (noise stripped) | Low (raw conversion) |
+| YAML frontmatter | Yes | No | No |
+| Token optimization | Yes (< 8K target) | No | No |
+| Analytics/metering | Yes | Yes (edge worker) | No (platform-level) |
+
+**Recommendation:** For Business+ SSR customers, offer HTMLRewriter as default for Google-Extended (cheaper, fresher). For text crawlers, always prefer CrawlReady cache; use Cloudflare native Markdown as SSR fallback on cache miss. CSR routes always go through pre-generated cache (no alternative).
 
 ---
 
@@ -352,12 +428,11 @@ Bot request → Edge Worker
 │    Level 2: middleware → edge.crawlready.app/serve/...
 │    Level 3: DNS proxy → bot detection → cache lookup
 │
-│  Format routing:
-│    GPTBot/ClaudeBot → Markdown
+│  Format routing (binary decision):
 │    Google-Extended  → Enriched HTML + Schema
-│    Visual agents    → ARIA HTML
-│    MCP clients      → Structured JSON
-│    Accept: text/md  → Markdown
+│    Everything else  → Markdown
+│      (GPTBot, ClaudeBot, PerplexityBot,
+│       Accept: text/md, unverified bots)
 │
 │  Fallback: stale-while-revalidate → origin passthrough
 └─────────────────────────────────────────────┘
@@ -392,13 +467,24 @@ Bot request → Edge Worker
 
 ## Decisions
 
-- **Serving topology:** Hybrid — Level 2 (middleware) and Level 3 (DNS proxy) from the same content pipeline. Consistent with existing docs.
-- **Cache strategy:** Balanced hybrid — pre-crawl high-value pages (sitemap, bot-visited, webhook-pushed), on-the-fly for long-tail with async backfill. 5-60x cheaper than pure pre-crawl, eliminates cold starts for pages that matter.
-- **Edge platform:** Cloudflare Workers for serving (0ms cold start, native KV, HTMLRewriter, R2 integration, $0.30/M requests). Not AWS Lambda@Edge (cold start, cost), not Vercel Edge (limited regions, no KV, no HTMLRewriter).
-- **Cache topology:** L1 (Workers KV, hot, eventual consistency) → L2 (R2, durable, consistent) → L3 (on-the-fly generation).
-- **Pipeline stages:** 4-stage (Extract → Schema Gen → Multi-Format Render → Parity Verify). Each stage independently testable and retryable.
-- **Change detection:** Tiered approach (webhooks → ETag/HEAD → content hash → full re-crawl). CSR sites depend on webhooks; SSR sites use lightweight polling.
-- **SSR optimization:** HTMLRewriter as a zero-cache real-time path for SSR sites. Complements pre-generated cache for CSR. Decision on when to implement deferred to Phase 2.
-- **Polite crawling:** Max 2 concurrent requests per origin domain, 1s minimum delay, honor `Crawl-delay`. Non-negotiable.
-- **Fail-open:** Customer middleware always serves origin on CrawlReady failure. Human traffic is never affected. CrawlReady being down must be invisible to end users.
-- **Crawl engine migration:** Firecrawl → self-hosted Playwright when volume > 100K pages/mo or COGS > $500/mo.
+- **Serving topology:** Hybrid — Level 2 (middleware) and Level 3 (DNS proxy) from the same content pipeline.
+- **Edge platform:** Cloudflare Workers for serving (0ms cold start, native KV, HTMLRewriter, R2 integration, $0.30/M requests).
+- **Cache topology:** L1 (Workers KV) → L2 (R2) → L3 (on-the-fly generation).
+- **Change detection:** Tiered approach (webhooks → ETag/HEAD → content hash → full re-crawl). CSR depends on webhooks.
+- **Polite crawling:** Max 2 concurrent per origin, 1s delay, honor `Crawl-delay`. Non-negotiable. Now with customer-configurable overrides.
+- **Fail-open:** Middleware serves origin on CrawlReady failure. Human traffic never affected.
+- **Crawl engine migration:** Firecrawl → self-hosted Playwright at 100K pages/mo or $500/mo COGS.
+- **Format count:** 2, not 4. Markdown (text-extraction crawlers) + Enriched HTML (Google-Extended). ARIA HTML removed (no delivery mechanism). Structured JSON deferred (no consumer). Extension policy requires real consumer + working delivery mechanism + meaningfully different output.
+- **Tier-aware strategy:** Each tier gets different pre-crawl/OTF/TTL/change-detection profiles. Starter is budget-conservative. Enterprise is freshness-maximizing.
+- **Traffic-adaptive caching:** Bot traffic feeds back into page priority and TTL multipliers. Estimated 30-40% crawl cost reduction.
+- **Cache decay:** Hot/warm/cold/frozen tiers based on 90-day bot traffic. Frozen pages never proactively refreshed.
+- **Removed page retention:** 30 days (not 7). Alert customer if bots still visit removed pages.
+- **Discovery reframing:** Customer sees "Coverage" (percentage, optimized pages list, time-to-first-optimization). Discovery mechanics are internal.
+- **Cloudflare Markdown for Bots:** Complement, not replace. Used as graceful degradation for SSR cache misses. CrawlReady differentiates on Schema, CSR rendering, content quality, analytics.
+- **SSR/CSR auto-detection:** Heuristic based on raw HTML body text content length. Customer can override. Hybrid sites get per-route classification.
+- **HTMLRewriter scope:** Business+ SSR customers for Google-Extended. Requires periodic crawls for Schema generation (Schema cache, not content cache).
+- **Content parity:** Token-based Jaccard index with dynamic content exclusion. Threshold: 0.90.
+- **Pipeline versioning:** Global version counter. Re-processing on major bumps only, does not consume customer budget.
+- **Customer crawl controls:** Concurrency limits, time windows, path exclusions, priority pages, OTF toggle. Table stakes.
+- **Bulk restructure handling:** Detect >20% inventory change, map redirects, offer one-time bulk re-crawl.
+- **OTF fallback policy:** Cache miss consumes crawl credit. Budget exhaustion → origin passthrough. Customer can disable OTF.
