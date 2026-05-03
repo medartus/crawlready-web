@@ -26,7 +26,8 @@ docs/
 │   ├── crawling-provider.md #   Crawling SaaS provider comparison
 │   ├── analytics-onboarding.md # Clerk auth + site registration flow
 │   ├── multi-format-serving.md  # Multi-format content serving per AI client
-│   └── crawler-analytics.md #   AI Crawler Analytics feature spec
+│   ├── crawler-analytics.md #   AI Crawler Analytics feature spec
+│   └── scan-output-specification.md # Scan output rules: evidence, interpretation, actions
 │
 ├── research/                # Market research & deep dives
 │   ├── agent-readiness.md   #   Agent Readiness Score design
@@ -55,7 +56,8 @@ For any new session, read in this order based on what you need:
 2. `docs/architecture/scoring-detail.md` — implementable scoring rubrics (check-by-check)
 3. `docs/architecture/crawling-provider.md` — crawling SaaS provider comparison
 4. `docs/architecture/analytics-onboarding.md` — Clerk auth + site registration
-5. `docs/product/solution.md` — technical approach, bot verification matrix
+5. `docs/architecture/scan-output-specification.md` — scan output rules, recommendation engine, visual diff spec
+6. `docs/product/solution.md` — technical approach, bot verification matrix
 
 **Understanding the business:**
 1. `docs/product/problem.md` — the pain point
