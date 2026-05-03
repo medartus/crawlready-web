@@ -52,15 +52,17 @@ const IndexPage = async (props: { params: Promise<{ locale: string }> }) => {
   return (
     <>
       <LandingNavbar />
-      <Hero />
-      <DemoSection />
-      <ProblemSection />
-      <SocialProofSection />
-      <Features />
-      <ComparisonSection />
-      <MarketOpportunitySection />
-      <FAQ />
-      <CTA />
+      <main>
+        <Hero />
+        <DemoSection />
+        <ProblemSection />
+        <SocialProofSection />
+        <Features />
+        <ComparisonSection />
+        <MarketOpportunitySection />
+        <FAQ />
+        <CTA />
+      </main>
       <LandingFooter />
     </>
   );

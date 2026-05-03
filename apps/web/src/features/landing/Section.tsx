@@ -8,27 +8,27 @@ export const Section = (props: {
   className?: string;
   id?: string;
 }) => (
-  <div id={props.id} className={cn('px-3 py-16', props.className)}>
+  <section id={props.id} className={cn('px-4 py-16 sm:px-6 lg:px-8', props.className)}>
     {(props.title || props.subtitle || props.description) && (
       <div className="mx-auto mb-12 max-w-screen-md text-center">
         {props.subtitle && (
-          <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-sm font-bold text-transparent">
+          <div className="text-sm font-semibold tracking-wide text-cr-primary">
             {props.subtitle}
           </div>
         )}
 
         {props.title && (
-          <div className="mt-1 text-3xl font-bold">{props.title}</div>
+          <h2 className="mt-1 text-3xl font-bold text-cr-fg">{props.title}</h2>
         )}
 
         {props.description && (
-          <div className="text-muted-foreground mt-2 text-lg">
+          <p className="mt-2 text-lg text-cr-fg-secondary">
             {props.description}
-          </div>
+          </p>
         )}
       </div>
     )}
 
     <div className="mx-auto max-w-screen-lg">{props.children}</div>
-  </div>
+  </section>
 );

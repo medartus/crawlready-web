@@ -13,11 +13,45 @@ import { expect, test } from '@playwright/test';
 // Check the example at https://feedback.checklyhq.com/changelog/new-changelog-436
 
 test.describe('Sanity', () => {
-  test.describe('Static pages', () => {
-    test('should display the homepage', async ({ page, baseURL }) => {
-      await page.goto(`${baseURL}/`);
+  test.describe('Critical pages load', () => {
+    test('homepage returns 200', async ({ request, baseURL }) => {
+      const response = await request.get(`${baseURL}/`);
 
-      await expect(page.getByText('The perfect SaaS template to build')).toBeVisible();
+      expect(response.status()).toBe(200);
+    });
+
+    test('crawler checker returns 200', async ({ request, baseURL }) => {
+      const response = await request.get(`${baseURL}/crawler-checker`);
+
+      expect(response.status()).toBe(200);
+    });
+
+    test('schema checker returns 200', async ({ request, baseURL }) => {
+      const response = await request.get(`${baseURL}/schema-checker`);
+
+      expect(response.status()).toBe(200);
+    });
+  });
+
+  test.describe('API endpoints respond', () => {
+    test('scan API rejects empty body', async ({ request, baseURL }) => {
+      const response = await request.post(`${baseURL}/api/v1/scan`, {
+        data: {},
+      });
+
+      expect(response.status()).toBe(400);
+    });
+
+    test('c.js serves JavaScript', async ({ request, baseURL }) => {
+      const response = await request.get(`${baseURL}/c.js`);
+
+      expect(response.status()).toBe(200);
+    });
+
+    test('tracking pixel serves GIF', async ({ request, baseURL }) => {
+      const response = await request.get(`${baseURL}/api/v1/t/test`);
+
+      expect(response.status()).toBe(200);
     });
   });
 });

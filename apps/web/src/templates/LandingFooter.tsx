@@ -9,7 +9,6 @@ export const LandingFooter = () => {
   const router = useRouter();
 
   const scrollToSection = (sectionId: string) => {
-    // If not on home page, navigate to home first
     if (pathname !== '/' && !pathname.match(/^\/[a-z]{2}\/?$/)) {
       router.push(`/#${sectionId}`);
       return;
@@ -21,29 +20,25 @@ export const LandingFooter = () => {
     }
   };
 
+  const linkClass = 'text-sm text-cr-fg-secondary transition-colors hover:text-cr-primary';
+
   return (
-    <footer className="border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <footer className="border-t border-cr-border bg-cr-bg">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 md:grid-cols-5">
-          {/* Brand Column */}
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600">
-                <span className="text-lg font-bold text-white">C</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
-                CrawlReady
-              </span>
+            <Link href="/" className="text-xl font-bold text-cr-fg">
+              CrawlReady
             </Link>
-            <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-              Make your JavaScript site visible to AI search engines. Get cited in ChatGPT answers.
+            <p className="mt-4 text-sm text-cr-fg-secondary">
+              See what AI actually sees on your site.
             </p>
             <div className="mt-6 flex gap-4">
               <a
                 href="https://twitter.com/medartus"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
+                className="text-cr-fg-muted transition-colors hover:text-cr-primary"
                 aria-label="Follow @medartus on Twitter"
               >
                 <Twitter className="size-5" />
@@ -52,7 +47,7 @@ export const LandingFooter = () => {
                 href="https://www.linkedin.com/in/marcetiennedartus/?locale=en_US"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
+                className="text-cr-fg-muted transition-colors hover:text-cr-primary"
                 aria-label="Connect on LinkedIn"
               >
                 <Linkedin className="size-5" />
@@ -61,7 +56,7 @@ export const LandingFooter = () => {
                 href="https://github.com/medartus"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 transition-colors hover:text-indigo-600 dark:hover:text-indigo-400"
+                className="text-cr-fg-muted transition-colors hover:text-cr-primary"
                 aria-label="CrawlReady on GitHub"
               >
                 <Github className="size-5" />
@@ -69,152 +64,80 @@ export const LandingFooter = () => {
             </div>
           </div>
 
-          {/* Product Column */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-cr-fg">
               Product
             </h3>
             <ul className="space-y-3">
               <li>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('features')}
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
+                <button type="button" onClick={() => scrollToSection('features')} className={linkClass}>
                   Features
                 </button>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('demo')}
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Demo
-                </button>
+                <Link href="/docs" className={linkClass}>Documentation</Link>
               </li>
               <li>
-                <Link
-                  href="/docs"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Documentation
-                </Link>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection('faq')}
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
+                <button type="button" onClick={() => scrollToSection('faq')} className={linkClass}>
                   FAQ
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Tools Column */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-cr-fg">
               Free Tools
             </h3>
             <ul className="space-y-3">
               <li>
-                <Link
-                  href="/crawler-checker"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  AI Crawler Checker
-                </Link>
+                <Link href="/crawler-checker" className={linkClass}>AI Crawler Checker</Link>
               </li>
               <li>
-                <Link
-                  href="/schema-checker"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Schema Markup Analyzer
-                </Link>
+                <Link href="/schema-checker" className={linkClass}>Schema Markup Analyzer</Link>
               </li>
             </ul>
           </div>
 
-          {/* Company Column */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-cr-fg">
               Company
             </h3>
             <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/about"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/blog"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Contact
-                </Link>
-              </li>
+              <li><Link href="/about" className={linkClass}>About</Link></li>
+              <li><Link href="/blog" className={linkClass}>Blog</Link></li>
+              <li><Link href="/contact" className={linkClass}>Contact</Link></li>
             </ul>
           </div>
 
-          {/* Legal Column */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-white">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-cr-fg">
               Legal
             </h3>
             <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-sm text-gray-600 transition-colors hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
-                >
-                  Terms of Service
-                </Link>
-              </li>
+              <li><Link href="/privacy" className={linkClass}>Privacy Policy</Link></li>
+              <li><Link href="/terms" className={linkClass}>Terms of Service</Link></li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-12 border-t border-gray-200 pt-8 dark:border-gray-800">
+        <div className="mt-12 border-t border-cr-border pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-cr-fg-secondary">
               ©
               {' '}
               {new Date().getFullYear()}
               {' '}
               CrawlReady. All rights reserved.
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">
+            <p className="text-sm text-cr-fg-muted">
               Built by
               {' '}
               <a
                 href="https://twitter.com/medartus"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                className="font-medium text-cr-primary hover:text-cr-primary-hover"
               >
                 @medartus
               </a>
