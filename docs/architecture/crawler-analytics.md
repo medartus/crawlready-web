@@ -35,11 +35,39 @@ CrawlReady's Phase 0 diagnostic is a one-time scan: enter a URL, see your score.
 - **Minimal payload** — sends ~200 bytes per AI crawler request (timestamp, path, crawler ID, site key)
 - **AI crawlers only** — does not log human traffic; no privacy concerns
 
-### Why Middleware (Not a JS Script Tag)
+### Two Integration Paths: Middleware (Recommended) + Script Tag (Quick Start)
 
-AI crawlers do not execute JavaScript. A client-side `<script>` tag would never fire when GPTBot or ClaudeBot visits. Detection must happen server-side, at the HTTP request level, by reading the User-Agent header before any response is sent.
+AI crawlers that do not execute JavaScript are invisible to client-side `<script>` tags. Middleware detection (server-side, reading the User-Agent header) provides ~100% coverage. However, a script tag integration is provided as a lower-friction onboarding path for non-technical users, with ~60-80% coverage via a two-layer approach (c.js for JS-capable bots + tracking pixel for non-JS bots).
 
-### Framework Snippets
+Both paths feed into the same [shared processing pipeline](./analytics-infrastructure.md). The dashboard tracks `integration_type` per site and nudges script tag users to upgrade to middleware for full coverage.
+
+**Coverage comparison:**
+
+| Integration | Coverage | Setup Effort | Bot List Updates |
+|---|---|---|---|
+| Middleware (★ Recommended) | ~100% | Server-side code change (~5 lines) | Customer must update snippet regex |
+| Script Tag (Quick Start) | ~60-80% | Copy-paste into HTML `<head>` | Auto-updated via CDN (1hr TTL) |
+
+See [analytics-infrastructure.md](./analytics-infrastructure.md) for the complete dual integration model, 9-step ingest pipeline, site key lifecycle, and scaling triggers.
+
+### Script Tag Integration
+
+For customers who cannot modify server-side code or want a quick evaluation:
+
+```html
+<!-- CrawlReady AI Crawler Analytics -->
+<script src="https://crawlready.app/c.js" data-key="YOUR_SITE_KEY" async></script>
+<noscript>
+  <img src="https://crawlready.app/api/v1/t/YOUR_SITE_KEY" style="display:none" alt="" />
+</noscript>
+```
+
+- **Layer 1 (c.js):** Detects JS-capable bots via User-Agent check in JS context, sends POST beacon. Auto-updated bot list.
+- **Layer 2 (noscript img):** Catches non-JS bots that fetch images. Bot detected via UA header, path via Referer header.
+
+See [analytics-infrastructure.md](./analytics-infrastructure.md) §Tracking Pixel and §c.js for endpoint details.
+
+### Middleware Snippets (★ Recommended)
 
 #### Next.js Middleware (`middleware.ts`)
 
@@ -55,7 +83,7 @@ export function middleware(request: NextRequest) {
     const bot = ua.match(AI_BOTS)?.[0] || 'unknown';
     fetch('https://crawlready.app/api/v1/ingest', {
       method: 'POST',
-      body: JSON.stringify({ s: 'SITE_KEY', p: request.nextUrl.pathname, b: bot, t: Date.now() }),
+      body: JSON.stringify({ s: 'SITE_KEY', p: request.nextUrl.pathname, b: bot, t: Date.now(), v: 1 }),
       headers: { 'Content-Type': 'application/json' },
     }).catch(() => {});
   }
@@ -74,7 +102,7 @@ app.use((req, res, next) => {
     const bot = ua.match(AI_BOTS)?.[0] || 'unknown';
     fetch('https://crawlready.app/api/v1/ingest', {
       method: 'POST',
-      body: JSON.stringify({ s: 'SITE_KEY', p: req.path, b: bot, t: Date.now() }),
+      body: JSON.stringify({ s: 'SITE_KEY', p: req.path, b: bot, t: Date.now(), v: 1 }),
       headers: { 'Content-Type': 'application/json' },
     }).catch(() => {});
   }
@@ -376,11 +404,25 @@ CrawlReady's AI Crawler Analytics would be a first: a free, easy-to-install, dev
 
 ---
 
+## Related Documents
+
+| Document | Scope |
+|---|---|
+| [analytics-infrastructure.md](./analytics-infrastructure.md) | Ingest pipeline, dual integration model, site key lifecycle, analytics API, scaling |
+| [analytics-onboarding.md](./analytics-onboarding.md) | Clerk auth, site registration, snippet display |
+| [infrastructure-overview.md](./infrastructure-overview.md) | Unified Phase 0 topology, cross-cutting concerns |
+| [diagrams-infrastructure.md](./diagrams-infrastructure.md) | Mermaid diagrams: ingest pipeline, dual integration flow |
+
+---
+
 ## Decisions
 
-- **Phase 0 scope:** Ship the ingest API and middleware snippets alongside the diagnostic. The dashboard ships in Phase 1 using accumulated Phase 0 data.
+- **Phase 0 scope:** Ship the ingest API, middleware snippets, and script tag alongside the diagnostic. The dashboard ships in Phase 1 using accumulated Phase 0 data.
+- **Dual integration model:** Middleware (★ recommended, ~100% coverage) and script tag (quick start, ~60-80%). Both feed the same shared pipeline. See [analytics-infrastructure.md](./analytics-infrastructure.md).
 - **Email gating:** The analytics dashboard requires email signup (the site key is issued upon registration). The diagnostic score page remains un-gated.
 - **Snippet distribution:** Publish snippets in the CrawlReady docs with copy-paste instructions. Do not create npm packages for the snippets — the point is zero dependencies.
-- **Hidden backlink:** Ships as a follow-up to the analytics beacon, since response body modification adds complexity. The beacon (pure logging) is the priority.
+- **Hidden backlink:** Injected in the content pipeline optimized page (Phase 2+), not via middleware or script tag. See [analytics-infrastructure.md](./analytics-infrastructure.md) §Hidden Backlink Architecture.
+- **Bot list management:** Single source of truth in `packages/core/detection/bot-registry.ts`. c.js auto-updates. Middleware users notified in dashboard when their snippet is stale. See [analytics-infrastructure.md](./analytics-infrastructure.md) §Bot List Management.
+- **Beacon version tracking:** All beacons include `v: 1` field. Enables snippet freshness detection and stale-snippet alerts in the dashboard.
 - **Opt-in badge:** Available as a separate JS snippet users can add voluntarily. Two variants: clean (unbranded score) and branded ("Powered by CrawlReady"). Never auto-injected.
-- **Data model:** Start with Supabase Postgres. Migrate to time-series store only if scale demands it (unlikely before Phase 2).
+- **Data model:** Start with Supabase Postgres. Migrate to time-series store only if scale demands it (unlikely before Phase 2). Scaling triggers documented in [analytics-infrastructure.md](./analytics-infrastructure.md) §Scaling Triggers.

@@ -97,35 +97,46 @@ User reaches CrawlReady via one of:
 - System creates a `sites` row with a generated `site_key`
 - System normalizes the domain (lowercase, strip www)
 
-### Step 4: Get Snippet
+### Step 4: Choose Integration Method
 
-After registration, the user sees their site key and a framework-specific snippet:
+After registration, the user chooses between two integration paths:
 
 ```
-┌─────────────────────────────────────────────┐
-│  ✓ example.com registered                    │
-│                                              │
-│  Site Key: cr_live_a1b2c3d4e5f6              │
-│                                              │
-│  Add this to your middleware:                │
-│                                              │
-│  [Next.js] [Express] [Cloudflare] [Generic] │
-│                                              │
-│  ┌─────────────────────────────────────────┐ │
-│  │ // middleware.ts                         │ │
-│  │ const AI_BOTS = /GPTBot|ClaudeBot|.../; │ │
-│  │ ...                                     │ │
-│  │ { s: 'cr_live_a1b2c3d4e5f6', ... }     │ │
-│  └─────────────────────────────────────────┘ │
-│                                              │
-│  [Copy to clipboard]                         │
-│                                              │
-│  Once installed, AI crawler visits will      │
-│  appear in your dashboard (coming soon).     │
-└─────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│  ✓ example.com registered                              │
+│                                                        │
+│  Site Key: cr_live_a1b2c3d4e5f6g7h8                    │
+│                                                        │
+│  Choose your integration:                              │
+│                                                        │
+│  [★ Middleware (Recommended)]  [Quick Start (Script)]  │
+│                                                        │
+│  ────────────────────────────────────────────────── │
+│                                                        │
+│  Middleware tab (default):                              │
+│  [Next.js] [Express] [Cloudflare] [Generic]            │
+│  ┌────────────────────────────────────────────────┐ │
+│  │ // middleware.ts (5 lines)                        │ │
+│  │ ...code with pre-filled site key...               │ │
+│  └────────────────────────────────────────────────┘ │
+│  [Copy to clipboard]                                    │
+│  ✓ ~100% bot coverage                                   │
+│                                                        │
+│  Quick Start tab:                                      │
+│  ┌────────────────────────────────────────────────┐ │
+│  │ <!-- Copy into your <head> tag -->               │ │
+│  │ <script src="c.js" data-key="KEY" async></script>│ │
+│  │ <noscript><img src="/t/KEY" ... /></noscript>    │ │
+│  └────────────────────────────────────────────────┘ │
+│  [Copy to clipboard]                                    │
+│  ⚠ ~60-80% bot coverage. Upgrade to middleware for 100%. │
+│                                                        │
+│  Once installed, AI crawler visits will appear          │
+│  in your dashboard (coming soon).                       │
+└────────────────────────────────────────────────────────┘
 ```
 
-The snippet templates are the same as defined in `docs/architecture/crawler-analytics.md`, with the ingest URL corrected to `https://crawlready.app/api/v1/ingest`.
+The user's choice is stored as `sites.integration_type` ('middleware' or 'js'). Script tag users see a nudge in the dashboard to upgrade. Snippet templates defined in [crawler-analytics.md](./crawler-analytics.md).
 
 ---
 
@@ -133,15 +144,18 @@ The snippet templates are the same as defined in `docs/architecture/crawler-anal
 
 Site keys use a prefixed format for easy identification:
 
-- **Format:** `cr_live_{12 random alphanumeric chars}`
-- **Example:** `cr_live_a1b2c3d4e5f6`
-- **Generation:** `crypto.randomUUID()` truncated, or `nanoid(12)` with prefix
+- **Format:** `cr_live_{16 random alphanumeric chars}`
+- **Example:** `cr_live_a1b2c3d4e5f6g7h8`
+- **Total length:** 24 characters
+- **Generation:** `crypto.randomBytes(12).toString('base64url').slice(0, 16).toLowerCase()`
 - **Uniqueness:** Enforced at database level (UNIQUE constraint)
 
 The `cr_live_` prefix:
 - Makes keys visually identifiable in code
 - Allows future `cr_test_` keys for development mode
 - Prevents accidental use of other IDs as site keys
+
+See [analytics-infrastructure.md](./analytics-infrastructure.md) §Site Key Lifecycle for rotation, revocation, and grace period mechanics.
 
 ---
 
@@ -404,12 +418,25 @@ function reportAiCrawler(userAgent, path) {
 
 ### Site Key Trust Model
 
-The `site_key` is embedded in customer middleware code running on their servers. It is **semi-public** — not secret like an API key, but not advertised either. This is acceptable because:
+The `site_key` is embedded in customer middleware code (server-side) or HTML (script tag). It is **semi-public** — not secret like an API key, but not advertised either. This is the same trust model as Google Analytics measurement IDs (G-XXXXX), which have operated publicly for 20+ years. This is acceptable because:
 
-- The ingest endpoint only accepts crawler visit data (path, bot name, timestamp)
+- The ingest endpoint only accepts crawler visit data (path, bot name, timestamp) — no PII
 - Spoofing a site key produces junk data in that site's analytics — it does not expose or modify any other data
-- Phase 1 can add domain validation (reject ingest from mismatched origins) if abuse appears
-- Rate limiting (100 req/s per key) bounds the damage from any single key
+- A bad actor gains nothing — they pollute only their own (registered) dashboard
+- Rate limiting (100 req/s per key via Upstash Redis) bounds the damage from any single key
+- The snippet runs on the customer's server — if beacons arrive, they genuinely control the domain's server
+
+See [analytics-infrastructure.md](./analytics-infrastructure.md) §Trust Model for the full analysis.
+
+### Domain Verification (Phase 1)
+
+Phase 0 requires no domain verification — registering a domain gives access only to the registrant's own data. Phase 1 adds optional lightweight verification:
+
+- **Meta tag verification (recommended):** Add `<meta name='crawlready-verify' content='cr_live_...' />` to homepage. Background job checks hourly for 72h.
+- **DNS TXT record (alternative):** Add `crawlready-verify=cr_live_...` TXT record.
+- **Feature gating:** Verified sites get full analytics, alerts, export, public badge. Unverified sites get data collection + basic stats only.
+
+See [analytics-infrastructure.md](./analytics-infrastructure.md) §Domain Verification for implementation details.
 
 ### Clerk Security
 
@@ -419,13 +446,26 @@ The `site_key` is embedded in customer middleware code running on their servers.
 
 ---
 
+## Related Documents
+
+| Document | Scope |
+|---|---|
+| [analytics-infrastructure.md](./analytics-infrastructure.md) | Ingest pipeline, dual integration model, site key lifecycle, analytics API |
+| [crawler-analytics.md](./crawler-analytics.md) | Feature spec, middleware snippets, dashboard views |
+| [infrastructure-overview.md](./infrastructure-overview.md) | Unified Phase 0 topology, auth model overview |
+| [api-first.md](./api-first.md) | All API endpoints, data model, auth table |
+
+---
+
 ## Decisions
 
 - **Auth provider:** Clerk (not Supabase Auth). Supabase is database-only.
 - **Clerk features used:** Sign-up, sign-in, session management, `userId` as foreign key. No organizations, roles, or MFA in Phase 0.
-- **Site key format:** `cr_live_` prefix + 12 random alphanumeric characters.
+- **Site key format:** `cr_live_` prefix + 16 random alphanumeric characters (24 chars total). See [analytics-infrastructure.md](./analytics-infrastructure.md) §Key Format.
+- **Dual integration onboarding:** Both middleware (★ recommended) and script tag (quick start) options presented during onboarding. User's choice stored in `sites.integration_type`.
 - **Sites per user:** 10 maximum in Phase 0. Increase in paid tiers.
 - **Domain uniqueness:** One user cannot register the same domain twice. Different users CAN register the same domain (this enables agencies and multi-team setups in the future).
-- **Ingest URL:** `https://crawlready.app/api/v1/ingest` (canonical — no subdomain).
+- **Ingest URLs:** `POST /api/v1/ingest` (middleware + c.js beacons), `GET /api/v1/t/{key}` (tracking pixel), `GET /c.js` (script). All canonical — no subdomain.
 - **No dashboard in Phase 0:** Site management only. The analytics dashboard (charts, per-crawler views, alerts) ships in Phase 1 using data accumulated during Phase 0.
-- **No site key rotation in Phase 0:** If a key is compromised, user deletes the site and re-registers. Rotation UI is Phase 1.
+- **Site key rotation in Phase 1:** 24-hour grace period for old key. Emergency revoke (immediate). Phase 0: delete and re-register. See [analytics-infrastructure.md](./analytics-infrastructure.md) §Site Key Lifecycle.
+- **Domain verification in Phase 1:** Meta tag or DNS TXT. Feature gating: verified = full features, unverified = basic stats.

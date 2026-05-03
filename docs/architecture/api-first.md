@@ -56,15 +56,19 @@ Every distribution channel consumes the same API. A score improvement, new bot d
 │                    └───────┬────────┘                 │
 └────────────────────────────┼──────────────────────────┘
                              │
-              ┌──────────────┼──────────────┐
-              │              │              │
-     ┌────────▼───┐  ┌──────▼─────┐  ┌─────▼──────┐
-     │  Firecrawl  │  │  Supabase   │  │  Scoring    │
-     │  API        │  │  (Postgres)  │  │  Engine     │
-     │  (crawl +   │  │  - scores   │  │  (in-app)   │
-     │   extract)  │  │  - visits   │  │             │
-     │             │  │  - emails   │  │             │
-     └─────────────┘  └────────────┘  └─────────────┘
+         ┌───────────────────┼───────────────────┐
+         │                   │                   │
+┌────────▼───┐  ┌────────────▼────┐  ┌───────────▼──────┐
+│  Firecrawl  │  │  Supabase        │  │  Upstash Redis   │
+│  API        │  │  (Postgres)       │  │  (rate limits,   │
+│  (crawl +   │  │  - scans         │  │   site key cache,│
+│   extract)  │  │  - sites         │  │   budget counter)│
+│             │  │  - crawler_visits│  │                  │
+│             │  │  - subscribers   │  │                  │
+└─────────────┘  └─────────────────┘  └──────────────────┘
+
+Scoring Engine (packages/core): Pure functions, zero external deps.
+See: infrastructure-overview.md for full Phase 0 topology.
 ```
 
 ### Technology Stack (Phase 0)
@@ -77,6 +81,9 @@ Every distribution channel consumes the same API. A score improvement, new bot d
 | Database | Supabase (Postgres) | Free tier for Phase 0, scores + emails + crawler visits + sites |
 | Auth | Clerk (`@clerk/nextjs`) | Site registration, analytics onboarding, future dashboard. See `docs/architecture/analytics-onboarding.md`. |
 | Email capture | Lightweight (no auth) | Diagnostic gated features (PDF, alerts). Stored in `subscribers` table. No account. |
+| Rate limiting | Upstash Redis (`@upstash/ratelimit`) | Sliding window rate limits, site key cache, Firecrawl budget counter. Free tier: 10K cmds/day. |
+| Error tracking | Sentry | Structured error capture + source maps. Free tier: 5K errors/mo. |
+| Feature flags | Vercel Edge Config | < 1ms reads at edge. Free tier. |
 | Deployment | Vercel | Free tier for development, Pro ($20/mo) for production |
 | Domain | crawlready.app | Secured |
 
@@ -138,13 +145,19 @@ A single `normalizeUrl(input: string): { url: string; domain: string }` utility 
 
 **One scan** = one diagnostic analysis of a single URL. It consists of:
 
-1. **1 crawling provider call** — JS-rendered scrape of the target URL (returns HTML + Markdown + metadata). This is the only provider cost.
-2. **1 direct HTTP fetch** — `User-Agent: GPTBot/1.0`, no JS rendering. Shows what non-rendering bots see. Made from the API route, no provider cost.
-3. **1 content negotiation probe** — `Accept: text/markdown` header. Made from the API route.
-4. **1 llms.txt check** — `GET {origin}/llms.txt`. Made from the API route.
+1. **1 crawling provider call** — JS-rendered scrape of the target URL (returns HTML + Markdown + metadata + accessibility tree). This is the only provider cost. **Required** — scan fails if this fails after retries.
+2. **1 direct HTTP fetch** — `User-Agent: GPTBot/1.0`, no JS rendering. Shows what non-rendering bots see. Made from the API route, no provider cost. **Required** — scan fails if this fails after retries.
+3. **1 content negotiation probe** — `Accept: text/markdown` header. Made from the API route. *Non-required* — scored as 0 on failure.
+4. **1 llms.txt check** — `GET {origin}/.well-known/llms.txt` (or `/llms.txt`). Made from the API route. *Non-required*.
+5. **1 robots.txt parse** — `GET {origin}/robots.txt`, extract AI bot directives. *Non-required*.
+6. **3 standards adoption probes** — HEAD requests to sitemap.xml, `.well-known/mcp/server-card`, `.well-known/api-catalog`. *Non-required*.
+7. **Schema.org detection** — Extract existing JSON-LD, microdata, RDFa from the Firecrawl HTML output. *Non-required*.
+8. **Accessibility tree analysis** — From the rendered DOM (Firecrawl output). *Non-required*.
 
 **Total provider cost per scan:** 1 credit (rendered view only).
-**Total HTTP requests per scan:** 4 (1 provider + 3 direct).
+**Total HTTP requests per scan:** 4 required (1 provider + 3 direct) + up to 5 optional probes.
+
+Scans follow a state machine: `PENDING → CRAWLING → SCORING → COMPLETE | PARTIAL | FAILED`. Non-required checks that fail produce a `PARTIAL` result with scores computed from available data. See [scan-workflow.md](./scan-workflow.md) for the complete state machine, partial failure strategy, and retry semantics.
 
 **Rate limits:**
 - 3 scans per hour per IP (unauthenticated)
@@ -194,7 +207,7 @@ Rate limit responses include `Retry-After` header (seconds) and `X-RateLimit-Rem
 
 #### `POST /api/v1/scan`
 
-Triggers a new crawl and returns the AI Readiness Score.
+Triggers a new scan. Returns immediately with `scan_id` and `status: pending`. Client polls `GET /api/v1/scan/{scanId}/status` for progress. See [scan-workflow.md](./scan-workflow.md) for the full state machine.
 
 **Request:**
 ```json
@@ -203,10 +216,27 @@ Triggers a new crawl and returns the AI Readiness Score.
 }
 ```
 
-**Response:**
+**Immediate Response (202 Accepted):**
+```json
+{
+  "scan_id": 123,
+  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "pending",
+  "status_url": "/api/v1/scan/123/status",
+  "score_url": "https://crawlready.app/score/example.com"
+}
+```
+
+**Final Response (when polled via status endpoint after completion):**
 ```json
 {
   "url": "https://example.com/pricing",
+  "scan_id": 123,
+  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "complete",
+  "checks_completed": 9,
+  "checks_total": 9,
+  "data_quality": "full",
   "ai_readiness_score": 31,
   "scores": {
     "crawlability": 23,
@@ -244,9 +274,35 @@ Triggers a new crawl and returns the AI Readiness Score.
 }
 ```
 
-**Rate limits:** 3 scans per hour per IP (un-authenticated). Authenticated users get higher limits.
+**Rate limits:** 3 scans per hour per IP (un-authenticated). Authenticated users get higher limits (tier-based via Upstash Redis).
 
 **Cache:** Results are cached for 24 hours per URL. Subsequent requests within 24h return the cached result without triggering a new Firecrawl crawl.
+
+#### `GET /api/v1/scan/{scanId}/status`
+
+Polls scan progress. Client polls every 2 seconds, max 30 polls (60s timeout). See [scan-workflow.md](./scan-workflow.md) for polling flow and timeout handling.
+
+**Response (in-progress):**
+```json
+{
+  "scan_id": 123,
+  "status": "crawling",
+  "progress_pct": 30,
+  "checks_completed": 2,
+  "checks_total": 9,
+  "eta_seconds": 12
+}
+```
+
+**Response (complete):**
+```json
+{
+  "scan_id": 123,
+  "status": "complete",
+  "progress_pct": 100,
+  "redirect_url": "/score/example.com"
+}
+```
 
 #### `GET /api/v1/score/{domain}`
 
@@ -258,55 +314,52 @@ Returns the most recent score for a domain (cached, no new crawl).
 
 ### AI Crawler Analytics API
 
+Three ingest entry points feed the same shared processing pipeline. See [analytics-infrastructure.md](./analytics-infrastructure.md) for the full 9-step pipeline, dual integration model, and scaling triggers.
+
 #### `POST /api/v1/ingest`
 
-Receives beacon payloads from middleware snippets. See `docs/architecture/crawler-analytics.md` for full specification.
+Shared beacon endpoint — receives payloads from middleware and c.js. See [analytics-infrastructure.md](./analytics-infrastructure.md) for the full pipeline.
 
 **Request:**
 ```json
 {
-  "s": "site_abc123",
+  "s": "cr_live_a1b2c3d4e5f6g7h8",
   "p": "/pricing",
   "b": "GPTBot",
-  "t": 1712419200000
+  "t": 1712419200000,
+  "v": 1
 }
 ```
 
 **Response:** `204 No Content`
 
-#### `GET /api/v1/analytics/{siteId}`
+Silent reject (also 204) for: invalid site key, rate limited, duplicate within 1-second window.
 
-Returns crawler analytics for a registered site (authenticated).
+#### `GET /api/v1/t/{siteKey}`
 
-**Response:**
-```json
-{
-  "site_id": "site_abc123",
-  "domain": "example.com",
-  "period": "30d",
-  "total_visits": 5024,
-  "unique_pages": 67,
-  "by_crawler": [
-    { "bot": "Google-Extended", "visits": 2891, "pages": 67, "share": 0.58 },
-    { "bot": "Meta-ExternalAgent", "visits": 1653, "pages": 52, "share": 0.33 },
-    { "bot": "GPTBot", "visits": 312, "pages": 45, "share": 0.06 }
-  ],
-  "top_pages": [
-    { "path": "/docs/getting-started", "visits": 1247 },
-    { "path": "/pricing", "visits": 891 }
-  ],
-  "alerts": [
-    {
-      "type": "invisible_content",
-      "path": "/pricing",
-      "bot": "GPTBot",
-      "visits": 89,
-      "crawlability_score": 12,
-      "message": "GPTBot visited /pricing 89 times but your crawlability score is 12/100"
-    }
-  ]
-}
-```
+Tracking pixel endpoint for non-JS bots (Layer 2 of the script tag integration). Bot detected from User-Agent header, page path from Referer header. Returns a 1×1 transparent GIF (43 bytes). See [analytics-infrastructure.md](./analytics-infrastructure.md) §Tracking Pixel.
+
+**Response:** `200 OK` with `Content-Type: image/gif`, `Cache-Control: no-store`.
+
+#### `GET /c.js`
+
+Client-side bot detection script (~400 bytes gzipped). Bot regex auto-generated from `packages/core` bot registry. CDN-cached with 1-hour TTL. See [analytics-infrastructure.md](./analytics-infrastructure.md) §c.js.
+
+**Response:** `200 OK` with `Content-Type: application/javascript`, `Cache-Control: public, max-age=3600`.
+
+#### Analytics Dashboard API (Phase 1)
+
+Six focused endpoints power the dashboard. All require Clerk auth + site ownership verification. See [analytics-infrastructure.md](./analytics-infrastructure.md) §Analytics API Endpoints for full request/response specs.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/analytics/{siteId}/overview` | Headline stats (total visits, unique pages, active crawlers) |
+| `GET /api/v1/analytics/{siteId}/bots` | Per-crawler breakdown with trends |
+| `GET /api/v1/analytics/{siteId}/pages` | Top crawled pages (paginated) |
+| `GET /api/v1/analytics/{siteId}/timeseries` | Chart data (hourly or daily granularity) |
+| `GET /api/v1/analytics/{siteId}/alerts` | Actionable insights (invisible content, new crawler, spike) |
+| `GET /api/v1/analytics/{siteId}/export` | CSV/JSON data export (streaming) |
+| `GET /api/v1/analytics/overview` | Cross-site summary for all user's sites |
 
 ### Email Capture API
 
@@ -378,7 +431,7 @@ The `crawlready` package includes both the middleware exports and a `bin` entry 
 **Option B — Separate packages:**
 ```
 npm install crawlready          # Middleware only
-npm install @crawlready/cli     # CLI only  
+npm install @crawlready/cli     # CLI only
 ```
 Cleaner separation of concerns. CLI users don't pull in middleware dependencies and vice versa.
 
@@ -413,9 +466,16 @@ CREATE TABLE sites (
   domain TEXT NOT NULL,
   site_key TEXT NOT NULL UNIQUE,
   tier TEXT NOT NULL DEFAULT 'free',
+  integration_type TEXT DEFAULT 'middleware',   -- 'middleware' | 'js' (tracks onboarding choice)
+  beacon_version INT DEFAULT 1,                 -- tracks snippet freshness
+  last_beacon_at TIMESTAMPTZ,                   -- last successful ingest
+  previous_site_key TEXT,                       -- for key rotation grace period
+  key_rotated_at TIMESTAMPTZ,                   -- when key was last rotated
+  verified BOOLEAN NOT NULL DEFAULT FALSE,      -- domain verification (Phase 1)
+  deleted_at TIMESTAMPTZ,                       -- soft delete
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
+
   UNIQUE(clerk_user_id, domain)
 );
 
@@ -424,28 +484,40 @@ CREATE INDEX idx_sites_domain ON sites(domain);
 CREATE INDEX idx_sites_key ON sites(site_key);
 
 -- Diagnostic scan results
--- Uses JSONB `result` column to match the API response shape exactly.
--- Avoids premature flattening into typed columns.
+-- Score columns are nullable to support PARTIAL and FAILED states.
 CREATE TABLE scans (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   url TEXT NOT NULL,
   domain TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',           -- pending|crawling|scoring|complete|partial|failed
+  correlation_id UUID NOT NULL DEFAULT gen_random_uuid(),
   scoring_version INT NOT NULL DEFAULT 1,
-  ai_readiness_score INT NOT NULL,
-  crawlability_score INT NOT NULL,
-  agent_readiness_score INT NOT NULL,
-  agent_interaction_score INT NOT NULL,
-  eu_ai_act_passed INT NOT NULL DEFAULT 0,
+  ai_readiness_score INT,                           -- nullable: not set until scoring completes
+  crawlability_score INT,
+  agent_readiness_score INT,
+  agent_interaction_score INT,
+  eu_ai_act_passed INT DEFAULT 0,
   eu_ai_act JSONB,
   recommendations JSONB,
   schema_preview JSONB,
+  checks_completed INT,
+  checks_total INT,
+  checks_failed TEXT[],                             -- array of check names that failed
+  data_quality TEXT,                                -- 'full' | 'partial' | 'degraded'
   raw_html_size INT,
   markdown_size INT,
+  error_code TEXT,                                  -- set on FAILED status
+  error_message TEXT,
+  firecrawl_cost_cents INT,                         -- per-scan cost tracking
+  crawl_started_at TIMESTAMPTZ,
+  scoring_started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
   scanned_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_scans_domain ON scans(domain, scanned_at DESC);
 CREATE INDEX idx_scans_url ON scans(url, scanned_at DESC);
+CREATE INDEX idx_scans_domain_status ON scans(domain, status) WHERE status IN ('complete', 'partial');
 
 -- AI crawler visit logs
 CREATE TABLE crawler_visits (
@@ -453,10 +525,13 @@ CREATE TABLE crawler_visits (
   site_id UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
   path TEXT NOT NULL,
   bot TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'middleware',         -- 'middleware' | 'js' | 'pixel'
+  beacon_version INT DEFAULT 1,
   visited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX idx_crawler_visits_site_visited ON crawler_visits(site_id, visited_at DESC);
 CREATE INDEX idx_crawler_visits_site_bot ON crawler_visits(site_id, bot, visited_at);
 CREATE INDEX idx_crawler_visits_site_path ON crawler_visits(site_id, path, visited_at);
 
@@ -487,12 +562,15 @@ See `docs/architecture/analytics-onboarding.md` for the full Clerk + Supabase da
 
 | Service | Purpose | Phase 0 Cost | Failure Mode |
 |---|---|---|---|
-| **Crawling SaaS** | Crawl pages + extract HTML/Markdown | ~$0.001/page, est. $10-50/mo | Scan fails gracefully, returns `PROVIDER_ERROR` |
-| **Supabase** | Database (PostgreSQL) | Free tier (500MB) | Score pages unavailable, ingest drops |
-| **Clerk** | User authentication | Free tier (10K MAUs) | Site registration unavailable; diagnostic unaffected |
-| **Vercel** | Hosting + serverless functions | Free → Pro ($20/mo) | Site down (standard Vercel SLA) |
+| **Vercel** | Hosting, edge middleware, serverless, ISR | Free → Pro ($20/mo) | **Total outage** — all services down |
+| **Supabase** | Database (PostgreSQL) | Free tier (500MB) | **Total outage** — no reads or writes |
+| **Firecrawl** | JS rendering + HTML extraction | $19/mo (500 credits) | **Scan plane down** — ingest unaffected |
+| **Upstash Redis** | Rate limiting, site key cache, budget counter | Free tier (10K cmds/day) | **Degraded** — rate limiting fails open |
+| **Clerk** | User authentication | Free tier (10K MAUs) | **Dashboard down** — diagnostic + ingest unaffected |
+| **Sentry** | Error tracking | Free tier (5K errors/mo) | **No impact** — monitoring blind, product works |
+| **Vercel Edge Config** | Feature flags | Free tier | **Degraded** — flags return defaults |
 
-**No other dependencies in Phase 0.** No Redis, no Cloudflare Workers, no separate backend service, no message queue. Complexity is minimized for a solo developer building 15-20 hrs/week. See `docs/architecture/crawling-provider.md` for provider selection.
+**Fail-open principle:** When Upstash Redis is unreachable, rate limiting is skipped. When Sentry is down, errors are logged locally. Only Vercel, Supabase, and Firecrawl are hard dependencies. See [infrastructure-overview.md](./infrastructure-overview.md) for the complete dependency map, failure modes, and monthly cost estimates.
 
 ---
 
@@ -513,12 +591,16 @@ CrawlReady uses a **dual auth model**:
 | Endpoint | Auth Required | Method |
 |---|---|---|
 | `POST /api/v1/scan` | No (rate-limited by IP) | None |
+| `GET /api/v1/scan/{scanId}/status` | No | None |
 | `GET /api/v1/score/{domain}` | No (public score pages) | None |
 | `POST /api/v1/sites` | Yes (site owner) | Clerk JWT |
 | `GET /api/v1/sites` | Yes (site owner) | Clerk JWT |
+| `GET /api/v1/sites/{siteId}` | Yes (site owner) | Clerk JWT |
 | `DELETE /api/v1/sites/{id}` | Yes (site owner) | Clerk JWT |
 | `POST /api/v1/ingest` | Site key (in body `s` field) | Semi-public key |
-| `GET /api/v1/analytics/{siteId}` | Yes (site owner) | Clerk JWT |
+| `GET /api/v1/t/{siteKey}` | No (tracking pixel) | None |
+| `GET /c.js` | No (script) | None |
+| `GET /api/v1/analytics/{siteId}/*` | Yes (site owner) | Clerk JWT (Phase 1) |
 | `POST /api/v1/subscribe` | No | None |
 | `GET /api/v1/badge/{domain}.svg` | No (public) | None (Phase 1) |
 
@@ -551,5 +633,9 @@ This migration is a refactoring exercise, not a rewrite. The API contract stays 
 - **Scan definition:** One scan = 1 provider call + 3 direct HTTP requests. See "What Is a Scan?" section above.
 - **Score caching:** Scan results cached 24h per URL. No new provider call within cache window. `GET /score/{domain}` always served from database.
 - **Score page semantics:** `/score/{domain}` shows the homepage scan. Multi-page scoring is Phase 1+.
-- **Crawler analytics ingest:** Supabase INSERT, not a queue. At Phase 0-1 scale (hundreds of users), Postgres handles the throughput. Migrate to time-series store only if needed.
+- **Crawler analytics ingest:** Supabase INSERT via `waitUntil()` (response before write). At Phase 0-1 scale, Postgres handles the throughput. Migrate to time-series store only if needed. See [analytics-infrastructure.md](./analytics-infrastructure.md).
 - **Scoring version:** Every scan stores `scoring_version` (integer). Enables historical comparison as the algorithm evolves.
+- **Scan state machine:** Explicit states (PENDING→CRAWLING→SCORING→COMPLETE|PARTIAL|FAILED). Partial results always shown. See [scan-workflow.md](./scan-workflow.md).
+- **Upstash Redis in Phase 0:** Added for rate limiting, site key caching, and budget tracking. Fail-open design — if Redis is down, requests proceed without rate limiting.
+- **Three ingest paths:** Middleware POST, c.js POST, tracking pixel GET — all feed the same 9-step pipeline. See [analytics-infrastructure.md](./analytics-infrastructure.md).
+- **Complete endpoint inventory:** See [infrastructure-overview.md](./infrastructure-overview.md) §Endpoint Inventory for all Phase 0, 1, and 2 endpoints.
