@@ -161,48 +161,47 @@ See [analytics-infrastructure.md](./analytics-infrastructure.md) §Site Key Life
 
 ## Data Model Changes
 
-### Updated `sites` Table
+### `sites` Table
 
-```sql
-CREATE TABLE sites (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  clerk_user_id TEXT NOT NULL,
-  domain TEXT NOT NULL,
-  site_key TEXT NOT NULL UNIQUE,
-  tier TEXT NOT NULL DEFAULT 'free',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
-  UNIQUE(clerk_user_id, domain)
-);
+The canonical schema is in [api-first.md](./api-first.md) §Data Model. Key columns relevant to onboarding:
 
-CREATE INDEX idx_sites_clerk_user ON sites(clerk_user_id);
-CREATE INDEX idx_sites_domain ON sites(domain);
-CREATE INDEX idx_sites_key ON sites(site_key);
-```
+| Column | Type | Purpose |
+|---|---|---|
+| `id` | UUID | Primary key |
+| `clerk_user_id` | TEXT | Links to Clerk identity |
+| `domain` | TEXT | Registered domain |
+| `site_key` | TEXT | `cr_live_{16 alphanumeric}` — issued on registration |
+| `tier` | TEXT | `'free'` default |
+| `integration_type` | TEXT | `'middleware'` or `'js'` — tracks onboarding choice |
+| `beacon_version` | INT | Tracks snippet freshness |
+| `last_beacon_at` | TIMESTAMPTZ | Last successful ingest |
+| `previous_site_key` | TEXT | For key rotation grace period (Phase 1) |
+| `key_rotated_at` | TIMESTAMPTZ | When key was last rotated |
+| `verified` | BOOLEAN | Domain verification (Phase 1) |
+| `deleted_at` | TIMESTAMPTZ | Soft delete |
 
-Changes from the original `api-first.md` schema:
-- `id` is now UUID (not TEXT)
-- `owner_email` removed — user data lives in Clerk
-- `clerk_user_id` added — links to Clerk identity
-- `UNIQUE(clerk_user_id, domain)` — one user cannot register the same domain twice
-- `updated_at` added for future use
+Constraints: `UNIQUE(clerk_user_id, domain)` — one user cannot register the same domain twice.
 
-### `crawler_visits` Table (Unchanged)
+### `crawler_visits` Table
 
 ```sql
 CREATE TABLE crawler_visits (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  site_id UUID NOT NULL REFERENCES sites(id),
+  site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
   path TEXT NOT NULL,
   bot TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'middleware',         -- 'middleware' | 'js' | 'pixel'
+  beacon_version INT DEFAULT 1,
   visited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE INDEX idx_crawler_visits_site_visited ON crawler_visits(site_id, visited_at DESC);
 CREATE INDEX idx_crawler_visits_site_bot ON crawler_visits(site_id, bot, visited_at);
 CREATE INDEX idx_crawler_visits_site_path ON crawler_visits(site_id, path, visited_at);
 ```
+
+`source` tracks the integration path (`'middleware'`, `'js'`, or `'pixel'`). `beacon_version` enables snippet freshness detection. See [api-first.md](./api-first.md) §Data Model for the canonical schema.
 
 ---
 
@@ -296,7 +295,7 @@ List the current user's registered sites.
 
 #### `DELETE /api/v1/sites/{id}`
 
-Remove a site registration. Also deletes associated `crawler_visits`.
+Soft-delete a site registration. Sets `sites.deleted_at = NOW()` and invalidates the site key. Associated `crawler_visits` are retained for 90 days (data retention policy), then purged by a scheduled cleanup job. See [analytics-infrastructure.md](./analytics-infrastructure.md) §Site Key Lifecycle.
 
 **Auth:** Clerk JWT. User must own the site.
 
@@ -314,7 +313,8 @@ Unchanged from `docs/architecture/crawler-analytics.md`. Uses `site_key` in the 
   "s": "cr_live_a1b2c3d4e5f6",
   "p": "/pricing",
   "b": "GPTBot",
-  "t": 1712419200000
+  "t": 1712419200000,
+  "v": 1
 }
 ```
 
@@ -322,9 +322,10 @@ Unchanged from `docs/architecture/crawler-analytics.md`. Uses `site_key` in the 
 
 **Validation:**
 - `s` must match a registered `site_key`
-- `b` must be in the known bot list
-- `t` must be within 5 minutes of server time
+- `b` must be in the known bot list (unknown bots accepted with `verified = false`)
+- `v` (beacon version) stored for snippet freshness tracking
 - Rate limit: 100 req/s per site key
+- Client timestamp (`t`) stored for debugging but server assigns `visited_at = NOW()` as source of truth. See [analytics-infrastructure.md](./analytics-infrastructure.md) §Ingest Processing Pipeline.
 
 ---
 
@@ -335,8 +336,8 @@ All snippets use the canonical ingest URL: `https://crawlready.app/api/v1/ingest
 ### Next.js Middleware
 
 ```typescript
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const AI_BOTS = /GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|PerplexityBot|Perplexity-User|Google-Extended|Applebot-Extended|Meta-ExternalAgent|Bytespider/i;
 
@@ -346,7 +347,7 @@ export function middleware(request: NextRequest) {
     const bot = ua.match(AI_BOTS)?.[0] || 'unknown';
     fetch('https://crawlready.app/api/v1/ingest', {
       method: 'POST',
-      body: JSON.stringify({ s: 'YOUR_SITE_KEY', p: request.nextUrl.pathname, b: bot, t: Date.now() }),
+      body: JSON.stringify({ s: 'YOUR_SITE_KEY', p: request.nextUrl.pathname, b: bot, t: Date.now(), v: 1 }),
       headers: { 'Content-Type': 'application/json' },
     }).catch(() => {});
   }
@@ -365,7 +366,7 @@ app.use((req, res, next) => {
     const bot = ua.match(AI_BOTS)?.[0] || 'unknown';
     fetch('https://crawlready.app/api/v1/ingest', {
       method: 'POST',
-      body: JSON.stringify({ s: 'YOUR_SITE_KEY', p: req.path, b: bot, t: Date.now() }),
+      body: JSON.stringify({ s: 'YOUR_SITE_KEY', p: req.path, b: bot, t: Date.now(), v: 1 }),
       headers: { 'Content-Type': 'application/json' },
     }).catch(() => {});
   }
@@ -386,7 +387,7 @@ export default {
       const url = new URL(request.url);
       env.waitUntil(fetch('https://crawlready.app/api/v1/ingest', {
         method: 'POST',
-        body: JSON.stringify({ s: env.CRAWLREADY_KEY, p: url.pathname, b: bot, t: Date.now() }),
+        body: JSON.stringify({ s: env.CRAWLREADY_KEY, p: url.pathname, b: bot, t: Date.now(), v: 1 }),
         headers: { 'Content-Type': 'application/json' },
       }).catch(() => {}));
     }
@@ -405,12 +406,28 @@ function reportAiCrawler(userAgent, path) {
     const bot = userAgent.match(AI_BOTS)?.[0] || 'unknown';
     fetch('https://crawlready.app/api/v1/ingest', {
       method: 'POST',
-      body: JSON.stringify({ s: 'YOUR_SITE_KEY', p: path, b: bot, t: Date.now() }),
+      body: JSON.stringify({ s: 'YOUR_SITE_KEY', p: path, b: bot, t: Date.now(), v: 1 }),
       headers: { 'Content-Type': 'application/json' },
     }).catch(() => {});
   }
 }
 ```
+
+### Script Tag (Quick Start)
+
+For non-technical users or quick evaluation. ~60-80% bot coverage (bots that don't render JS or fetch images are missed). Both layers feed into the same shared processing pipeline as middleware.
+
+```html
+<script src="https://crawlready.app/c.js" data-key="YOUR_SITE_KEY" async></script>
+<noscript>
+  <img src="https://crawlready.app/api/v1/t/YOUR_SITE_KEY"
+       style="display:none" alt="" />
+</noscript>
+```
+
+- **Layer 1 (`c.js`):** Detects bot UA in JS context, sends `POST /api/v1/ingest`. Source: `'js'`.
+- **Layer 2 (`<noscript><img>`):** Tracking pixel for non-JS bots. Bot detected via `User-Agent` header, page path via `Referer` header. Source: `'pixel'`.
+- `c.js` is CDN-cached with 1-hour TTL and auto-updated when the bot list changes. See [analytics-infrastructure.md](./analytics-infrastructure.md) §c.js.
 
 ---
 

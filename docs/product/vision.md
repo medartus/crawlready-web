@@ -163,8 +163,8 @@ CrawlReady uses a **split auth model** for Phase 0:
 **Scope:** Expand the diagnostic's distribution surface and feature set. Still free, still zero cloaking risk.
 
 **What Phase 1 adds:**
-- Ship **AI Crawler Analytics** dashboard + ultra-light middleware snippets for Next.js, Express, Cloudflare Workers, and Vercel Edge. See `docs/architecture/crawler-analytics.md`.
-- **Hidden backlink growth engine:** For free-tier analytics users, middleware injects a hidden `<link rel="ai-analytics" href="https://crawlready.app/score/{domain}">` tag in the `<head>` of every page (invisible to humans, discoverable by crawlers). Paid tiers can remove it. An opt-in badge (unbranded or branded) is available but never forced.
+- Ship **AI Crawler Analytics** dashboard (middleware snippets and ingest API already ship in Phase 0 — Phase 1 adds the dashboard UI, alerts, and per-crawler breakdown). See `docs/architecture/crawler-analytics.md`.
+- **Hidden backlink growth engine (Phase 2+):** For free-tier users, the content pipeline optimized page includes a hidden `<link rel="ai-analytics" href="https://crawlready.app/score/{domain}">` tag (invisible to humans, discoverable by crawlers). Injected during optimized page generation — not via customer middleware or script tag. Paid tiers can remove it. An opt-in badge (unbranded or branded) is available but never forced. See `docs/architecture/analytics-infrastructure.md` §Hidden Backlink Architecture.
 - Pre-seed 200 additional sites (expand SEO footprint via public score URLs)
 - Ship npm package (`crawlready`) with free-tier static analysis (CLI output, no API key needed)
 - **Ship MCP server** (`crawlready-mcp`) — puts CrawlReady inside developers' IDEs (Cursor, VS Code, etc.). See MCP Server Design below.
@@ -307,7 +307,7 @@ See `docs/research/monitoring-integration.md` for full partnership model, API de
 - Custom Playwright pipeline for content generation (full transformation control — replaces Firecrawl API from Phase 0-1). **Note:** Validate Firecrawl COGS during Phase 0 to confirm whether custom Playwright is needed for cost reasons or just quality reasons.
 - KV store for cached AI-optimized pages
 - Diff engine for content parity monitoring
-- Cache strategy: Starter default 7-day TTL, Pro 24h, Business 12h, Enterprise 6h + webhook-triggered refresh + recache API (see `docs/product/solution.md` for full tier table)
+- Cache strategy: Starter default 14-day TTL, Pro 7d, Business 3d, Enterprise 24h + webhook-triggered refresh + recache API (see `docs/architecture/content-pipeline-infrastructure.md` for canonical TTL values and traffic-adaptive multipliers)
 - **Potential complementary mechanism for SSR sites (April 2026 multi-format review):** Cloudflare HTMLRewriter can transform HTML in real-time at the edge — injecting Schema.org, stripping noise, adding ARIA attributes — with no cache required and near-zero COGS. This works only for SSR sites where origin HTML is content-rich; CSR sites still require the pre-generated cache. Decision on whether to implement deferred to Phase 2, informed by actual customer mix from Phase 0-1. See `docs/architecture/multi-format-serving.md` for full trade-off analysis.
 
 ---
@@ -385,7 +385,7 @@ All product vision questions have been researched and resolved. See `docs/decisi
 
 - **Email gating:** Un-gate the headline score + shareable URL. Gate full PDF report, historical tracking, and "email me when score changes" behind email. Preserves the viral loop while capturing emails from engaged users.
 - **SPAs with hash routing:** Support pushState routing only in Phase 0. Flag hash SPAs as "limited crawl surface" in the diagnostic. The ICP (modern B2B SaaS) almost entirely uses pushState.
-- **Cache refresh:** Starter default 7-day TTL + webhook-triggered refresh + recache API. Higher tiers get shorter TTLs (Pro: 24h, Business: 12h, Enterprise: 6h). No daily full-site re-crawls. See `docs/product/solution.md` for the full tier table.
+- **Cache refresh:** Starter default 14-day TTL + webhook-triggered refresh + recache API. Higher tiers get shorter TTLs (Pro: 7d, Business: 3d, Enterprise: 24h). Customer-configurable with per-tier guardrails. No daily full-site re-crawls. See `docs/architecture/content-pipeline-infrastructure.md` for canonical TTL values.
 - **Benchmarking:** Build a suite of ~50 representative URLs across page types. Measure content coverage (F1 vs gold standard), noise ratio, structure preservation, information completeness. Publish results as differentiation content.
 - **Citation monitoring:** Buy/partner for Phase 3, do not build from scratch. CrawlReady's value is at crawl/transformation, not monitoring.
 - **Phase 0 scope (revised April 2026):** Three deliverables — landing page + working diagnostic + analytics onboarding with ingest. Auth split: Clerk for site registration, lightweight email capture for diagnostic gating, Supabase as DB only. No npm package, badges, GitHub repo, or multi-channel launch. Pre-seed 20 sites, not 200. Show HN as sole launch channel. Everything else gated on validation. Crawling SaaS provider is not locked to Firecrawl — selected based on comparison. See `docs/architecture/crawling-provider.md`.

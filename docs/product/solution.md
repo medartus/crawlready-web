@@ -268,12 +268,12 @@ CrawlReady pre-generates AI-optimized Markdown versions and serves them from cac
 | Tier              | Default TTL                 | Recache API          | Webhook Refresh |
 | ----------------- | --------------------------- | -------------------- | --------------- |
 | Free (diagnostic) | 24h rescan interval per URL | No                   | No              |
-| Starter           | 7 days                      | Yes                  | Yes             |
-| Pro               | 24h                         | Yes                  | Yes             |
-| Business          | 12h                         | Yes (priority queue) | Yes             |
-| Enterprise        | 6h                          | Yes (instant)        | Yes             |
+| Starter           | 14 days                     | Yes                  | Yes             |
+| Pro               | 7 days                      | Yes                  | Yes             |
+| Business          | 3 days                      | Yes (priority queue) | Yes             |
+| Enterprise        | 24h                         | Yes (instant)        | Yes             |
 
-Note: The 7-day default TTL applies to the Starter paid tier's optimization cache. The Free tier's 24h limit is a diagnostic rescan interval, not a cache TTL. Higher tiers get progressively shorter defaults for fresher AI-optimized content. All paid tiers support webhook-triggered refresh for on-deploy invalidation, which is the primary freshness mechanism.
+Note: The 14-day default TTL applies to the Starter paid tier's optimization cache. The Free tier's 24h limit is a diagnostic rescan interval, not a cache TTL. Higher tiers get progressively shorter defaults for fresher AI-optimized content. All paid tier TTLs are customer-configurable with per-tier min/max guardrails. All paid tiers support webhook-triggered refresh for on-deploy invalidation, which is the primary freshness mechanism. See `docs/architecture/content-pipeline-infrastructure.md` for the canonical TTL values and traffic-adaptive multipliers.
 
 **Refresh triggers:**
 
@@ -548,7 +548,7 @@ CrawlReady ships a continuously-running free tool alongside the one-time diagnos
 
 **What it shows:** Per-crawler visit counts, per-page crawl frequency, top crawled pages, and alerts when crawlers visit pages with low crawlability scores ("GPTBot visited /pricing 89 times but received an empty `<div>`").
 
-**Backlink mechanic (free tier):** The middleware injects a hidden `<link rel="ai-analytics" href="https://crawlready.app/score/{domain}">` tag in the HTML `<head>`. Invisible to humans, discoverable by all crawlers. Creates indexable backlinks to CrawlReady's score pages. Paid tiers can remove this tag. An opt-in visible badge (unbranded "AI Score: 72/100" or branded "Powered by CrawlReady") is available but never auto-injected.
+**Backlink mechanic (free tier — Phase 2+):** The content pipeline optimized page includes a hidden `<link rel="ai-analytics" href="https://crawlready.app/score/{domain}">` tag. Invisible to humans, discoverable by all crawlers. Creates indexable backlinks to CrawlReady's score pages. Paid tiers can remove this tag. The backlink is injected during optimized page generation — not via customer middleware or script tag. CrawlReady controls the optimized page, so the backlink cannot be bypassed. An opt-in visible badge (unbranded "AI Score: 72/100" or branded "Powered by CrawlReady") is available but never auto-injected. See `docs/architecture/analytics-infrastructure.md` §Hidden Backlink Architecture.
 
 **Phase 0:** Ingest API endpoint ships alongside the diagnostic. **Phase 1:** Full dashboard, alerts, and all 4 framework snippets.
 
@@ -563,7 +563,7 @@ All technical architecture questions have been researched and resolved. See `doc
 - **Bot detection:** UA + IP range verification per vendor (see verification matrix above). UA-only fallback for ClaudeBot until Anthropic publishes ranges.
 - **A4 Standards Adoption (April 2026 Cloudflare review):** New scoring category added to Agent Readiness sub-score after analyzing Cloudflare's isitagentready.com. Six checks measuring emerging AI agent standards (robots.txt AI rules, Content Signals, sitemap.xml, Link Headers, MCP Server Card, API Catalog). Points redistributed: A1(30→25), A2(30→25), A3(40→30), A4(0-20) — total remains 100. HTTP budget increased from 2 to 5 requests per scan. See `docs/architecture/scoring-detail.md`.
 - **Authenticated content:** Out of scope for Phase 0–2. Optimize public URLs only. Enterprise: self-hosted worker in customer VPC.
-- **Cache refresh:** Starter default 7-day TTL, Pro 24h, Business 12h, Enterprise 6h + webhook-triggered refresh + recache API (see cache strategy table above). No daily full-site re-crawls.
+- **Cache refresh:** Starter default 14-day TTL, Pro 7d, Business 3d, Enterprise 24h + webhook-triggered refresh + recache API (see cache strategy table above). Customer-configurable with per-tier guardrails. No daily full-site re-crawls. See `docs/architecture/content-pipeline-infrastructure.md` for canonical TTL values.
 - **Public Markdown endpoint:** Public by default (`/crawlready-preview/page-slug`) with `rel=canonical` to original URL and `X-Robots-Tag: noindex`. Core differentiator — do not hide it.
 - **Benchmarking:** Build a suite of ~50 representative URLs. Measure content coverage (F1 vs gold standard), noise ratio, structure preservation, information completeness. Run against our pipeline + competitor outputs. Publish as differentiation content.
 - **Value prop framing (April 2026 critical analysis):** Promise visibility, not citations. "AI crawlers see 100% of your content instead of 0%" (CSR) and "5x cleaner signal" (SSR) are provable. Citation rate improvement (~17%) is a downstream metric CrawlReady cannot guarantee — it depends on authority, comprehensiveness, and recency which are outside scope.

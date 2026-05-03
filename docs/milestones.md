@@ -432,7 +432,7 @@ M5 (analytics onboarding) is the only milestone that can be built in parallel wi
 - Schema.org generation + injection (paid) -- Phase 1-2
 - Historical score tracking over time -- Phase 1
 - Site key rotation UI -- Phase 1
-- Hidden backlink injection -- Phase 1
+- Hidden backlink injection (content pipeline) -- Phase 2+
 - Stripe / billing integration -- Phase 2
 - PDF export -- Phase 1
 - Multi-page scoring (only homepage in Phase 0) -- Phase 1
@@ -440,7 +440,7 @@ M5 (analytics onboarding) is the only milestone that can be built in parallel wi
 ## Key Decisions
 
 - **Revenue target for Phase 0:** $0. This is pure validation.
-- **Scoring version:** Integer per scan, starting at version 1. Historical scans are never rescored.
+- **Scoring version:** Integer per scan, currently version 2 (A4 Standards Adoption added April 2026). Historical scans are never rescored.
 - **Auth split:** Clerk for registered users, lightweight email for diagnostic gating, Supabase as DB only.
 - **Rate limits:** 3 scans/hour/IP (diagnostic), 100 req/s/key (ingest), 24h cache per URL.
 - **Distribution:** Show HN only. One channel, executed well.

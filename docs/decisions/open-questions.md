@@ -132,7 +132,7 @@ Consolidated from all CrawlReady docs. Research conducted April 2026 via web sea
 - Cloudflare supports single-URL purge via API — instant invalidation
 - Vercel ISR on-demand revalidation is the framework-native analog
 
-**Decision:** **Default TTL of 7 days + webhook-triggered refresh on content change + manual recache API.** Higher tiers get shorter defaults (Pro: 24h, Enterprise: 6h). The recache API is critical — let customers trigger refresh on deploy via CI/CD. Do not build daily full-site re-crawls.
+**Decision:** **Default TTL of 14 days (Starter) + webhook-triggered refresh on content change + manual recache API.** Higher tiers get shorter defaults (Pro: 7d, Business: 3d, Enterprise: 24h). Customer-configurable with per-tier min/max guardrails. The recache API is critical — let customers trigger refresh on deploy via CI/CD. Do not build daily full-site re-crawls. See `docs/architecture/content-pipeline-infrastructure.md` for canonical TTL values and traffic-adaptive multipliers.
 
 **Confidence:** High — well-established industry pattern. | Sources: `docs.prerender.io/docs/modify-the-cache-expiration`, `developers.cloudflare.com/cache/how-to/purge-cache/purge-by-single-file/`
 

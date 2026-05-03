@@ -72,8 +72,8 @@ See [analytics-infrastructure.md](./analytics-infrastructure.md) §Tracking Pixe
 #### Next.js Middleware (`middleware.ts`)
 
 ```typescript
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const AI_BOTS = /GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|PerplexityBot|Perplexity-User|Google-Extended|Applebot-Extended|Meta-ExternalAgent|Bytespider/i;
 
@@ -123,7 +123,7 @@ export default {
       const url = new URL(request.url);
       env.waitUntil(fetch('https://crawlready.app/api/v1/ingest', {
         method: 'POST',
-        body: JSON.stringify({ s: env.CRAWLREADY_KEY, p: url.pathname, b: bot, t: Date.now() }),
+        body: JSON.stringify({ s: env.CRAWLREADY_KEY, p: url.pathname, b: bot, t: Date.now(), v: 1 }),
         headers: { 'Content-Type': 'application/json' },
       }).catch(() => {}));
     }
@@ -136,9 +136,9 @@ export default {
 
 The Next.js middleware snippet above works directly in Vercel deployments. For non-Next.js Vercel projects, the same pattern applies in `middleware.ts` at the project root using `@vercel/edge` or the standard Web API `Request` object.
 
-### Hidden Backlink (Free Tier)
+### Hidden Backlink (Free Tier — Phase 2+)
 
-In addition to the analytics beacon, the middleware injects a single `<link>` tag into the HTML `<head>` on every response for free-tier users:
+For free-tier users, the **content pipeline optimized page** (Phase 2+) includes a backlink:
 
 ```html
 <link rel="ai-analytics" href="https://crawlready.app/score/example.com" />
@@ -150,9 +150,9 @@ This tag is:
 - A real, indexable backlink to CrawlReady's score pages
 - Removable by upgrading to a paid tier
 
-The injection requires the middleware to modify the HTML response. For frameworks where middleware can modify the response body (Next.js, Express, Cloudflare Workers with HTMLRewriter), this is straightforward. For frameworks where middleware runs before the response (Vercel Edge), the injection may need to happen via a layout component or server plugin instead.
+The backlink is injected during optimized page generation in CrawlReady's content pipeline — not via customer middleware or script tag. CrawlReady controls the optimized page entirely, so the backlink cannot be bypassed, works for all bots, and requires zero customer action.
 
-**Implementation priority:** The analytics beacon ships first (pure logging, no response modification). The hidden backlink injection ships as a follow-up, since it requires response body modification which adds complexity.
+See [analytics-infrastructure.md](./analytics-infrastructure.md) §Hidden Backlink Architecture for the full design.
 
 ---
 
@@ -169,7 +169,8 @@ Receives beacon payloads from middleware snippets.
   "s": "site_abc123",
   "p": "/pricing",
   "b": "GPTBot",
-  "t": 1712419200000
+  "t": 1712419200000,
+  "v": 1
 }
 ```
 
@@ -179,6 +180,7 @@ Receives beacon payloads from middleware snippets.
 | `p` | string | URL path that was crawled |
 | `b` | string | Bot identifier (matched from User-Agent) |
 | `t` | number | Unix timestamp in milliseconds |
+| `v` | number | Beacon version (currently `1`). Enables snippet freshness detection. |
 
 **Response:** `204 No Content` (fire-and-forget, no response body needed)
 

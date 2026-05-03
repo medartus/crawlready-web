@@ -57,9 +57,9 @@ Two-unit model: **cached responses** (cheap — served from edge, negligible mar
 |---|---|---|---|---|
 | **Free** | $0 | N/A | 3 scans/hr per IP | AI Readiness Score (unified 0–100 headline), Crawlability Score (0–100), Agent Readiness Score (0–100), Agent Interaction Score (0–100), EU AI Act checklist (X/4), visual diff (browser vs. crawler), top 3 recommendations, Schema generation preview (detection only), public shareable score URL. Full recommendations + PDF gated behind email capture. |
 | **Starter** | $29/mo | Unlimited | 500 | CDN snippet (Level 2), Markdown serving, crawlability score trend, webhook-triggered refresh |
-| **Pro** | $49/mo | Unlimited | 2,500 | Priority cache refresh (24h default TTL), cache freshness alerts, API access, embeddable badge, **dynamic Schema.org generation + injection (FAQPage, Product, HowTo)**, multi-format serving (Markdown + enriched HTML per AI client type) |
-| **Business** | $199/mo | Unlimited | 10K | Citation monitoring (Phase 3, buy/partner), team seats (3), 12h default TTL, advanced analytics, agent readiness API, dynamic Schema.org generation + injection |
-| **Enterprise** | Custom | Unlimited | Unlimited | DNS proxy (Level 3), SLA, SOC 2 docs, custom bot rules, 6h TTL, dedicated support, EU AI Act compliance reporting, dynamic Schema.org generation + injection |
+| **Pro** | $49/mo | Unlimited | 2,500 | Priority cache refresh (7d default TTL), cache freshness alerts, API access, embeddable badge, **dynamic Schema.org generation + injection (FAQPage, Product, HowTo)**, multi-format serving (Markdown + enriched HTML per AI client type) |
+| **Business** | $199/mo | Unlimited | 10K | Citation monitoring (Phase 3, buy/partner), team seats (3), 3d default TTL, advanced analytics, agent readiness API, dynamic Schema.org generation + injection |
+| **Enterprise** | Custom | Unlimited | Unlimited | DNS proxy (Level 3), SLA, SOC 2 docs, custom bot rules, 24h default TTL, dedicated support, EU AI Act compliance reporting, dynamic Schema.org generation + injection |
 
 **Crawl limit rationale (revised):** Fresh crawls are the expensive operation (Firecrawl/Playwright rendering at $0.01–$0.05/page). Cached responses are nearly free ($0.30 per million on Cloudflare Workers). The limits above keep Firecrawl COGS at $5–$25/mo for Starter and $25–$125/mo for Pro — sustainable margins. Limits are subject to validation against actual Firecrawl costs during Phase 0.
 

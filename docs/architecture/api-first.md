@@ -491,7 +491,7 @@ CREATE TABLE scans (
   domain TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending',           -- pending|crawling|scoring|complete|partial|failed
   correlation_id UUID NOT NULL DEFAULT gen_random_uuid(),
-  scoring_version INT NOT NULL DEFAULT 1,
+  scoring_version INT NOT NULL DEFAULT 2,           -- see scoring-detail.md §Scoring Version
   ai_readiness_score INT,                           -- nullable: not set until scoring completes
   crawlability_score INT,
   agent_readiness_score INT,
@@ -522,7 +522,7 @@ CREATE INDEX idx_scans_domain_status ON scans(domain, status) WHERE status IN ('
 -- AI crawler visit logs
 CREATE TABLE crawler_visits (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  site_id UUID NOT NULL REFERENCES sites(id) ON DELETE CASCADE,
+  site_id UUID NOT NULL REFERENCES sites(id) ON DELETE RESTRICT,
   path TEXT NOT NULL,
   bot TEXT NOT NULL,
   source TEXT NOT NULL DEFAULT 'middleware',         -- 'middleware' | 'js' | 'pixel'
@@ -551,10 +551,16 @@ See `docs/architecture/analytics-onboarding.md` for the full Clerk + Supabase da
 
 ### Row-Level Security
 
+**Phase 0:** Application-level tenant isolation via repository pattern. Every authenticated query includes a `WHERE clerk_user_id = ?` clause. No Supabase RLS policies — all DB access uses the service role key.
+
+**Phase 1:** Add Supabase RLS policies:
+
 - `scans`: Public read (score pages are un-gated). Write via API routes only (service role).
 - `crawler_visits`: Read restricted to site owner (via `clerk_user_id` on joined `sites` table). Write via ingest endpoint (service role).
 - `subscribers`: Write via subscribe endpoint. Read via admin only.
 - `sites`: Read restricted to owner (`clerk_user_id` matches). Write via registration flow (Clerk auth required).
+
+See [infrastructure-overview.md](./infrastructure-overview.md) for the Phase 0 → Phase 1 security hardening plan.
 
 ---
 
@@ -630,7 +636,7 @@ This migration is a refactoring exercise, not a rewrite. The API contract stays 
 - **Auth model:** Dual — Clerk JWT for site management, site key for ingest, no auth for diagnostic. See `docs/architecture/analytics-onboarding.md`.
 - **Error contract:** Consistent JSON error envelope with `code`, `message`, and optional `retry_after`. See Error Contract section above.
 - **URL normalization:** All URLs and domains normalized before storage or cache lookup. See URL Normalization section above.
-- **Scan definition:** One scan = 1 provider call + 3 direct HTTP requests. See "What Is a Scan?" section above.
+- **Scan definition:** One scan = 1 provider call + 3 required direct HTTP requests + up to 3 optional HEAD probes (sitemap.xml, MCP Server Card, API Catalog). See "What Is a Scan?" section above.
 - **Score caching:** Scan results cached 24h per URL. No new provider call within cache window. `GET /score/{domain}` always served from database.
 - **Score page semantics:** `/score/{domain}` shows the homepage scan. Multi-page scoring is Phase 1+.
 - **Crawler analytics ingest:** Supabase INSERT via `waitUntil()` (response before write). At Phase 0-1 scale, Postgres handles the throughput. Migrate to time-series store only if needed. See [analytics-infrastructure.md](./analytics-infrastructure.md).

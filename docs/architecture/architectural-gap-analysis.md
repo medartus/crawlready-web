@@ -313,7 +313,7 @@ CREATE TABLE scans (
   domain TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending',
     -- pending | crawling | scoring | complete | partial | failed
-  scoring_version INT NOT NULL DEFAULT 1,
+  scoring_version INT NOT NULL DEFAULT 2,  -- see scoring-detail.md §Scoring Version
   ai_readiness_score INT,         -- nullable until scoring completes
   crawlability_score INT,
   agent_readiness_score INT,
