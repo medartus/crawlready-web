@@ -2,6 +2,7 @@ import { relations } from 'drizzle-orm';
 import {
   bigint,
   bigserial,
+  boolean,
   index,
   integer,
   jsonb,
@@ -11,7 +12,6 @@ import {
   unique,
   uniqueIndex,
   uuid,
-  varchar,
 } from 'drizzle-orm/pg-core';
 
 // ==========================================
@@ -56,6 +56,8 @@ export const sites = pgTable('sites', {
   domain: text('domain').notNull(),
   siteKey: text('site_key').notNull().unique(),
   tier: text('tier').notNull().default('free'),
+  integrationMethod: text('integration_method').notNull().default('middleware'),
+  beaconVersion: integer('beacon_version').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => ({
@@ -70,11 +72,16 @@ export const scans = pgTable('scans', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   url: text('url').notNull(),
   domain: text('domain').notNull(),
-  scoringVersion: integer('scoring_version').notNull().default(1),
-  aiReadinessScore: integer('ai_readiness_score').notNull(),
-  crawlabilityScore: integer('crawlability_score').notNull(),
-  agentReadinessScore: integer('agent_readiness_score').notNull(),
-  agentInteractionScore: integer('agent_interaction_score').notNull(),
+  status: text('status').notNull().default('pending'),
+  correlationId: text('correlation_id'),
+  scoringVersion: integer('scoring_version').notNull().default(2),
+  aiReadinessScore: integer('ai_readiness_score'),
+  crawlabilityScore: integer('crawlability_score'),
+  agentReadinessScore: integer('agent_readiness_score'),
+  agentInteractionScore: integer('agent_interaction_score'),
+  errorCode: text('error_code'),
+  errorMessage: text('error_message'),
+  firecrawlCostCents: integer('firecrawl_cost_cents'),
   euAiActPassed: integer('eu_ai_act_passed').notNull().default(0),
   euAiAct: jsonb('eu_ai_act'),
   recommendations: jsonb('recommendations'),
@@ -103,6 +110,8 @@ export const crawlerVisits = pgTable('crawler_visits', {
   siteId: uuid('site_id').notNull().references(() => sites.id, { onDelete: 'cascade' }),
   path: text('path').notNull(),
   bot: text('bot').notNull(),
+  source: text('source').notNull().default('middleware'),
+  verified: boolean('verified').notNull().default(true),
   visitedAt: timestamp('visited_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => ({

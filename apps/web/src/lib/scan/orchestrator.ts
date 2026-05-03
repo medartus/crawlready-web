@@ -12,7 +12,10 @@
  * See docs/architecture/api-first.md § "What Is a Scan?"
  */
 
+import { randomUUID } from 'node:crypto';
+
 import { schema } from '@crawlready/database';
+import { createLogger } from '@crawlready/logger';
 import { and, desc, eq, gte } from 'drizzle-orm';
 
 import { botFetch } from '@/lib/crawl/bot-fetch';
@@ -33,9 +36,13 @@ import type { CrawlabilityResult } from '@/lib/scoring/crawlability';
 import { analyzeSchemaPreview } from '@/lib/scoring/schema-preview';
 import type { VisualDiffResult } from '@/lib/scoring/visual-diff';
 import { computeVisualDiff } from '@/lib/scoring/visual-diff';
+import { checkBudget, recordCredit } from '@/lib/utils/budget';
 import type { ScoreBreakdown, SubCheckScore } from '@/types/scan';
 
 import { getDb } from './db-helper';
+
+const log = createLogger({ service: 'scan' });
+const SCAN_TIMEOUT_MS = 30_000; // 30 seconds max per scan
 
 export type ScanWarning = {
   code: string;
@@ -44,6 +51,7 @@ export type ScanWarning = {
 
 export type ScanResult = {
   id: number;
+  correlationId: string;
   url: string;
   domain: string;
   aiReadinessScore: number;
@@ -153,12 +161,13 @@ async function checkCache(url: string): Promise<ScanResult | null> {
 
     return {
       id: row.id,
+      correlationId: row.correlationId ?? '',
       url: row.url,
       domain: row.domain,
-      aiReadinessScore: row.aiReadinessScore,
-      crawlabilityScore: row.crawlabilityScore,
-      agentReadinessScore: row.agentReadinessScore,
-      agentInteractionScore: row.agentInteractionScore,
+      aiReadinessScore: row.aiReadinessScore ?? 0,
+      crawlabilityScore: row.crawlabilityScore ?? 0,
+      agentReadinessScore: row.agentReadinessScore ?? 0,
+      agentInteractionScore: row.agentInteractionScore ?? 0,
       euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as ScanResult['euAiAct'],
       recommendations: (row.recommendations ?? []) as ScanResult['recommendations'],
       schemaPreview: (row.schemaPreview ?? { detectedTypes: [], generatable: [] }) as ScanResult['schemaPreview'],
@@ -171,7 +180,7 @@ async function checkCache(url: string): Promise<ScanResult | null> {
       scoreBreakdown: (row.scoreBreakdown ?? null) as ScoreBreakdown | null,
     };
   } catch (err) {
-    console.warn('Cache check failed (DB unavailable), proceeding without cache:', err instanceof Error ? err.message : err);
+    log.warn({ err }, 'Cache check failed, proceeding without cache');
     return null;
   }
 }
@@ -183,21 +192,55 @@ export async function runScan(
   inputUrl: string,
   crawlProvider: CrawlProvider,
 ): Promise<ScanResult> {
+  const correlationId = randomUUID();
+  const startTime = Date.now();
+
   // 1. Normalize
   const { url, domain } = normalizeUrl(inputUrl);
+  log.info({ correlationId, url, domain }, 'Scan started');
 
   // 2. Check cache
   const cached = await checkCache(url);
   if (cached) {
-    return cached;
+    log.info({ correlationId, url, cached: true }, 'Scan cache hit');
+    return { ...cached, correlationId };
   }
 
-  // 3. Crawl (provider + bot-fetch + standards probes in parallel)
-  const [crawlResult, botResult, standardsProbes] = await Promise.all([
+  // 2b. Budget circuit breaker
+  const budget = checkBudget();
+  if (!budget.allowed) {
+    log.error(
+      { correlationId, creditsUsed: budget.creditsUsed },
+      'Scan rejected — daily budget exhausted',
+    );
+    throw new Error('Service at capacity. Please try again later.');
+  }
+
+  // 3. Crawl (provider + bot-fetch + standards probes in parallel, with timeout)
+  const crawlPromise = Promise.all([
     crawlProvider.scrape(url),
     botFetch(url),
     runStandardsProbes(url),
   ]);
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(
+      () => reject(new Error(`Scan timed out after ${SCAN_TIMEOUT_MS / 1000}s`)),
+      SCAN_TIMEOUT_MS,
+    );
+  });
+
+  const [crawlResult, botResult, standardsProbes] = await Promise.race([
+    crawlPromise,
+    timeoutPromise,
+  ]);
+
+  // Record Firecrawl credit usage
+  recordCredit(1);
+  log.info(
+    { correlationId, crawlDurationMs: Date.now() - startTime },
+    'Crawl phase complete',
+  );
 
   // 3b. Detect edge cases and collect warnings
   const warnings: ScanWarning[] = [];
@@ -298,11 +341,14 @@ export async function runScan(
         .values({
           url,
           domain,
+          status: 'complete',
+          correlationId,
           scoringVersion: 2,
           aiReadinessScore: composite.aiReadinessScore,
           crawlabilityScore: composite.crawlabilityScore,
           agentReadinessScore: composite.agentReadinessScore,
           agentInteractionScore: composite.agentInteractionScore,
+          firecrawlCostCents: 4, // ~$0.038 per credit, rounded to 4 cents
           euAiActPassed: euAiActResult.passed,
           euAiAct: euAiActResult,
           recommendations,
@@ -323,13 +369,20 @@ export async function runScan(
         .returning({ id: schema.scans.id });
       insertedId = inserted!.id;
     } catch (err) {
-      console.warn('DB write failed (DB unavailable), returning result without persistence:', err instanceof Error ? err.message : err);
+      log.warn({ correlationId, err }, 'DB write failed, returning result without persistence');
     }
   }
+
+  const totalMs = Date.now() - startTime;
+  log.info(
+    { correlationId, url, domain, score: composite.aiReadinessScore, totalMs },
+    'Scan complete',
+  );
 
   // 7. Return
   return {
     id: insertedId,
+    correlationId,
     url,
     domain,
     aiReadinessScore: composite.aiReadinessScore,

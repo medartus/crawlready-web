@@ -41,7 +41,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     };
   }
 
-  const band = getScoreBand(row.aiReadinessScore);
+  const band = getScoreBand(row.aiReadinessScore ?? 0);
   const title = `${row.domain} scored ${row.aiReadinessScore}/100 on AI Readiness | CrawlReady`;
   const description = `${row.domain} AI Readiness Score: ${row.aiReadinessScore}/100 (${band.label}). Crawlability: ${row.crawlabilityScore}, Agent Readiness: ${row.agentReadinessScore}, Agent Interaction: ${row.agentInteractionScore}.`;
 
@@ -78,10 +78,10 @@ export default async function ScanResultPage(props: Props) {
     id: row.id,
     url: row.url,
     domain: row.domain,
-    aiReadinessScore: row.aiReadinessScore,
-    crawlabilityScore: row.crawlabilityScore,
-    agentReadinessScore: row.agentReadinessScore,
-    agentInteractionScore: row.agentInteractionScore,
+    aiReadinessScore: row.aiReadinessScore ?? 0,
+    crawlabilityScore: row.crawlabilityScore ?? 0,
+    agentReadinessScore: row.agentReadinessScore ?? 0,
+    agentInteractionScore: row.agentInteractionScore ?? 0,
     euAiAct: (row.euAiAct ?? { passed: 0, total: 4, checks: [] }) as EuAiActData,
     recommendations: (row.recommendations ?? []) as RecommendationData[],
     schemaPreview: (row.schemaPreview ?? { detectedTypes: [], generatable: [] }) as SchemaPreviewData,

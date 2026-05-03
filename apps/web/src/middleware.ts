@@ -23,6 +23,7 @@ const publicApiRoutes = [
   '/api/v1/scan',
   '/api/v1/subscribe',
   '/api/v1/ingest',
+  '/c.js',
 ];
 
 // Protected page routes that require authentication
@@ -43,6 +44,7 @@ export default function middleware(
   if (
     publicApiRoutes.includes(pathname)
     || pathname.startsWith('/api/v1/score/')
+    || pathname.startsWith('/api/v1/t/')
   ) {
     return NextResponse.next();
   }

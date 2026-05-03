@@ -81,7 +81,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     };
   }
 
-  const label = bandLabel(row.aiReadinessScore);
+  const label = bandLabel(row.aiReadinessScore ?? 0);
   const title = `${domain} scored ${row.aiReadinessScore}/100 on AI Readiness | CrawlReady`;
   const description = `${domain} AI Readiness Score: ${row.aiReadinessScore}/100 (${label}). Crawlability: ${row.crawlabilityScore}, Agent Readiness: ${row.agentReadinessScore}, Agent Interaction: ${row.agentInteractionScore}.`;
 
@@ -140,10 +140,10 @@ export default async function ScoreResultPage(props: Props) {
     <ScorePageContent
       domain={row.domain}
       url={row.url}
-      aiReadinessScore={row.aiReadinessScore}
-      crawlabilityScore={row.crawlabilityScore}
-      agentReadinessScore={row.agentReadinessScore}
-      agentInteractionScore={row.agentInteractionScore}
+      aiReadinessScore={row.aiReadinessScore ?? 0}
+      crawlabilityScore={row.crawlabilityScore ?? 0}
+      agentReadinessScore={row.agentReadinessScore ?? 0}
+      agentInteractionScore={row.agentInteractionScore ?? 0}
       recommendations={(row.recommendations ?? []) as RecommendationData[]}
       visualDiffStats={visualDiff?.stats as VisualDiffStatsData | null ?? null}
       scannedAt={row.scannedAt.toISOString()}

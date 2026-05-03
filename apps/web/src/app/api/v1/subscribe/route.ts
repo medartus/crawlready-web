@@ -1,10 +1,14 @@
 import { schema } from '@crawlready/database';
+import { createLogger } from '@crawlready/logger';
 import { and, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { apiError, getClientIp, rateLimitError } from '@/lib/utils/api-helpers';
+import { isDisposableEmail } from '@/lib/utils/disposable-emails';
 import { subscribeRateLimiter } from '@/lib/utils/rate-limit';
 import { db } from '@/libs/DB';
+
+const log = createLogger({ service: 'subscribe' });
 
 function isValidEmail(email: string): boolean {
   const atIndex = email.indexOf('@');
@@ -35,6 +39,11 @@ export async function POST(request: Request) {
 
   if (!email || typeof email !== 'string' || !isValidEmail(email)) {
     return apiError('INVALID_EMAIL', 'A valid email address is required.', 400);
+  }
+
+  // Block disposable/temporary email addresses
+  if (isDisposableEmail(email)) {
+    return apiError('DISPOSABLE_EMAIL', 'Please use a permanent email address.', 400);
   }
 
   // Check for existing subscriber, return 409 if duplicate
@@ -71,7 +80,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
-    console.error('Subscribe error:', error);
+    log.error({ err: error }, 'Subscribe error');
     return apiError('INTERNAL_ERROR', 'An unexpected error occurred.', 500);
   }
 }

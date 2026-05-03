@@ -1,3 +1,4 @@
+import { createLogger } from '@crawlready/logger';
 import { SSRFError } from '@crawlready/security';
 import { NextResponse } from 'next/server';
 
@@ -7,6 +8,8 @@ import { runScan } from '@/lib/scan/orchestrator';
 import { apiError, getClientIp, rateLimitError } from '@/lib/utils/api-helpers';
 import { scanRateLimiter } from '@/lib/utils/rate-limit';
 import { getBaseUrl } from '@/utils/Helpers';
+
+const log = createLogger({ service: 'scan-api' });
 
 export async function POST(request: Request) {
   // Rate limit (bypass for local pre-seed scripts)
@@ -52,6 +55,7 @@ export async function POST(request: Request) {
     });
     res.headers.set('X-RateLimit-Remaining', String(rateLimitRemaining));
     res.headers.set('X-RateLimit-Limit', '3');
+    res.headers.set('X-Correlation-ID', result.correlationId);
     return res;
   } catch (error) {
     if (error instanceof CrawlProviderError) {
@@ -66,9 +70,21 @@ export async function POST(request: Request) {
       return apiError('INVALID_URL', error.message, 400);
     }
 
+    // Timeout errors
+    if (error instanceof Error && error.message.includes('timed out')) {
+      log.warn({ err: error, url }, 'Scan timed out');
+      return apiError('SCAN_TIMEOUT', 'Scan timed out. The target site may be too slow.', 504);
+    }
+
+    // Budget exhausted
+    if (error instanceof Error && error.message.includes('capacity')) {
+      log.warn({ err: error }, 'Scan rejected due to budget');
+      return apiError('SERVICE_BUSY', error.message, 503);
+    }
+
     const errMsg = error instanceof Error ? error.message : String(error);
     const errStack = error instanceof Error ? error.stack : undefined;
-    console.error('Scan error:', error);
+    log.error({ err: error, url }, 'Unhandled scan error');
     return apiError('INTERNAL_ERROR', errMsg || 'An unexpected error occurred.', 500, {
       ...(process.env.NODE_ENV !== 'production' && { stack: errStack }),
     });
