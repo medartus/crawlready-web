@@ -101,7 +101,7 @@
     "cssnano": "^7.1.1",
     "dotenv-cli": "^7.4.2",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^8.57.1",
+    "eslint": "^10.3.0",
     "eslint-plugin-format": "^0.1.2",
     "eslint-plugin-jest-dom": "^5.4.0",
     "eslint-plugin-jsx-a11y": "^6.10.0",
