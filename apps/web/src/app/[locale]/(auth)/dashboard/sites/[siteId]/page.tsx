@@ -1,8 +1,8 @@
 'use client';
 
-import { Activity, AlertCircle, AlertTriangle, ArrowLeft, CheckCircle2, Code, Copy, Globe, Key, Loader2, Trash2 } from 'lucide-react';
+import { Activity, AlertCircle, AlertTriangle, ArrowLeft, BarChart3, CheckCircle2, Code, Copy, Eye, EyeOff, Globe, Key, Loader2, Settings, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { buttonVariants } from '@/components/ui/buttonVariants';
@@ -38,7 +38,30 @@ export default function SiteDetailPage() {
   const [copiedSnippet, setCopiedSnippet] = useState(false);
   const [copiedScriptTag, setCopiedScriptTag] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>('nextjs');
+  const [activeSnippetTab, setActiveSnippetTab] = useState<string>('nextjs');
+  const [keyRevealed, setKeyRevealed] = useState(false);
+  const searchParams = useSearchParams();
+
+  // Top-level tab from URL, default contextually
+  const getDefaultTab = () => {
+    const urlTab = searchParams.get('tab');
+    if (urlTab && ['setup', 'status', 'key'].includes(urlTab)) {
+      return urlTab;
+    }
+    // Default: status for active sites, setup for new
+    if (site?.last_beacon_at) {
+      return 'status';
+    }
+    return 'setup';
+  };
+  const [activeTopTab, setActiveTopTab] = useState<string>('setup');
+
+  const switchTab = (tab: string) => {
+    setActiveTopTab(tab);
+    const url = new URL(globalThis.location.href);
+    url.searchParams.set('tab', tab);
+    globalThis.history.replaceState({}, '', url.toString());
+  };
 
   useEffect(() => {
     const fetchSite = async () => {
@@ -61,6 +84,14 @@ export default function SiteDetailPage() {
 
     fetchSite();
   }, [siteId]);
+
+  // Set default tab after site loads
+  useEffect(() => {
+    if (site) {
+      setActiveTopTab(getDefaultTab());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [site?.last_beacon_at]);
 
   const handleCopy = async (text: string, setter: (v: boolean) => void) => {
     try {
@@ -129,33 +160,33 @@ export default function SiteDetailPage() {
         Back to Sites
       </Link>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Site Key */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <div className="mb-4 flex items-center gap-2">
-              <Key className="size-5 text-indigo-600 dark:text-indigo-400" />
-              <h3 className="font-semibold text-gray-900 dark:text-white">Site Key</h3>
-            </div>
-            <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-3 dark:bg-gray-900">
-              <code className="flex-1 font-mono text-sm text-gray-900 dark:text-white">
-                {site.site_key}
-              </code>
-              <button
-                type="button"
-                onClick={() => handleCopy(site.site_key, setCopiedKey)}
-                className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                title="Copy site key"
-              >
-                {copiedKey
-                  ? <CheckCircle2 className="size-4 text-emerald-500" />
-                  : <Copy className="size-4" />}
-              </button>
-            </div>
-          </div>
+      {/* Top-level tabs */}
+      <div className="mb-6 flex gap-1 rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-700 dark:bg-gray-900">
+        {[
+          { key: 'setup', label: 'Setup', icon: Settings },
+          { key: 'status', label: 'Status', icon: BarChart3 },
+          { key: 'key', label: 'Site Key', icon: Key },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => switchTab(tab.key)}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+              activeTopTab === tab.key
+                ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+            }`}
+          >
+            <tab.icon className="size-4" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-          {/* Script Tag (E4-T2) */}
+      {/* Setup Tab */}
+      {activeTopTab === 'setup' && (
+        <div className="space-y-6">
+          {/* Script Tag */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-4 flex items-center gap-2">
               <Code className="size-5 text-indigo-600 dark:text-indigo-400" />
@@ -195,9 +226,9 @@ export default function SiteDetailPage() {
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => setActiveSnippetTab(tab.key)}
                   className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    activeTab === tab.key
+                    activeSnippetTab === tab.key
                       ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-white'
                       : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                   }`}
@@ -208,11 +239,11 @@ export default function SiteDetailPage() {
             </div>
             <div className="relative">
               <pre className="max-h-64 overflow-auto rounded-lg bg-gray-900 p-4 text-xs text-gray-100">
-                {site.snippet[activeTab]}
+                {site.snippet[activeSnippetTab]}
               </pre>
               <button
                 type="button"
-                onClick={() => handleCopy(site.snippet[activeTab] ?? '', setCopiedSnippet)}
+                onClick={() => handleCopy(site.snippet[activeSnippetTab] ?? '', setCopiedSnippet)}
                 className="absolute right-2 top-2 rounded bg-gray-700 px-2 py-1 text-xs text-gray-300 hover:bg-gray-600"
               >
                 {copiedSnippet ? 'Copied!' : 'Copy'}
@@ -220,84 +251,148 @@ export default function SiteDetailPage() {
             </div>
           </div>
         </div>
+      )}
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Info Card */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <div className="mb-4 flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
-                <Globe className="size-6 text-indigo-600 dark:text-indigo-400" />
+      {/* Status Tab */}
+      {activeTopTab === 'status' && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            {/* Status Overview */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+              <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Integration Status</h3>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-900">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{site.total_visits}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Total Visits</p>
+                </div>
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-900">
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {site.last_beacon_at
+                      ? new Date(site.last_beacon_at).toLocaleDateString()
+                      : '—'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Last Beacon</p>
+                </div>
+                <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-center dark:border-gray-700 dark:bg-gray-900">
+                  {!site.last_beacon_at
+                    ? (
+                        <span className="inline-flex items-center gap-1 text-lg font-bold text-amber-600 dark:text-amber-400">
+                          <AlertCircle className="size-5" />
+                          Pending
+                        </span>
+                      )
+                    : (Date.now() - new Date(site.last_beacon_at).getTime()) < 86400000
+                        ? (
+                            <span className="inline-flex items-center gap-1 text-lg font-bold text-green-600 dark:text-green-400">
+                              <Activity className="size-5" />
+                              Active
+                            </span>
+                          )
+                        : (
+                            <span className="inline-flex items-center gap-1 text-lg font-bold text-blue-600 dark:text-blue-400">
+                              <CheckCircle2 className="size-5" />
+                              Connected
+                            </span>
+                          )}
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 dark:text-white">{site.domain}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {site.tier}
-                  {' '}
-                  plan
+            </div>
+
+            {/* Next Steps for pending sites */}
+            {!site.last_beacon_at && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-amber-900/20">
+                <h3 className="mb-2 font-semibold text-amber-800 dark:text-amber-300">Waiting for first beacon</h3>
+                <p className="text-sm text-amber-700 dark:text-amber-400">
+                  Deploy your integration and AI crawlers will be detected automatically.
+                  Switch to the Setup tab to see integration snippets.
                 </p>
               </div>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Status</span>
-                {!site.last_beacon_at
-                  ? (
-                      <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                        <AlertCircle className="size-3" />
-                        No data
-                      </span>
-                    )
-                  : (Date.now() - new Date(site.last_beacon_at).getTime()) < 86400000
-                      ? (
-                          <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
-                            <Activity className="size-3" />
-                            Active
-                          </span>
-                        )
-                      : (
-                          <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                            <CheckCircle2 className="size-3" />
-                            Connected
-                          </span>
-                        )}
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Total visits</span>
-                <span className="font-medium text-gray-900 dark:text-white">{site.total_visits}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Last beacon</span>
-                <span className="text-gray-900 dark:text-white">
-                  {site.last_beacon_at
-                    ? new Date(site.last_beacon_at).toLocaleDateString()
-                    : 'Never'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500 dark:text-gray-400">Registered</span>
-                <span className="text-gray-900 dark:text-white">{new Date(site.created_at).toLocaleDateString()}</span>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Delete */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Danger Zone</h3>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-            >
-              {isDeleting
-                ? <Loader2 className="size-4 animate-spin" />
-                : <Trash2 className="size-4" />}
-              Delete Site
-            </button>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex size-12 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
+                  <Globe className="size-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">{site.domain}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {site.tier}
+                    {' '}
+                    plan
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500 dark:text-gray-400">Registered</span>
+                  <span className="text-gray-900 dark:text-white">{new Date(site.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Delete */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+              <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Danger Zone</h3>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 px-4 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+              >
+                {isDeleting
+                  ? <Loader2 className="size-4 animate-spin" />
+                  : <Trash2 className="size-4" />}
+                Delete Site
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Site Key Tab */}
+      {activeTopTab === 'key' && (
+        <div className="mx-auto max-w-xl space-y-6">
+          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <div className="mb-4 flex items-center gap-2">
+              <Key className="size-5 text-indigo-600 dark:text-indigo-400" />
+              <h3 className="font-semibold text-gray-900 dark:text-white">Site Key</h3>
+            </div>
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              This key identifies your site when sending beacons. Keep it safe but it is not a secret — it is embedded in your client-side code.
+            </p>
+            <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-3 dark:bg-gray-900">
+              <code className="flex-1 font-mono text-sm text-gray-900 dark:text-white">
+                {keyRevealed ? site.site_key : `${site.site_key.slice(0, 12)}${'•'.repeat(8)}`}
+              </code>
+              <button
+                type="button"
+                onClick={() => setKeyRevealed(!keyRevealed)}
+                className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                title={keyRevealed ? 'Hide' : 'Reveal'}
+              >
+                {keyRevealed
+                  ? <EyeOff className="size-4" />
+                  : <Eye className="size-4" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleCopy(site.site_key, setCopiedKey)}
+                className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                title="Copy site key"
+              >
+                {copiedKey
+                  ? <CheckCircle2 className="size-4 text-emerald-500" />
+                  : <Copy className="size-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

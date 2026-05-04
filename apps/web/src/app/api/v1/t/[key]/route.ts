@@ -13,7 +13,9 @@ import { AI_BOTS_REGEX, KNOWN_BOTS } from '@crawlready/core';
 import { schema } from '@crawlready/database';
 import { createLogger } from '@crawlready/logger';
 import { eq } from 'drizzle-orm';
+import { after } from 'next/server';
 
+import { dedupCache } from '@/lib/cache/dedup-cache';
 import { siteKeyCache } from '@/lib/cache/site-key-cache';
 import { ingestRateLimiter } from '@/lib/utils/rate-limit';
 import { db } from '@/libs/DB';
@@ -57,8 +59,8 @@ export async function GET(request: Request, routeParams: RouteParams) {
     return gifResponse;
   }
 
-  // Best-effort async DB write
-  void (async () => {
+  // Async DB write via after() — keeps serverless function alive
+  after(async () => {
     try {
       let siteId: string;
       const cached = siteKeyCache.get(siteKey);
@@ -86,6 +88,11 @@ export async function GET(request: Request, routeParams: RouteParams) {
         // Can't parse referer — use root
       }
 
+      // Dedup check
+      if (dedupCache.isDuplicate(siteKey, path, bot)) {
+        return;
+      }
+
       await db.insert(schema.crawlerVisits).values({
         siteId,
         path,
@@ -97,7 +104,7 @@ export async function GET(request: Request, routeParams: RouteParams) {
     } catch (err) {
       log.error({ err, siteKey: siteKey.slice(0, 12) }, 'Tracking pixel DB write failed');
     }
-  })();
+  });
 
   return gifResponse;
 }

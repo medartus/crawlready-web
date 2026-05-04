@@ -13,3 +13,13 @@ export const createSiteSchema = z.object({
 });
 
 export type CreateSitePayload = z.infer<typeof createSiteSchema>;
+
+export const updateSiteSchema = z.object({
+  integration_method: z
+    .enum(['middleware', 'script_tag'])
+    .optional(),
+}).refine(data => Object.keys(data).length > 0, {
+  message: 'At least one field must be provided',
+});
+
+export type UpdateSitePayload = z.infer<typeof updateSiteSchema>;

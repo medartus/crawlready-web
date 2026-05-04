@@ -2,8 +2,9 @@ import { KNOWN_BOTS } from '@crawlready/core';
 import { schema } from '@crawlready/database';
 import { createLogger } from '@crawlready/logger';
 import { eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 
+import { dedupCache } from '@/lib/cache/dedup-cache';
 import { siteKeyCache } from '@/lib/cache/site-key-cache';
 import { ingestRateLimiter } from '@/lib/utils/rate-limit';
 import { ingestSchema } from '@/lib/validations/ingest';
@@ -123,20 +124,29 @@ export async function POST(request: Request) {
   const validSources = new Set(['middleware', 'js', 'pixel']);
   const normalizedSource = source && validSources.has(source) ? source : 'middleware';
 
-  // Step 8: Return response BEFORE database write (per spec)
-  // Step 9: Async DB write (best-effort, at-most-once, fire-and-forget)
+  // Step 7: Dedup — reject duplicate (siteKey, path, bot) within 1s window
+  if (dedupCache.isDuplicate(siteKey, path, sanitizedBot)) {
+    return SILENT_204;
+  }
+
   // Read correlation ID from request header (injected by middleware)
   const correlationId = request.headers.get('x-correlation-id') ?? 'unknown';
 
-  void db.insert(schema.crawlerVisits).values({
-    siteId,
-    path,
-    bot: sanitizedBot,
-    source: normalizedSource,
-    verified: isKnownBot,
-    visitedAt: new Date(timestamp),
-  }).catch((err) => {
-    log.error({ err, siteId, bot: sanitizedBot, path, correlationId }, 'Ingest DB write failed');
+  // Step 8: Return response BEFORE database write (per spec)
+  // Step 9: Async DB write via after() — keeps serverless function alive
+  after(async () => {
+    try {
+      await db.insert(schema.crawlerVisits).values({
+        siteId,
+        path,
+        bot: sanitizedBot,
+        source: normalizedSource,
+        verified: isKnownBot,
+        visitedAt: new Date(timestamp),
+      });
+    } catch (err) {
+      log.error({ err, siteId, bot: sanitizedBot, path, correlationId }, 'Ingest DB write failed');
+    }
   });
 
   return SILENT_204;

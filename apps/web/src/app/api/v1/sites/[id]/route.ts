@@ -7,9 +7,10 @@ import { NextResponse } from 'next/server';
 import { siteKeyCache } from '@/lib/cache/site-key-cache';
 import { apiError } from '@/lib/utils/api-helpers';
 import { getSnippets } from '@/lib/utils/snippets';
+import { updateSiteSchema } from '@/lib/validations/sites';
 import { db } from '@/libs/DB';
 
-const log = createLogger({ service: 'sites-detail' });
+const _log = createLogger({ service: 'sites-detail' });
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -110,4 +111,72 @@ export async function DELETE(_request: Request, routeParams: RouteParams) {
   }
 
   return new NextResponse(null, { status: 204 });
+}
+
+/**
+ * PATCH /api/v1/sites/[id] — Update a site's settings
+ */
+export async function PATCH(request: Request, routeParams: RouteParams) {
+  const { userId } = await auth();
+  if (!userId) {
+    return apiError('UNAUTHORIZED', 'Authentication required.', 401);
+  }
+
+  const { id } = await routeParams.params;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return apiError('VALIDATION_ERROR', 'Invalid JSON body.', 400);
+  }
+
+  const parsed = updateSiteSchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError('VALIDATION_ERROR', parsed.error.issues[0]?.message ?? 'Invalid input.', 400);
+  }
+
+  // Build update fields
+  const updates: Record<string, unknown> = {
+    updatedAt: new Date(),
+  };
+  if (parsed.data.integration_method) {
+    updates.integrationMethod = parsed.data.integration_method;
+  }
+
+  // Verify ownership and update
+  const rows = await db
+    .update(schema.sites)
+    .set(updates)
+    .where(
+      and(
+        eq(schema.sites.id, id),
+        eq(schema.sites.clerkUserId, userId),
+      ),
+    )
+    .returning({
+      id: schema.sites.id,
+      domain: schema.sites.domain,
+      siteKey: schema.sites.siteKey,
+      tier: schema.sites.tier,
+      integrationMethod: schema.sites.integrationMethod,
+      createdAt: schema.sites.createdAt,
+      updatedAt: schema.sites.updatedAt,
+    });
+
+  const site = rows[0];
+  if (!site) {
+    return apiError('NOT_FOUND', 'Site not found.', 404);
+  }
+
+  return NextResponse.json({
+    id: site.id,
+    domain: site.domain,
+    site_key: site.siteKey,
+    tier: site.tier,
+    integration_method: site.integrationMethod,
+    created_at: site.createdAt.toISOString(),
+    updated_at: site.updatedAt.toISOString(),
+    snippet: getSnippets(site.siteKey),
+  });
 }

@@ -272,11 +272,30 @@ export default function SitesPage() {
             </div>
           )
         : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {sites.map(site => (
-                <SiteCard key={site.id} site={site} onDelete={handleDelete} />
-              ))}
-            </div>
+            <>
+              {/* Integration pending banner (E3-T6) */}
+              {sites.every(s => !s.last_beacon_at) && (
+                <div className="mb-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+                  <div>
+                    <p className="font-medium text-amber-800 dark:text-amber-300">Integration pending</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-400">
+                      No beacons received yet. Complete your integration setup to start tracking AI crawlers.
+                    </p>
+                  </div>
+                  <Link
+                    href="/onboarding/integrate"
+                    className={`${buttonVariants({ variant: 'outline', size: 'sm' })} shrink-0`}
+                  >
+                    Complete Setup
+                  </Link>
+                </div>
+              )}
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {sites.map(site => (
+                  <SiteCard key={site.id} site={site} onDelete={handleDelete} />
+                ))}
+              </div>
+            </>
           )}
     </>
   );
