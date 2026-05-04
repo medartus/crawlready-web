@@ -54,46 +54,53 @@ function normalizePath(raw: string): string {
  * Rate limit: 100 req/s per site key
  * Response: 204 No Content (always — silent reject on errors per spec)
  *
- * See docs/architecture/analytics-infrastructure.md §Shared Processing Pipeline
+ * 9-step pipeline — see docs/architecture/analytics-infrastructure.md
+ *   1. Parse & validate input (Zod)
+ *   2. Validate bot name
+ *   3. Timestamp replay protection
+ *   4. Site key lookup (LRU cache → DB)
+ *   5. Rate limit by site key
+ *   6. Path normalization
+ *   7. Dedup check (1s window)
+ *   8. Return 204 immediately
+ *   9. Async DB write via after()
  */
 export async function POST(request: Request) {
-  // Step 1: Parse & normalize input
-  let body: { s?: string; p?: string; b?: string; t?: number; src?: string };
+  const correlationId = request.headers.get('x-correlation-id') ?? 'unknown';
+
+  // ── Step 1: Parse & validate input ──
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return SILENT_204; // Malformed JSON — silent reject
+    log.debug({ correlationId, step: 'parse' }, 'Rejected: malformed JSON');
+    return SILENT_204;
   }
 
-  // Step 1: Zod validation
   const parsed = ingestSchema.safeParse(body);
   if (!parsed.success) {
+    log.debug({ correlationId, step: 'validate' }, 'Rejected: schema validation failed');
     return SILENT_204;
   }
 
   const { s: siteKey, p: rawPath, b: bot, t: timestamp, src: source } = parsed.data;
 
-  // Step 2: Validate bot — accept unknown bots as unverified
-  const isKnownBot = KNOWN_BOTS.has(bot);
-  // Sanitize bot name (prevent injection, limit length)
+  // ── Step 2: Validate bot name ──
   const sanitizedBot = bot.replace(/[^\w.\-/]/g, '').slice(0, 64);
   if (!sanitizedBot) {
+    log.debug({ correlationId, step: 'bot' }, 'Rejected: empty bot name after sanitization');
     return SILENT_204;
   }
+  const isKnownBot = KNOWN_BOTS.has(bot);
 
-  // Step 3: Validate timestamp (replay protection)
+  // ── Step 3: Timestamp replay protection ──
   const drift = Math.abs(Date.now() - timestamp);
   if (drift > MAX_TIMESTAMP_DRIFT_MS) {
+    log.debug({ correlationId, step: 'timestamp', drift }, 'Rejected: timestamp drift');
     return SILENT_204;
   }
 
-  // Step 5: Rate limit by site key
-  const limit = ingestRateLimiter.check(siteKey);
-  if (!limit.allowed) {
-    return SILENT_204; // Silent rate limit per spec
-  }
-
-  // Step 4: Site key lookup (LRU cache → DB fallback)
+  // ── Step 4: Site key lookup (LRU cache → DB fallback) ──
   let siteId: string;
   const cached = siteKeyCache.get(siteKey);
   if (cached) {
@@ -107,33 +114,37 @@ export async function POST(request: Request) {
         .limit(1);
 
       if (rows.length === 0) {
-        return SILENT_204; // Invalid key — silent reject per spec
+        log.debug({ correlationId, step: 'site-key' }, 'Rejected: unknown site key');
+        return SILENT_204;
       }
       siteId = rows[0]!.id;
       siteKeyCache.set(siteKey, siteId);
     } catch (err) {
-      log.warn({ err, siteKey: siteKey.slice(0, 12) }, 'Site key lookup failed');
+      log.warn({ err, correlationId, step: 'site-key', siteKey: siteKey.slice(0, 12) }, 'Site key lookup failed');
       return SILENT_204;
     }
   }
 
-  // Step 6: Path normalization
-  const path = normalizePath(rawPath);
-
-  // Validate source field
-  const validSources = new Set(['middleware', 'js', 'pixel']);
-  const normalizedSource = source && validSources.has(source) ? source : 'middleware';
-
-  // Step 7: Dedup — reject duplicate (siteKey, path, bot) within 1s window
-  if (dedupCache.isDuplicate(siteKey, path, sanitizedBot)) {
+  // ── Step 5: Rate limit by site key ──
+  const limit = ingestRateLimiter.check(siteKey);
+  if (!limit.allowed) {
+    log.debug({ correlationId, step: 'rate-limit', siteKey: siteKey.slice(0, 12) }, 'Rejected: rate limited');
     return SILENT_204;
   }
 
-  // Read correlation ID from request header (injected by middleware)
-  const correlationId = request.headers.get('x-correlation-id') ?? 'unknown';
+  // ── Step 6: Path normalization ──
+  const path = normalizePath(rawPath);
+  const validSources = new Set(['middleware', 'js', 'pixel']);
+  const normalizedSource = source && validSources.has(source) ? source : 'middleware';
 
-  // Step 8: Return response BEFORE database write (per spec)
-  // Step 9: Async DB write via after() — keeps serverless function alive
+  // ── Step 7: Dedup check (1s window) ──
+  if (dedupCache.isDuplicate(siteKey, path, sanitizedBot)) {
+    log.debug({ correlationId, step: 'dedup', siteKey: siteKey.slice(0, 12) }, 'Rejected: duplicate beacon');
+    return SILENT_204;
+  }
+
+  // ── Step 8: Return 204 immediately ──
+  // ── Step 9: Async DB write via after() ──
   after(async () => {
     try {
       await db.insert(schema.crawlerVisits).values({
@@ -145,7 +156,7 @@ export async function POST(request: Request) {
         visitedAt: new Date(timestamp),
       });
     } catch (err) {
-      log.error({ err, siteId, bot: sanitizedBot, path, correlationId }, 'Ingest DB write failed');
+      log.error({ err, correlationId, step: 'db-write', siteId, bot: sanitizedBot, path }, 'Ingest DB write failed');
     }
   });
 
