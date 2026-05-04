@@ -12,9 +12,13 @@ Comprehensive dashboard architecture for CrawlReady. Defines all pages, navigati
 |---|---|---|
 | Site model | Adaptive (auto single-site, portfolio at 2+) | Most users start with 1 site; grow into multi-site |
 | Onboarding | Separate flow, dashboard empty states redirect to it | Streamlined adaptive experience; incomplete onboarding loops back |
+| Onboarding verification | Synthetic AI bot request to user's site | Instant integration verification — don't wait for real crawlers |
 | Multi-tenancy | Org-scoped from day 1 (Clerk Organizations) | Avoids migration; every user auto-creates a personal org |
 | Diagnostic integration | Separate public tool; dashboard links out | Keeps zero-friction public entry point independent |
-| Configuration depth | Progressive disclosure | Smart defaults + advanced overrides for power users |
+| Optimization availability | All tiers including free (free = with backlink) | Optimization is THE hero feature. Free tier includes CrawlReady backlink on optimized pages; paid tiers remove it. |
+| Issue display model | Auto-fixed vs. Needs Your Attention | CrawlReady auto-fixes Schema, content, ARIA. Only surface issues the user must fix (robots.txt, server config, CSR). |
+| Configuration depth | Progressive disclosure (plug-and-play default) | Zero-config works out of the box. Advanced panel for deep customization. |
+| Analytics | Queryable and prominent | Search, filter, segment, export. First-class data exploration, not just charts. |
 | Notifications | In-app + email + webhooks | Covers internal awareness + external integrations |
 | Mobile | Full responsive | Sidebar becomes mobile nav; every feature has a mobile layout |
 
@@ -62,20 +66,21 @@ The sidebar collapses to icon-only on narrow viewports or user toggle. Sections 
 
 ```
 ── Overview                    [LayoutDashboard icon]
+── Optimization                [Zap icon]           ★ Hero feature, all tiers
+   ├── Pipeline Status
+   ├── What We Fixed
+   ├── Configuration
+   └── Cache & Budget
 ── Analytics                   [BarChart3 icon]
    ├── Crawler Activity
    ├── Top Pages
    ├── Bot Breakdown
+   ├── Query Explorer
    └── Alerts
-── Scores                      [Target icon]
+── AI Readiness                [Target icon]
    ├── Current Score
    ├── Score History
-   └── Recommendations
-── Optimization                [Zap icon]          (Phase 2+ / tier-gated)
-   ├── Content Pipeline
-   ├── Schema Generation
-   ├── Format Routing
-   └── Cache Management
+   └── Needs Your Attention
 ── Citations                   [Quote icon]         (Phase 3+ / tier-gated)
    ├── Citation Tracker
    ├── Competitor Analysis
@@ -87,6 +92,8 @@ The sidebar collapses to icon-only on narrow viewports or user toggle. Sections 
 ── divider ──
 ── Settings                    [Settings icon]
 ```
+
+**Navigation priority rationale:** Optimization is #2 (right after Overview) because it's the hero feature — the automated pipeline that fixes websites. Analytics is #3 because it's the primary read-heavy surface users check daily. AI Readiness is #4 because CrawlReady auto-fixes most issues; this section only shows what the user must address manually.
 
 **When "All Sites" is selected (portfolio view):**
 
@@ -105,7 +112,7 @@ The sidebar collapses to icon-only on narrow viewports or user toggle. Sections 
 
 On viewports < 768px:
 - Sidebar collapses entirely
-- Bottom navigation bar with 5 items: Overview, Analytics, Scores, Integration, More (hamburger for remaining items)
+- Bottom navigation bar with 5 items: Overview, Optimize, Analytics, Setup, More (hamburger for remaining items)
 - Site selector moves to a full-width bar below the header
 - Org selector available via the "More" menu
 
@@ -147,26 +154,26 @@ All dashboard routes are under `/(auth)/dashboard/`. Site-scoped routes use `[or
 /dashboard/[orgSlug]/[siteId]/analytics/alerts
   → Alert feed (actionable insights)
 
-/dashboard/[orgSlug]/[siteId]/scores
-  → Current score + history chart
-
-/dashboard/[orgSlug]/[siteId]/scores/recommendations
-  → Full recommendation list with framework-specific fixes
+/dashboard/[orgSlug]/[siteId]/analytics/explorer
+  → Query explorer: search, filter, segment analytics data
 
 /dashboard/[orgSlug]/[siteId]/optimization
-  → Optimization overview (Phase 2+)
+  → Optimization overview (★ hero feature, all tiers)
 
-/dashboard/[orgSlug]/[siteId]/optimization/pipeline
-  → Content pipeline status per page
+/dashboard/[orgSlug]/[siteId]/optimization/fixed
+  → What CrawlReady auto-fixed (Schema, content, ARIA)
 
-/dashboard/[orgSlug]/[siteId]/optimization/schema
-  → Schema.org generation preview + injection status
-
-/dashboard/[orgSlug]/[siteId]/optimization/formats
-  → Multi-format serving configuration per bot
+/dashboard/[orgSlug]/[siteId]/optimization/config
+  → Advanced configuration (format routing, bot rules, Schema overrides)
 
 /dashboard/[orgSlug]/[siteId]/optimization/cache
   → Cache management: TTL, invalidation, fresh crawl budget
+
+/dashboard/[orgSlug]/[siteId]/readiness
+  → Current score + history chart
+
+/dashboard/[orgSlug]/[siteId]/readiness/issues
+  → Issues only the user can fix (not auto-fixable)
 
 /dashboard/[orgSlug]/[siteId]/citations
   → Citation monitoring (Phase 3+)
@@ -295,20 +302,30 @@ The site overview is the "home" for a single site. It surfaces the most importan
 │                             │                                   │
 ├─────────────────────────────┴───────────────────────────────────┤
 │                                                                 │
-│  Priority Actions                                               │
-│  ─────────────                                                  │
+│  Optimization Pipeline                          [Active ●]      │
+│  ─────────────────────                                              │
+│  12 pages optimized · Schema injected on 4 · 98% cache hit      │
+│  [View pipeline →]                                              │
 │                                                                 │
-│  ⚠ Critical: 3 sections invisible to AI crawlers               │
-│    GPTBot visited /pricing 89 times but received empty HTML.    │
-│    [View recommendation →]                                      │
+├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ⚠ Warning: No Schema.org detected on /pricing                 │
-│    CrawlReady can generate FAQPage + Product schema.            │
-│    [Preview schema →]                                 [🔒 Pro]  │
+│  Needs Your Attention (2)                                       │
+│  ─────────────────────────                                        │
+│  Only issues CrawlReady cannot auto-fix.                        │
 │                                                                 │
-│  ℹ Info: Snippet is 2 versions behind                           │
-│    Update your middleware regex to detect new bots.             │
-│    [View updated snippet →]                                     │
+│  ⚠ Critical: robots.txt blocks GPTBot and ClaudeBot             │
+│    Your robots.txt disallows these User-Agents.                 │
+│    CrawlReady cannot override this — you must update it.        │
+│    [View fix instructions →]                                     │
+│                                                                 │
+│  ⚠ Warning: /app/* requires authentication                      │
+│    AI crawlers receive a login redirect for 12 pages.           │
+│    CrawlReady cannot optimize auth-gated content.               │
+│    [View affected pages →]                                      │
+│                                                                 │
+│  ✓ Auto-fixed: Schema.org generated for 4 pages (FAQPage,       │
+│    Product). Content optimized for 12 pages. ARIA enriched.     │
+│    [View what we fixed →]                                       │
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
@@ -331,10 +348,13 @@ The site overview is the "home" for a single site. It surfaces the most importan
 
 **Key behaviors:**
 - Score gauge uses the signature 700ms fill animation on first render
-- Priority actions are sorted by severity (critical > warning > info) then impact
+- Optimization Pipeline section is the most prominent after the score — it's the hero
+- "Needs Your Attention" only shows issues CrawlReady cannot auto-fix (robots.txt, auth-gated pages, server config, etc.)
+- Auto-fixed items are summarized in one line with a link to the full "What We Fixed" page
 - Quick stats show 30d trend (▲/▼/steady) with percentage or absolute delta
 - All sections link to their detail pages
-- Tier-gated features show lock icon with tier name
+- Free tier: optimization active, backlink badge shown ("Powered by CrawlReady" on optimized pages)
+- Paid tier: no backlink badge
 
 **Loading state:** Skeleton layout matching the exact grid proportions. Score gauge shows empty ring. Stat cards show gray placeholder bars.
 
@@ -394,6 +414,37 @@ Page                        Visits   Bots   Score   Status
 - Status column cross-references crawlability score for that URL
 - Score column links to the public score page
 
+**3e. Query Explorer (`/dashboard/[orgSlug]/[siteId]/analytics/explorer`)**
+
+A powerful search and filter interface for all analytics data. Designed for developers who want to answer specific questions about their AI crawler traffic.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Query Explorer                                                 │
+│                                                                 │
+│  [Search pages, bots, or paths...           ]  [Filter ▼]      │
+│                                                                 │
+│  Filters:                                                       │
+│  [Bot: All ▼] [Status: All ▼] [Path: contains ▼] [Date: 30d ▼]│
+│                                                                 │
+│  Showing 847 matching visits                    [Export CSV ▼]  │
+│                                                                 │
+│  Page              Bot              Time         Status          │
+│  ─────────────────────────────────────────────────────────────  │
+│  /docs/auth        GPTBot           2h ago       ✓ Optimized    │
+│  /pricing          ClaudeBot        3h ago       ✓ Optimized    │
+│  /app/settings     Google-Extended  5h ago       ⚠ Auth-gated   │
+│  ...                                                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+- Full-text search across page paths
+- Combinable filters: bot, date range, optimization status, HTTP status, page path pattern
+- Saved filter presets (e.g., "Unoptimized pages visited this week")
+- Export filtered results as CSV or JSON
+- Pagination with configurable page size (20/50/100)
+- Status column reflects optimization pipeline state, not just crawlability
+
 **Loading state:** Skeleton chart (rectangle with faded gradient) + skeleton table rows.
 
 ---
@@ -434,156 +485,216 @@ Page                        Visits   Bots   Score   Status
 
 ---
 
-### 5. Scores (`/dashboard/[orgSlug]/[siteId]/scores`)
+### 5. AI Readiness (`/dashboard/[orgSlug]/[siteId]/readiness`)
 
-**Layout:** Score gauge (lg) at top, history chart below, recommendations list.
+**Layout:** Score gauge (lg) at top, auto-fixed summary, then "needs attention" list, then history chart.
 
-**5a. Current Score**
+**Core principle:** CrawlReady auto-fixes most issues (Schema generation, content optimization, ARIA enrichment). This page celebrates what was fixed automatically and only asks the user to act on things CrawlReady cannot fix.
+
+**5a. Current Score + Auto-Fix Summary**
 - Large score gauge (180px) with band label and color
 - Three sub-score gauges (sm, 80px) in a row: Crawlability, Agent Readiness, Agent Interaction
 - EU AI Act compliance badge: "X/4 checks passed" (expandable)
-- "Last scanned: [date]" with link to public score page
+- **Auto-fix summary banner:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ✓ CrawlReady auto-fixed 8 issues                          │
+│                                                             │
+│  Schema.org generated: 4 pages (FAQPage, Product, HowTo)   │
+│  Content optimized: 12 pages (Markdown + enriched HTML)     │
+│  ARIA enrichment: 12 pages (landmarks, labels, roles)       │
+│                                                             │
+│  [View all auto-fixes →]                                    │
+└─────────────────────────────────────────────────────────────┘
+```
 
-**5b. Score History Chart**
+**5b. Needs Your Attention (`/dashboard/[orgSlug]/[siteId]/readiness/issues`)**
+
+Only issues CrawlReady cannot auto-fix. These are things that require the site owner to change their own infrastructure:
+
+| Issue Category | Example | Why CrawlReady Can't Fix It |
+|---|---|---|
+| robots.txt blocking | `Disallow: / # GPTBot` | Server-level config, user must edit |
+| Auth-gated pages | `/app/*` returns 302 to login | CrawlReady has no credentials |
+| Server-side redirects | Redirect loops, 5xx errors | Origin server problem |
+| CSR-only with no SSR | React SPA with no server rendering | Requires framework migration |
+| Content behind JS interactions | Tab content, accordion, infinite scroll | Requires code changes |
+| Rate limiting / IP blocking | Origin blocks CrawlReady's crawler | Firewall / CDN config |
+
+Each needs-attention card:
+- Severity badge (critical / warning)
+- Issue title + evidence (what was measured)
+- Why CrawlReady can't auto-fix this (one sentence)
+- Framework-specific fix instructions (expandable code block)
+- Affected pages list
+
+**When there are zero needs-attention issues:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ✓ Nothing needs your attention                             │
+│                                                             │
+│  CrawlReady is handling all optimizations automatically.    │
+│  Your AI Readiness Score is 85/100.                         │
+│  Keep monitoring analytics for new crawler activity.        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**5c. Score History Chart**
 - Line chart showing AI Readiness Score over time (one point per scan)
 - Sub-score lines togglable
 - X-axis: dates of scans
 - Y-axis: 0-100
 - Band color zones as horizontal background stripes (Critical/Poor/Fair/Good/Excellent)
+- Annotation markers on chart for "CrawlReady auto-fix deployed" events
 - Empty state: "Only one scan recorded. Score history will appear after your site is scanned again."
 
-**5c. Recommendations**
-- Full list of recommendations from the most recent scan
-- Sorted by severity (critical → warning → info) then impact score
-- Each recommendation card:
-  - Severity badge (color-coded)
-  - Category tag (Crawlability / Agent Readiness / Agent Interaction)
-  - Issue title
-  - Evidence (measured data)
-  - Interpretation (what it means)
-  - Fix action (framework-specific code when applicable)
-  - Dependency indicator ("Blocked: fix [other issue] first")
-- Tier-gated recommendations show content but gate the fix code behind upgrade CTA
-
 ---
 
-### 6. Optimization — Overview (`/dashboard/[orgSlug]/[siteId]/optimization`)
+### 6. Optimization — Pipeline Overview (`/dashboard/[orgSlug]/[siteId]/optimization`)
 
-**Phase 2+ feature.** For free/Starter tiers, this page is a feature teaser.
+**★ Hero feature. Available to ALL tiers.** Free tier includes a CrawlReady backlink on optimized pages; paid tiers remove it. This is the automated pipeline that fixes websites for AI crawlers — the core value proposition.
 
-**Teaser state (free/Starter):**
+**Design principle: plug-and-play.** The pipeline works with zero configuration. Users see what's happening and can customize deeply, but they never *have* to.
+
+**6a. Pipeline Status (top of page)**
 ```
-┌─────────────────────────────────────────────────────────┐
-│                                                         │
-│  [Zap icon, 24px]                                       │
-│                                                         │
-│  AI Content Optimization                                │
-│                                                         │
-│  Automatically serve AI-optimized content to crawlers.  │
-│  Clean Markdown, injected Schema.org, noise-free HTML.  │
-│                                                         │
-│  Based on your current score:                           │
-│  · 3 pages would benefit from content optimization      │
-│  · Schema.org can be generated for 2 page types         │
-│  · Estimated score improvement: +25-35 points           │
-│                                                         │
-│  [Upgrade to Pro →]                                     │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  Optimization Pipeline                            [Active ●]    │
+│                                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │ 12       │  │ 98.2%    │  │ 4        │  │ 312/500  │      │
+│  │ Pages    │  │ Cache    │  │ Schema   │  │ Crawls   │      │
+│  │ optimized│  │ hit rate │  │ types    │  │ used     │      │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
+│                                                                 │
+│  Free plan: Optimized pages include "Powered by CrawlReady"    │
+│  backlink visible to AI crawlers. [Remove with Starter →]       │
+│  (only shown for free tier)                                     │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Active state (Pro+):**
-
-**6a. Pipeline Health**
-- Pages optimized: X of Y registered pages
-- Cache hit rate: XX%
-- Fresh crawls used: X of Y limit (progress bar)
-- Last pipeline run: [timestamp]
-
-**6b. Page-Level Status Table**
+**6b. Page-Level Pipeline Table**
 ```
-Page                   Format      Cache    TTL     Last Crawl   Status
+Page                   What We Did                    Cache    Status
 ──────────────────────────────────────────────────────────────────────────
-/pricing               HTML+Schema  Hit     7d      2d ago       ✓ Fresh
-/docs/getting-started  Markdown     Hit     7d      5d ago       ✓ Fresh
-/features              HTML+Schema  Miss    7d      --           ⏳ Queued
-/about                 Markdown     Stale   14d     16d ago      ⚠ Stale
+/pricing               HTML+Schema (Product, FAQ)      Hit     ✓ Fresh
+/docs/getting-started  Markdown + ARIA                 Hit     ✓ Fresh
+/features              HTML+Schema (FAQ)               Miss    ⏳ Queued
+/about                 Markdown + ARIA                 Stale   ⚠ Refresh
+/app/settings          ✗ Auth-gated (cannot optimize)  —       ⚠ Blocked
 ```
 - Sort/filter by status, format, staleness
-- Row actions: [Preview] [Refresh] [Configure]
-- Bulk actions: select multiple → refresh, change TTL
+- Row click → opens content preview (slide-out panel)
+- "What We Did" column shows exactly which optimizations were applied
+- Blocked rows explain *why* with link to "Needs Your Attention"
+- Bulk actions: select multiple → refresh
+- Search bar for filtering by path
 
-**6c. Content Preview (slide-out panel or modal)**
+**6c. Content Preview (slide-out panel)**
 - Side-by-side: Origin HTML vs. Optimized output
-- Format tabs: Markdown | Enriched HTML | ARIA-Enhanced
+- Format tabs: Markdown | Enriched HTML + ARIA
 - Content parity indicator: "98.2% content match" (green if > 90%, yellow if 85-90%, red if < 85%)
-- Generated Schema.org preview (collapsible JSON-LD)
+- Generated Schema.org preview (collapsible JSON-LD with syntax highlighting)
+- "This is what [BotName] sees when it visits this page"
+
+**6d. What We Fixed (`/dashboard/[orgSlug]/[siteId]/optimization/fixed`)**
+
+Transparency page showing everything CrawlReady auto-fixed. Builds trust.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  What CrawlReady Auto-Fixed                                     │
+│                                                                 │
+│  Schema.org Generation                                          │
+│  ───────────────────────                                        │
+│  FAQPage on /pricing         — 8 Q&A pairs extracted            │
+│  Product on /pricing         — 3 tiers, pricing, features       │
+│  HowTo on /docs/quickstart   — 6 steps extracted                │
+│  Organization on /about      — name, logo, social links         │
+│                                                                 │
+│  Content Optimization                                           │
+│  ─────────────────────                                          │
+│  12 pages cleaned: nav/footer/sidebar removed, content focused  │
+│  Markdown versions generated for text-preferring bots           │
+│                                                                 │
+│  ARIA Enrichment                                                │
+│  ────────────────                                               │
+│  12 pages enriched: landmark roles, aria-labels, heading tree   │
+│  0 existing ARIA attributes overwritten                         │
+│                                                                 │
+│  [Preview any page →]                                           │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-### 7. Optimization — Schema Generation (`/dashboard/[orgSlug]/[siteId]/optimization/schema`)
+### 7. Optimization — Configuration (`/dashboard/[orgSlug]/[siteId]/optimization/config`)
 
-**Layout:** Schema type overview + per-page schema status.
+**Progressive disclosure pattern.** Default: zero-config. Advanced: full control.
 
-**7a. Schema Overview Cards**
+**Default view (plug-and-play):**
 ```
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│ FAQPage      │  │ Product      │  │ HowTo        │  │ Organization │
-│              │  │              │  │              │  │              │
-│ 3 pages      │  │ 1 page       │  │ 2 pages      │  │ 1 page       │
-│ 12 Q&A pairs │  │ 3 tiers      │  │ 8 steps      │  │              │
-│              │  │              │  │              │  │              │
-│ ✓ Active     │  │ ✓ Active     │  │ ✓ Active     │  │ ⚠ Review     │
-└──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘
-```
-
-**7b. Per-Page Schema Table**
-- Shows which pages have generated schema, type, confidence level, validation status
-- "Review" status for low-confidence extractions (user can approve/reject)
-- Preview button → shows generated JSON-LD with syntax highlighting
-
----
-
-### 8. Optimization — Format Routing (`/dashboard/[orgSlug]/[siteId]/optimization/formats`)
-
-**Progressive disclosure pattern:**
-
-**Default view (smart defaults):**
-```
-Format Routing: Automatic (recommended)
-
-CrawlReady serves the optimal format to each AI client:
-
-  GPTBot, ClaudeBot, PerplexityBot  →  Markdown
-  Google-Extended                     →  Enriched HTML + Schema.org
-  Visual Agents (Operator, etc.)     →  Original HTML + ARIA
-  Accept: text/markdown requests     →  Markdown
-
-[Customize →]
+┌─────────────────────────────────────────────────────────────────┐
+│  Pipeline Configuration                                         │
+│                                                                 │
+│  Mode: Automatic (recommended)                                  │
+│                                                                 │
+│  CrawlReady automatically:                                      │
+│  ✓ Detects your page types and generates Schema.org             │
+│  ✓ Serves optimal format per AI client                          │
+│  ✓ Enriches HTML with ARIA landmarks and labels                 │
+│  ✓ Caches optimized content for fast delivery                   │
+│                                                                 │
+│  Everything is working. No configuration needed.                │
+│                                                                 │
+│  [Show advanced settings →]                                     │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Advanced view (after clicking Customize):**
-```
-Format Routing: Custom
+**Advanced view (after clicking "Show advanced settings"):**
 
+**7a. Format Routing**
+```
 Bot / Client              Format                 Override
 ─────────────────────────────────────────────────────────
 GPTBot                    [Markdown ▼]           [Reset to default]
 ClaudeBot                 [Markdown ▼]           [Reset to default]
 Google-Extended           [Enriched HTML ▼]      [Reset to default]
+Visual Agents             [Original + ARIA ▼]    [Reset to default]
 ...
 
-Custom rules:
 [+ Add custom User-Agent rule]
 ```
 
+**7b. Schema.org Overrides**
+- Per-page schema type override (e.g., force Product instead of auto-detected FAQ)
+- Custom JSON-LD injection (expert mode, validated)
+- Confidence threshold slider: "Auto-apply when confidence > [80%]" (default)
+- Low-confidence schema → queued for user review
+
+**7c. Content Rules**
+- Exclude paths: patterns like `/admin/*`, `/api/*` that should never be optimized
+- Include-only paths: only optimize specific paths (e.g., `/docs/*`, `/blog/*`)
+- Custom CSS selectors to strip (beyond default nav/footer/sidebar removal)
+
+**7d. Bot Rules** (Business+ tier)
+- Block specific bots from receiving optimized content
+- Custom response headers per bot
+- A/B testing: serve original vs. optimized to measure impact
+
+Each advanced setting shows:
+- Current value (what CrawlReady chose automatically)
+- Why it was chosen (one sentence explanation)
+- Override control
+- [Reset to default] button
+
 ---
 
-### 9. Optimization — Cache Management (`/dashboard/[orgSlug]/[siteId]/optimization/cache`)
+### 8. Optimization — Cache & Budget (`/dashboard/[orgSlug]/[siteId]/optimization/cache`)
 
 **Sections:**
 
-**9a. Usage Meter**
+**8a. Usage Meter**
 ```
 Fresh Crawls This Month
 ████████████░░░░░░░░░░░░░░ 312 / 500 (62%)
@@ -592,30 +703,31 @@ Resets: May 15, 2026
 [Upgrade for more crawls →]  (if approaching limit)
 ```
 
-**9b. Default TTL Configuration**
+**8b. Default TTL Configuration**
 - Current TTL: [7 days] (dropdown: 3d, 7d, 14d based on tier)
 - "Your plan allows: 3d minimum, 14d maximum"
 - Per-page TTL overrides (advanced, expandable table)
 
-**9c. Cache Invalidation**
+**8c. Cache Invalidation**
 - Manual: Enter URL → [Invalidate]
-- Webhook: Display webhook URL for automated cache busting
+- Webhook: Display webhook URL for automated cache busting (e.g., trigger on deploy)
 - Bulk: [Invalidate all] (confirmation dialog, counts against fresh crawl budget)
+- CI/CD integration: code snippet for invalidating on deploy (GitHub Actions, Vercel hooks)
 
 ---
 
-### 10. Citations (`/dashboard/[orgSlug]/[siteId]/citations`)
+### 9. Citations (`/dashboard/[orgSlug]/[siteId]/citations`)
 
 **Phase 3+ feature.** Teaser for lower tiers.
 
 **Active state:**
 
-**10a. Citation Rate**
+**9a. Citation Rate**
 - Big number: "Your domain was cited in X AI answers this month"
 - Trend chart: citation count over time
 - Breakdown by AI engine: ChatGPT, Perplexity, Claude, Gemini
 
-**10b. Cited Pages**
+**9b. Cited Pages**
 ```
 Page                     Citations   Engine          Query Example
 ────────────────────────────────────────────────────────────────────
@@ -625,7 +737,7 @@ Page                     Citations   Engine          Query Example
                                      Claude (5)
 ```
 
-**10c. Competitor Comparison**
+**9c. Competitor Comparison**
 ```
 Domain          Citations (30d)   Overlap Queries   Your Advantage
 ───────────────────────────────────────────────────────────────────
@@ -633,13 +745,13 @@ competitor1.com    89              12 shared         They lead by 34
 competitor2.com    45              8 shared          You lead by 12
 ```
 
-**10d. Uncited Opportunities**
+**9d. Uncited Opportunities**
 - Queries where competitors are cited but you are not
 - Suggested content improvements
 
 ---
 
-### 11. Integration (`/dashboard/[orgSlug]/[siteId]/integration`)
+### 10. Integration (`/dashboard/[orgSlug]/[siteId]/integration`)
 
 **Purpose:** Integration setup, health monitoring, and snippet management.
 
@@ -687,7 +799,7 @@ or
 
 ---
 
-### 12. Settings — Account (`/dashboard/settings`)
+### 11. Settings — Account (`/dashboard/settings`)
 
 **Sections:**
 - Profile (name, email — read from Clerk)
@@ -696,11 +808,11 @@ or
 
 ---
 
-### 13. Settings — Billing (`/dashboard/settings/billing`)
+### 12. Settings — Billing (`/dashboard/settings/billing`)
 
 **Sections:**
 
-**13a. Current Plan**
+**12a. Current Plan**
 ```
 ┌─────────────────────────────────────────────┐
 │  Pro Plan · $49/month                       │
@@ -710,39 +822,39 @@ or
 └─────────────────────────────────────────────┘
 ```
 
-**13b. Usage This Period**
+**12b. Usage This Period**
 - Fresh crawls: 312/2,500 (progress bar)
 - Cached responses: 45,678 (unlimited)
 - Sites registered: 3/unlimited
 
-**13c. Plan Comparison** (expandable)
+**12c. Plan Comparison** (expandable)
 - Tier comparison table showing feature differences
 - Highlight current plan
 - Upgrade CTAs on higher tiers
 
-**13d. Invoice History**
+**12d. Invoice History**
 - Table: Date, Amount, Status (Paid/Pending), [Download PDF]
 
 ---
 
-### 14. Settings — Notifications (`/dashboard/settings/notifications`)
+### 13. Settings — Notifications (`/dashboard/settings/notifications`)
 
 **Sections:**
 
-**14a. In-App Notifications**
+**13a. In-App Notifications**
 - Toggle per alert type (invisible content, new bot, traffic spike, stale snippet, score drop, no beacons)
 - All on by default
 
-**14b. Email Digest**
+**13b. Email Digest**
 - Frequency: [Off] [Daily] [Weekly ●] [Monthly]
 - Delivery time: [9:00 AM ▼] [UTC ▼]
 - Content: checkboxes for what to include (summary stats, alerts, score changes)
 
-**14c. Webhook Endpoints** (links to /dashboard/settings/webhooks)
+**13c. Webhook Endpoints** (links to /dashboard/settings/webhooks)
 
 ---
 
-### 15. Settings — Webhooks (`/dashboard/settings/webhooks`)
+### 14. Settings — Webhooks (`/dashboard/settings/webhooks`)
 
 **Layout:** Endpoint list + add form.
 
@@ -778,7 +890,7 @@ or
 
 ---
 
-### 16. Settings — Team Members (`/dashboard/settings/team`)
+### 15. Settings — Team Members (`/dashboard/settings/team`)
 
 **Phase 4 / Business+ tier.**
 
@@ -827,25 +939,47 @@ Step 3: Choose Integration
   → Copy button
   → "I've installed the snippet" confirmation
 
-Step 4: Verify Integration
-  → Auto-check for incoming beacons (poll for 60s)
-  → Success: "First beacon received from [bot] on [path]!"
-  → Timeout: "No beacons yet. This is normal — AI crawlers visit
-    periodically. We'll notify you when the first one arrives."
-  → [Skip for now] always available
+Step 4: Verify Integration (Synthetic Bot Request)
+  → User clicks "Verify my integration"
+  → CrawlReady sends a synthetic HTTP request to the user's site
+    using AI bot User-Agents (GPTBot, ClaudeBot, etc.)
+  → This triggers the user's middleware/script tag to send a beacon
+  → CrawlReady listens for the beacon (poll for 15s — fast feedback)
+  → Success: "✓ Integration verified! We sent a GPTBot request to
+    /pricing and received your beacon in 1.2s."
+  → Failure: "We sent a test request but didn't receive a beacon.
+    Common fixes: [check middleware placement] [verify site key]
+    [check CORS if using script tag]"
+  → [Try again] + [Skip for now] always available
 
-Step 5: Done
-  → Success state with next steps:
-    "Your site is set up. Here's what happens next:
-     · AI crawler visits are now being tracked
-     · Run a diagnostic scan to see your AI Readiness Score
-     · Check back in 24-48 hours for your first analytics data"
+Step 5: Optimization Activation
+  → CrawlReady runs an initial scan + optimization pass
+  → Progress indicator: "Scanning your site..."
+    → "Found 14 pages"
+    → "Generating Schema.org for 4 pages..."
+    → "Optimizing content for AI crawlers..."
+    → "Done! 12 pages optimized, 2 need your attention."
+  → Quick preview: before/after for one page
+  → Free tier notice: "Your optimized pages include a
+    'Powered by CrawlReady' backlink. [Remove with Starter →]"
+
+Step 6: Done
+  → Success state with summary:
+    "Your site is live on CrawlReady:
+     · 12 pages optimized for AI crawlers
+     · Schema.org generated for 4 pages
+     · AI crawler visits are being tracked
+     · 2 issues need your attention (robots.txt, auth pages)"
   → [Go to dashboard →]
 ```
 
+**Why synthetic bot verification:** Real AI crawlers visit sites periodically (hours to days). Waiting for a real visit during onboarding would mean users leave the flow without knowing if their integration works. The synthetic request gives instant, deterministic feedback — the user knows within seconds if their snippet is installed correctly.
+
+**Implementation:** `POST /api/v1/verify-integration` sends requests from CrawlReady's servers with AI bot User-Agent strings to the user's domain, then checks for a matching beacon on the ingest endpoint within a 15-second window.
+
 **Incomplete onboarding:** If the user abandons at any step, next login redirects them back to the step they left off. Dashboard empty state also links back to the onboarding flow.
 
-**Adding subsequent sites:** When a user already has sites and clicks "+ Add site", they get a streamlined version (Steps 2-4 only, skip org setup).
+**Adding subsequent sites:** When a user already has sites and clicks "+ Add site", they get a streamlined version (Steps 2-5 only, skip org setup).
 
 ---
 
@@ -912,28 +1046,45 @@ Client (SWR)  →  Next.js RSC (ISR)  →  API Routes  →  Supabase / Redis
 ```typescript
 // Feature gate configuration (Vercel Edge Config or local config)
 const FEATURE_GATES: Record<Feature, Tier[]> = {
-  'analytics.overview':       ['free', 'starter', 'pro', 'business', 'enterprise'],
-  'analytics.export':         ['starter', 'pro', 'business', 'enterprise'],
-  'analytics.alerts':         ['starter', 'pro', 'business', 'enterprise'],
-  'optimization.pipeline':    ['pro', 'business', 'enterprise'],
-  'optimization.schema':      ['pro', 'business', 'enterprise'],
-  'optimization.formats':     ['pro', 'business', 'enterprise'],
-  'optimization.cache':       ['starter', 'pro', 'business', 'enterprise'],
-  'citations.tracker':        ['business', 'enterprise'],
-  'citations.competitors':    ['business', 'enterprise'],
-  'settings.team':            ['business', 'enterprise'],
-  'settings.webhooks':        ['pro', 'business', 'enterprise'],
+  'optimization.pipeline': ['free', 'starter', 'pro', 'business', 'enterprise'],
+  'optimization.fixed': ['free', 'starter', 'pro', 'business', 'enterprise'],
+  'optimization.config': ['free', 'starter', 'pro', 'business', 'enterprise'],
+  'optimization.cache': ['free', 'starter', 'pro', 'business', 'enterprise'],
+  'optimization.bot_rules': ['business', 'enterprise'],
+  'optimization.ab_testing': ['business', 'enterprise'],
+  'optimization.no_backlink': ['starter', 'pro', 'business', 'enterprise'],
+  // Analytics
+  'analytics.overview': ['free', 'starter', 'pro', 'business', 'enterprise'],
+  'analytics.explorer': ['starter', 'pro', 'business', 'enterprise'],
+  'analytics.export': ['starter', 'pro', 'business', 'enterprise'],
+  'analytics.alerts': ['starter', 'pro', 'business', 'enterprise'],
+  // AI Readiness
+  'readiness.score': ['free', 'starter', 'pro', 'business', 'enterprise'],
+  'readiness.attention': ['free', 'starter', 'pro', 'business', 'enterprise'],
+  'readiness.history': ['starter', 'pro', 'business', 'enterprise'],
+  // Citations
+  'citations.tracker': ['business', 'enterprise'],
+  'citations.competitors': ['business', 'enterprise'],
+  // Settings
+  'settings.team': ['business', 'enterprise'],
+  'settings.webhooks': ['pro', 'business', 'enterprise'],
   'integration.key_rotation': ['starter', 'pro', 'business', 'enterprise'],
   'integration.verification': ['starter', 'pro', 'business', 'enterprise'],
 };
 ```
+
+**Tier differentiation for optimization:**
+- **Free:** Full pipeline, backlink on optimized pages ("Powered by CrawlReady"), basic config
+- **Starter ($29):** No backlink, full config, score history
+- **Pro ($49):** Webhooks, analytics export, higher crawl budget
+- **Business ($199):** Custom bot rules, A/B testing, citations, team seats
+- **Enterprise:** DNS proxy, SLA, dedicated support
 
 Locked features are always **visible but gated.** The component renders with reduced opacity, a lock icon, and a tooltip: "Available on [Tier] plan. [Upgrade →]". This is the primary upsell surface.
 
 ---
 
 ## Responsive Breakpoints
-
 | Breakpoint | Viewport | Layout Behavior |
 |---|---|---|
 | `sm` | < 640px | Single column. Bottom nav (5 items). Site selector full-width below header. Stat cards stack vertically. Tables scroll horizontally. |
@@ -944,12 +1095,12 @@ Locked features are always **visible but gated.** The component renders with red
 ### Mobile Bottom Navigation
 
 ```
-┌──────────────────────────────────────────────────┐
-│ [Overview] [Analytics] [Scores] [Setup] [More ⋯] │
-└──────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────┐
+│ [Overview] [Optimize] [Analytics] [Setup] [More ⋯] │
+└────────────────────────────────────────────────┘
 ```
 
-"More" opens a slide-up sheet with: Optimization, Citations, Settings, Sign out.
+"More" opens a slide-up sheet with: AI Readiness, Citations, Settings, Sign out.
 
 ---
 
@@ -957,12 +1108,12 @@ Locked features are always **visible but gated.** The component renders with red
 
 | Phase | Dashboard Surfaces Shipped |
 |---|---|
-| **Phase 0** | Dashboard shell, site management, integration setup (snippets + key), empty states for analytics, onboarding flow, settings (account, billing placeholder) |
-| **Phase 1** | Analytics (overview, bots, pages, alerts), score history, data export, domain verification, key rotation, notification preferences, webhook settings |
+| **Phase 0** | Dashboard shell, site management, integration setup (snippets + key), **optimization pipeline (hero feature, all tiers)**, "What We Fixed" page, "Needs Your Attention", AI Readiness score, onboarding with synthetic bot verification + optimization activation, settings (account, billing placeholder) |
+| **Phase 1** | Analytics (overview, bots, pages, alerts, query explorer), score history chart, data export, domain verification, key rotation, notification preferences, webhook settings |
 | **Phase 1.5** | Partner attribution tracking in analytics (source column), referral link display |
-| **Phase 2** | Optimization (pipeline, schema, formats, cache), content preview, fresh crawl budget meter |
+| **Phase 2** | Advanced optimization config (format routing, Schema overrides, content rules), content preview side-by-side, cache management UI, CI/CD cache invalidation |
 | **Phase 3** | Citations (tracker, competitor comparison, query coverage) |
-| **Phase 4** | Team management, advanced bot rules, A/B testing UI, DNS proxy management, enterprise admin |
+| **Phase 4** | Team management, custom bot rules, A/B testing UI, DNS proxy management, enterprise admin |
 
 Each phase ships with:
 - Feature pages for that phase's capabilities
@@ -982,18 +1133,24 @@ The dashboard requires these components beyond what exists in `src/components/ui
 | `OrgSelector` | Header dropdown with org name + plan badge | Phase 0 |
 | `StatCard` | Metric + trend + label card | Phase 0 |
 | `ScoreGauge` | SVG ring gauge (sm/md/lg) with animation | Phase 0 (exists) |
-| `SparklineChart` | Inline trend mini-chart | Phase 1 |
-| `TimeSeriesChart` | Full analytics area/line chart | Phase 1 |
-| `DataTable` | Sortable, paginated, searchable table | Phase 1 |
-| `AlertCard` | Severity-colored alert with actions | Phase 1 |
+| `PipelineStatusBar` | Pipeline health summary (pages, cache, schema, budget) | Phase 0 |
+| `PipelineTable` | Page-level optimization status with "What We Did" column | Phase 0 |
+| `AutoFixBanner` | Summary of auto-fixed issues with link to detail | Phase 0 |
+| `NeedsAttentionCard` | Non-auto-fixable issue with evidence + why + fix | Phase 0 |
+| `ContentPreview` | Side-by-side origin vs. optimized content panel | Phase 0 |
+| `BacklinkNotice` | Free tier backlink notice with upgrade CTA | Phase 0 |
 | `FeatureGate` | Wrapper that gates content by tier | Phase 0 |
 | `EmptyState` | Icon + message + CTA placeholder | Phase 0 |
 | `SkeletonLayout` | Page-level skeleton matching layout | Phase 0 |
-| `FilterBar` | Date range + export controls | Phase 1 |
 | `CodeSnippet` | Syntax-highlighted code with copy + framework tabs | Phase 0 |
 | `StatusBanner` | Full-width integration status indicator | Phase 0 |
+| `SparklineChart` | Inline trend mini-chart | Phase 1 |
+| `TimeSeriesChart` | Full analytics area/line chart | Phase 1 |
+| `DataTable` | Sortable, paginated, searchable table with filters | Phase 1 |
+| `QueryExplorer` | Search + combinable filters + saved presets | Phase 1 |
+| `AlertCard` | Severity-colored alert with actions | Phase 1 |
+| `FilterBar` | Date range + export controls | Phase 1 |
 | `NotificationPanel` | Slide-out or dropdown notification list | Phase 1 |
-| `ContentPreview` | Side-by-side content comparison panel | Phase 2 |
 | `UsageMeter` | Progress bar with limit label | Phase 1 |
 | `PlanComparison` | Tier comparison table with current plan highlight | Phase 1 |
 
@@ -1001,15 +1158,20 @@ The dashboard requires these components beyond what exists in `src/components/ui
 
 ## Decisions
 
-- **Navigation model:** Collapsible sidebar + header with site/org selectors. Not a top-nav tab model.
+- **Optimization is the hero feature.** Available to ALL tiers including free. Free tier includes CrawlReady backlink on optimized pages; paid tiers remove it. This is the #1 value proposition.
+- **Auto-fix vs. Needs Your Attention.** CrawlReady auto-fixes Schema, content optimization, ARIA. Dashboard only surfaces issues the user must fix (robots.txt, auth-gated pages, server config). Don't show auto-fixable issues as problems.
+- **Plug-and-play default.** The optimization pipeline works with zero configuration. Advanced settings available via progressive disclosure. Users never *have* to configure anything.
+- **Synthetic bot verification in onboarding.** CrawlReady sends fake AI bot requests to the user's site to instantly verify integration. Don't wait for real crawlers.
+- **Navigation model:** Collapsible sidebar + header with site/org selectors. Optimization is #2 nav item (right after Overview). Analytics is #3.
 - **Site scoping:** URL contains `[orgSlug]/[siteId]`. Enables deep-linking and multi-org support.
 - **Adaptive landing:** 0 sites → empty state, 1 site → auto-redirect, 2+ sites → portfolio grid.
-- **Onboarding:** Separate flow, loops back on incomplete, dashboard empty states bridge the gap.
+- **Onboarding:** Separate flow with 6 steps (including verification + optimization activation). Loops back on incomplete.
 - **Feature gating:** Locked features are visible but gated with upgrade CTAs. Never hide features.
-- **Progressive disclosure:** Smart defaults shown first, advanced controls behind expandable sections.
+- **Analytics queryability:** Query explorer with full-text search, combinable filters, saved presets, and export. Not just charts.
 - **Loading strategy:** Skeletons matching layout, partial data shown immediately, inline error recovery.
-- **Mobile:** Full responsive with bottom nav. Read and configure on mobile.
+- **Mobile:** Full responsive with bottom nav (Overview, Optimize, Analytics, Setup, More).
 - **Data fetching:** RSC + ISR for page loads, SWR for real-time data, polling for notifications/alerts.
 - **Org-scoped from day 1:** Uses Clerk Organizations. Personal org auto-created. Sites belong to orgs.
 - **Diagnostic stays separate:** Public /scan tool is independent. Dashboard links to score pages, does not embed rescan.
 - **Notifications:** In-app bell + email digests + webhook endpoints. Event-driven architecture.
+- **Free tier backlink model:** Backlink injected in the optimized AI page generated by CrawlReady's content pipeline. CrawlReady controls the optimized page. Zero customer action required.
