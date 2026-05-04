@@ -5,44 +5,54 @@ import { useCallback, useEffect, useState } from 'react';
 
 type VerificationStatus = 'idle' | 'checking' | 'success' | 'failed';
 
+type VerifyResult = {
+  verified: boolean;
+  latency_ms: number;
+  bot_detected: string | null;
+  message: string;
+};
+
 export default function VerifyPage() {
   const router = useRouter();
   const [status, setStatus] = useState<VerificationStatus>('idle');
-  const [siteKey, setSiteKey] = useState<string | null>(null);
+  const [siteId, setSiteId] = useState<string | null>(null);
   const [domain, setDomain] = useState<string | null>(null);
+  const [result, setResult] = useState<VerifyResult | null>(null);
 
   useEffect(() => {
-    const storedKey = sessionStorage.getItem('onboarding_api_key');
+    const storedId = sessionStorage.getItem('onboarding_site_id');
     const storedDomain = sessionStorage.getItem('onboarding_domain');
 
-    if (storedKey) {
-      setSiteKey(storedKey);
+    if (storedId) {
+      setSiteId(storedId);
     }
     if (storedDomain) {
       setDomain(storedDomain);
     }
 
-    if (!storedKey && !storedDomain) {
+    if (!storedId && !storedDomain) {
       router.push('/onboarding/add-site');
     }
   }, [router]);
 
   const runVerification = useCallback(async () => {
-    if (!siteKey || !domain) {
+    if (!siteId) {
       return;
     }
 
     setStatus('checking');
+    setResult(null);
 
     try {
       const response = await fetch('/api/v1/verify-integration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ site_key: siteKey, domain }),
+        body: JSON.stringify({ site_id: siteId }),
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data: VerifyResult = await response.json();
+        setResult(data);
         setStatus(data.verified ? 'success' : 'failed');
       } else {
         setStatus('failed');
@@ -50,7 +60,7 @@ export default function VerifyPage() {
     } catch {
       setStatus('failed');
     }
-  }, [siteKey, domain]);
+  }, [siteId]);
 
   const handleContinue = () => {
     router.push('/onboarding/done');
@@ -80,14 +90,14 @@ export default function VerifyPage() {
               </svg>
             </div>
             <p className="mb-6 text-gray-600">
-              We&apos;ll send a synthetic AI bot request to your site and check if a beacon arrives.
+              We&apos;ll send a synthetic GPTBot request to your site and check if a beacon arrives.
             </p>
             <button
               type="button"
               onClick={runVerification}
               className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
             >
-              Run Verification
+              Verify My Integration
             </button>
           </div>
         )}
@@ -100,12 +110,12 @@ export default function VerifyPage() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
             </div>
-            <p className="text-gray-600">Sending synthetic bot request and waiting for beacon...</p>
-            <p className="mt-2 text-sm text-gray-400">This may take up to 15 seconds</p>
+            <p className="font-medium text-gray-700">Sending test request...</p>
+            <p className="mt-1 text-sm text-gray-500">Waiting for beacon response (up to 15 seconds)</p>
           </div>
         )}
 
-        {status === 'success' && (
+        {status === 'success' && result && (
           <div className="text-center">
             <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-green-100">
               <svg className="size-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +123,19 @@ export default function VerifyPage() {
               </svg>
             </div>
             <h3 className="mb-2 text-lg font-semibold text-green-800">Integration Verified!</h3>
-            <p className="text-gray-600">AI crawler tracking is working correctly for your site.</p>
+            <p className="text-gray-600">{result.message}</p>
+            {result.bot_detected && (
+              <p className="mt-2 text-sm text-gray-500">
+                Bot:
+                {' '}
+                <span className="font-mono">{result.bot_detected}</span>
+                {' · '}
+                Latency:
+                {' '}
+                {(result.latency_ms / 1000).toFixed(1)}
+                s
+              </p>
+            )}
           </div>
         )}
 
@@ -124,16 +146,29 @@ export default function VerifyPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h3 className="mb-2 text-lg font-semibold text-amber-800">Verification Pending</h3>
+            <h3 className="mb-2 text-lg font-semibold text-amber-800">No Beacon Detected</h3>
             <p className="mb-4 text-gray-600">
-              We didn&apos;t detect a beacon yet. This could mean the integration isn&apos;t deployed yet, or the site is behind a firewall.
+              {result?.message ?? 'We didn\'t receive a beacon within 15 seconds.'}
             </p>
+            <div className="mb-6 rounded-lg bg-gray-50 p-4 text-left text-sm text-gray-600">
+              <p className="mb-2 font-medium text-gray-700">Troubleshooting:</p>
+              <ul className="list-inside list-disc space-y-1">
+                <li>Ensure your middleware or script tag is deployed to production</li>
+                <li>
+                  Verify your domain matches exactly:
+                  {' '}
+                  <span className="font-mono">{domain}</span>
+                </li>
+                <li>Check that your middleware detects GPTBot in the User-Agent</li>
+                <li>If behind a firewall, ensure external requests are allowed</li>
+              </ul>
+            </div>
             <button
               type="button"
               onClick={runVerification}
               className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
             >
-              Retry
+              Try Again
             </button>
           </div>
         )}
@@ -154,7 +189,7 @@ export default function VerifyPage() {
                 onClick={handleContinue}
                 className="flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700"
               >
-                Continue
+                Continue to Dashboard
               </button>
             )
           : (
@@ -163,7 +198,7 @@ export default function VerifyPage() {
                 onClick={handleSkip}
                 className="flex-1 rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-700 hover:bg-gray-50"
               >
-                Skip for now
+                Skip for Now
               </button>
             )}
       </div>

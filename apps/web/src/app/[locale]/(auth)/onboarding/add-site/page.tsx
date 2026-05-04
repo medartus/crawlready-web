@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle2, Copy, Globe, Loader2 } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 type RegistrationResult = {
@@ -20,6 +20,7 @@ const SNIPPET_TABS = [
 ] as const;
 
 export default function AddSitePage() {
+  const router = useRouter();
   const [domain, setDomain] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -64,6 +65,10 @@ export default function AddSitePage() {
       }
 
       setResult(data);
+      // Store in sessionStorage for onboarding flow
+      sessionStorage.setItem('onboarding_site_id', data.id);
+      sessionStorage.setItem('onboarding_domain', data.domain);
+      sessionStorage.setItem('onboarding_api_key', data.site_key);
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -144,12 +149,13 @@ export default function AddSitePage() {
           Once installed, AI crawler visits will appear in your dashboard.
         </p>
 
-        <Link
-          href="/dashboard/sites"
+        <button
+          type="button"
+          onClick={() => router.push('/onboarding/integrate')}
           className="block w-full rounded-lg bg-indigo-600 px-4 py-3 text-center font-medium text-white transition-colors hover:bg-indigo-700"
         >
-          Go to Dashboard
-        </Link>
+          Continue to Integration Setup
+        </button>
       </div>
     );
   }
