@@ -1,4 +1,4 @@
-import { Award, BarChart3, Bot, Code2, FileCode, Zap } from 'lucide-react';
+import { EyeOff, GanttChart, Shield } from 'lucide-react';
 
 import { Background } from '@/components/Background';
 import { FeatureCard } from '@/features/landing/FeatureCard';
@@ -9,51 +9,45 @@ export const Features = () => {
     <div id="features">
       <Background className="bg-cr-surface">
         <Section
-          subtitle="CAPABILITIES"
-          title="What CrawlReady does"
-          description="Purpose-built for AI crawler optimization. Diagnostic, rendering, and analytics in one platform."
+          subtitle="The Problem"
+          title="Why is Your Site Invisible to AI?"
+          description="Your modern web app is likely built with JavaScript. That's great for users, but it means AI crawlers see a blank page. You're not getting cited, and you're losing traffic."
         >
-          <div className="grid grid-cols-1 gap-x-4 gap-y-6 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-x-3 gap-y-8 md:grid-cols-3">
+            {/* Feature 1: CSR Invisibility */}
             <FeatureCard
-              icon={<Award className="size-6" />}
-              title="AI Citation Tracking"
+              icon={(
+                <div className="flex size-full items-center justify-center">
+                  <EyeOff className="stroke-primary-foreground size-8" />
+                </div>
+              )}
+              title="Solve CSR Invisibility"
             >
-              Monitor when ChatGPT, Perplexity, and Claude cite your content. Real-time alerts when your brand appears in AI answers.
+              Your pricing table, feature list, and key content are rendered with JavaScript. AI crawlers like GPTBot don't wait for it. See a side-by-side comparison of what users see vs. what AI sees.
             </FeatureCard>
 
+            {/* Feature 2: Traffic Defense */}
             <FeatureCard
-              icon={<Zap className="size-6" />}
-              title="Sub-200ms Rendering"
+              icon={(
+                <div className="flex size-full items-center justify-center">
+                  <Shield className="stroke-primary-foreground size-8" />
+                </div>
+              )}
+              title="Defend Your Traffic"
             >
-              JavaScript rendering with headless Chrome. AI crawlers get fully-rendered HTML with no impact on your users' experience.
+              Organic search traffic is down 38% as users turn to AI. Cited publishers get 20-40% more clicks. Find out if you're being cited and how to fix it if you're not.
             </FeatureCard>
 
+            {/* Feature 3: Compliance Urgency */}
             <FeatureCard
-              icon={<FileCode className="size-6" />}
-              title="AI-Optimized Schema"
+              icon={(
+                <div className="flex size-full items-center justify-center">
+                  <GanttChart className="stroke-primary-foreground size-8" />
+                </div>
+              )}
+              title="Check AI Act Readiness"
             >
-              Structured data designed for LLMs. FAQ, HowTo, Article, and Product schemas that help AI understand your content.
-            </FeatureCard>
-
-            <FeatureCard
-              icon={<BarChart3 className="size-6" />}
-              title="AI Crawler Analytics"
-            >
-              See which AI crawlers visit your site. Track GPTBot, PerplexityBot, ClaudeBot activity and which content they index.
-            </FeatureCard>
-
-            <FeatureCard
-              icon={<Code2 className="size-6" />}
-              title="Developer-Friendly API"
-            >
-              RESTful API with comprehensive docs. Webhook support for real-time events. SDKs for Node.js, Python, and Go.
-            </FeatureCard>
-
-            <FeatureCard
-              icon={<Bot className="size-6" />}
-              title="All AI Platforms"
-            >
-              ChatGPT Search, Perplexity, Claude, Gemini, Bing AI, and emerging AI search engines. Auto-updates as new crawlers appear.
+              The EU AI Act's transparency rules take effect August 2, 2026. Our diagnostic includes a readiness checklist to see if your site meets the new requirements for machine-readability.
             </FeatureCard>
           </div>
         </Section>
