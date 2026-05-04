@@ -2,12 +2,16 @@ import { randomBytes } from 'node:crypto';
 
 import { auth } from '@clerk/nextjs/server';
 import { schema } from '@crawlready/database';
+import { createLogger } from '@crawlready/logger';
 import { and, count, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { apiError } from '@/lib/utils/api-helpers';
 import { getSnippets } from '@/lib/utils/snippets';
+import { createSiteSchema } from '@/lib/validations/sites';
 import { db } from '@/libs/DB';
+
+const _log = createLogger({ service: 'sites' });
 
 const MAX_SITES_PER_USER = 10;
 
@@ -50,18 +54,19 @@ export async function POST(request: Request) {
     return apiError('UNAUTHORIZED', 'Authentication required.', 401);
   }
 
-  let body: { domain?: string };
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
     return apiError('INVALID_REQUEST', 'Request body must be valid JSON.', 400);
   }
 
-  if (!body.domain || typeof body.domain !== 'string') {
-    return apiError('INVALID_DOMAIN', 'A domain is required.', 400);
+  const parsed = createSiteSchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError('INVALID_DOMAIN', parsed.error.issues[0]?.message ?? 'Invalid input.', 400);
   }
 
-  const domain = normalizeDomain(body.domain);
+  const domain = normalizeDomain(parsed.data.domain);
   if (!domain) {
     return apiError('INVALID_DOMAIN', 'Please enter a valid domain (e.g. example.com).', 400);
   }
@@ -137,6 +142,10 @@ export async function GET() {
         WHERE site_id = ${schema.sites.id}
         AND visited_at >= ${thirtyDaysAgo.toISOString()}
       ), 0)`,
+      lastBeaconAt: sql<string | null>`(
+        SELECT MAX(visited_at)::text FROM crawler_visits
+        WHERE site_id = ${schema.sites.id}
+      )`,
     })
     .from(schema.sites)
     .where(eq(schema.sites.clerkUserId, userId))
@@ -149,6 +158,7 @@ export async function GET() {
       site_key: r.siteKey,
       created_at: r.createdAt.toISOString(),
       visit_count_30d: r.visitCount30d,
+      last_beacon_at: r.lastBeaconAt ?? null,
     })),
   });
 }

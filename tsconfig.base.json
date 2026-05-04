@@ -11,6 +11,7 @@
       "@crawlready/cache": ["./packages/cache/src"],
       "@crawlready/queue": ["./packages/queue/src"],
       "@crawlready/storage": ["./packages/storage/src"],
+      "@crawlready/core": ["./packages/core/src"],
       "@crawlready/security": ["./packages/security/src"]
     },
     "resolveJsonModule": true,

@@ -1,26 +1,15 @@
+import { KNOWN_BOTS } from '@crawlready/core';
 import { schema } from '@crawlready/database';
 import { createLogger } from '@crawlready/logger';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
+import { siteKeyCache } from '@/lib/cache/site-key-cache';
 import { ingestRateLimiter } from '@/lib/utils/rate-limit';
+import { ingestSchema } from '@/lib/validations/ingest';
 import { db } from '@/libs/DB';
 
 const log = createLogger({ service: 'ingest' });
-
-// Known AI bots — verified bots get tagged as such
-const KNOWN_BOTS = new Set([
-  'GPTBot',
-  'ChatGPT-User',
-  'OAI-SearchBot',
-  'ClaudeBot',
-  'PerplexityBot',
-  'Perplexity-User',
-  'Google-Extended',
-  'Applebot-Extended',
-  'Meta-ExternalAgent',
-  'Bytespider',
-]);
 
 const MAX_TIMESTAMP_DRIFT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -75,21 +64,13 @@ export async function POST(request: Request) {
     return SILENT_204; // Malformed JSON — silent reject
   }
 
-  const { s: siteKey, p: rawPath, b: bot, t: timestamp, src: source } = body;
+  // Step 1: Zod validation
+  const parsed = ingestSchema.safeParse(body);
+  if (!parsed.success) {
+    return SILENT_204;
+  }
 
-  // Validate required fields — silent 204 on invalid
-  if (!siteKey || typeof siteKey !== 'string') {
-    return SILENT_204;
-  }
-  if (!rawPath || typeof rawPath !== 'string') {
-    return SILENT_204;
-  }
-  if (!bot || typeof bot !== 'string') {
-    return SILENT_204;
-  }
-  if (!timestamp || typeof timestamp !== 'number') {
-    return SILENT_204;
-  }
+  const { s: siteKey, p: rawPath, b: bot, t: timestamp, src: source } = parsed.data;
 
   // Step 2: Validate bot — accept unknown bots as unverified
   const isKnownBot = KNOWN_BOTS.has(bot);
@@ -111,22 +92,28 @@ export async function POST(request: Request) {
     return SILENT_204; // Silent rate limit per spec
   }
 
-  // Step 4: Site key lookup
+  // Step 4: Site key lookup (LRU cache → DB fallback)
   let siteId: string;
-  try {
-    const rows = await db
-      .select({ id: schema.sites.id })
-      .from(schema.sites)
-      .where(eq(schema.sites.siteKey, siteKey))
-      .limit(1);
+  const cached = siteKeyCache.get(siteKey);
+  if (cached) {
+    siteId = cached.siteId;
+  } else {
+    try {
+      const rows = await db
+        .select({ id: schema.sites.id })
+        .from(schema.sites)
+        .where(eq(schema.sites.siteKey, siteKey))
+        .limit(1);
 
-    if (rows.length === 0) {
-      return SILENT_204; // Invalid key — silent reject per spec
+      if (rows.length === 0) {
+        return SILENT_204; // Invalid key — silent reject per spec
+      }
+      siteId = rows[0]!.id;
+      siteKeyCache.set(siteKey, siteId);
+    } catch (err) {
+      log.warn({ err, siteKey: siteKey.slice(0, 12) }, 'Site key lookup failed');
+      return SILENT_204;
     }
-    siteId = rows[0]!.id;
-  } catch (err) {
-    log.warn({ err, siteKey: siteKey.slice(0, 12) }, 'Site key lookup failed');
-    return SILENT_204;
   }
 
   // Step 6: Path normalization
@@ -138,6 +125,9 @@ export async function POST(request: Request) {
 
   // Step 8: Return response BEFORE database write (per spec)
   // Step 9: Async DB write (best-effort, at-most-once, fire-and-forget)
+  // Read correlation ID from request header (injected by middleware)
+  const correlationId = request.headers.get('x-correlation-id') ?? 'unknown';
+
   void db.insert(schema.crawlerVisits).values({
     siteId,
     path,
@@ -146,7 +136,7 @@ export async function POST(request: Request) {
     verified: isKnownBot,
     visitedAt: new Date(timestamp),
   }).catch((err) => {
-    log.error({ err, siteId, bot: sanitizedBot, path }, 'Ingest DB write failed');
+    log.error({ err, siteId, bot: sanitizedBot, path, correlationId }, 'Ingest DB write failed');
   });
 
   return SILENT_204;

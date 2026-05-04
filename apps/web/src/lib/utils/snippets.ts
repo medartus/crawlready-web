@@ -4,9 +4,9 @@
  * to the CrawlReady ingest endpoint.
  */
 
-const INGEST_URL = 'https://crawlready.app/api/v1/ingest';
+import { AI_BOTS_REGEX_STRING } from '@crawlready/core';
 
-const AI_BOTS_REGEX = 'GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|PerplexityBot|Perplexity-User|Google-Extended|Applebot-Extended|Meta-ExternalAgent|Bytespider';
+const INGEST_URL = 'https://crawlready.app/api/v1/ingest';
 
 export function getSnippets(siteKey: string): Record<string, string> {
   return {
@@ -14,7 +14,7 @@ export function getSnippets(siteKey: string): Record<string, string> {
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const AI_BOTS = /${AI_BOTS_REGEX}/i;
+const AI_BOTS = /${AI_BOTS_REGEX_STRING}/i;
 
 export function middleware(request: NextRequest) {
   const ua = request.headers.get('user-agent') || '';
@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
 }`,
 
     express: `// app.js
-const AI_BOTS = /${AI_BOTS_REGEX}/i;
+const AI_BOTS = /${AI_BOTS_REGEX_STRING}/i;
 
 app.use((req, res, next) => {
   const ua = req.headers['user-agent'] || '';
@@ -46,7 +46,7 @@ app.use((req, res, next) => {
 });`,
 
     cloudflare: `// worker.js
-const AI_BOTS = /${AI_BOTS_REGEX}/i;
+const AI_BOTS = /${AI_BOTS_REGEX_STRING}/i;
 
 export default {
   async fetch(request, env) {
@@ -65,7 +65,7 @@ export default {
 };`,
 
     generic: `// Any JS runtime
-const AI_BOTS = /${AI_BOTS_REGEX}/i;
+const AI_BOTS = /${AI_BOTS_REGEX_STRING}/i;
 
 function reportAiCrawler(userAgent, path) {
   if (AI_BOTS.test(userAgent)) {

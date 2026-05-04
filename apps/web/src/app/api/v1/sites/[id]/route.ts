@@ -1,11 +1,15 @@
 import { auth } from '@clerk/nextjs/server';
 import { schema } from '@crawlready/database';
-import { and, eq } from 'drizzle-orm';
+import { createLogger } from '@crawlready/logger';
+import { and, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
+import { siteKeyCache } from '@/lib/cache/site-key-cache';
 import { apiError } from '@/lib/utils/api-helpers';
 import { getSnippets } from '@/lib/utils/snippets';
 import { db } from '@/libs/DB';
+
+const log = createLogger({ service: 'sites-detail' });
 
 type RouteParams = { params: Promise<{ id: string }> };
 
@@ -21,7 +25,21 @@ export async function GET(_request: Request, routeParams: RouteParams) {
   const { id } = await routeParams.params;
 
   const rows = await db
-    .select()
+    .select({
+      id: schema.sites.id,
+      domain: schema.sites.domain,
+      siteKey: schema.sites.siteKey,
+      tier: schema.sites.tier,
+      createdAt: schema.sites.createdAt,
+      lastBeaconAt: sql<string | null>`(
+        SELECT MAX(visited_at)::text FROM crawler_visits
+        WHERE site_id = ${schema.sites.id}
+      )`,
+      totalVisits: sql<number>`COALESCE((
+        SELECT COUNT(*)::int FROM crawler_visits
+        WHERE site_id = ${schema.sites.id}
+      ), 0)`,
+    })
     .from(schema.sites)
     .where(
       and(
@@ -43,6 +61,8 @@ export async function GET(_request: Request, routeParams: RouteParams) {
     tier: site.tier,
     created_at: site.createdAt.toISOString(),
     snippet: getSnippets(site.siteKey),
+    last_beacon_at: site.lastBeaconAt ?? null,
+    total_visits: site.totalVisits,
   });
 }
 
@@ -73,9 +93,21 @@ export async function DELETE(_request: Request, routeParams: RouteParams) {
     return apiError('NOT_FOUND', 'Site not found.', 404);
   }
 
+  // Get site key for cache invalidation before deleting
+  const siteToDelete = await db
+    .select({ siteKey: schema.sites.siteKey })
+    .from(schema.sites)
+    .where(eq(schema.sites.id, id))
+    .limit(1);
+
   await db
     .delete(schema.sites)
     .where(eq(schema.sites.id, id));
+
+  // Invalidate LRU cache
+  if (siteToDelete[0]?.siteKey) {
+    siteKeyCache.delete(siteToDelete[0].siteKey);
+  }
 
   return new NextResponse(null, { status: 204 });
 }

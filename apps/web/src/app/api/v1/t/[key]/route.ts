@@ -9,10 +9,12 @@
 
 import { Buffer } from 'node:buffer';
 
+import { AI_BOTS_REGEX, KNOWN_BOTS } from '@crawlready/core';
 import { schema } from '@crawlready/database';
 import { createLogger } from '@crawlready/logger';
 import { eq } from 'drizzle-orm';
 
+import { siteKeyCache } from '@/lib/cache/site-key-cache';
 import { ingestRateLimiter } from '@/lib/utils/rate-limit';
 import { db } from '@/libs/DB';
 
@@ -30,22 +32,6 @@ const GIF_HEADERS = {
   'Cache-Control': 'no-store, no-cache, must-revalidate',
   'Expires': '0',
 };
-
-// Known AI bots — same list as ingest route
-const KNOWN_BOTS = new Set([
-  'GPTBot',
-  'ChatGPT-User',
-  'OAI-SearchBot',
-  'ClaudeBot',
-  'PerplexityBot',
-  'Perplexity-User',
-  'Google-Extended',
-  'Applebot-Extended',
-  'Meta-ExternalAgent',
-  'Bytespider',
-]);
-
-const AI_BOTS_REGEX = /GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|PerplexityBot|Perplexity-User|Google-Extended|Applebot-Extended|Meta-ExternalAgent|Bytespider/i;
 
 type RouteParams = { params: Promise<{ key: string }> };
 
@@ -74,17 +60,24 @@ export async function GET(request: Request, routeParams: RouteParams) {
   // Best-effort async DB write
   void (async () => {
     try {
-      const rows = await db
-        .select({ id: schema.sites.id })
-        .from(schema.sites)
-        .where(eq(schema.sites.siteKey, siteKey))
-        .limit(1);
+      let siteId: string;
+      const cached = siteKeyCache.get(siteKey);
+      if (cached) {
+        siteId = cached.siteId;
+      } else {
+        const rows = await db
+          .select({ id: schema.sites.id })
+          .from(schema.sites)
+          .where(eq(schema.sites.siteKey, siteKey))
+          .limit(1);
 
-      if (rows.length === 0) {
-        return; // Invalid key — silently ignore
+        if (rows.length === 0) {
+          return; // Invalid key — silently ignore
+        }
+
+        siteId = rows[0]!.id;
+        siteKeyCache.set(siteKey, siteId);
       }
-
-      const siteId = rows[0]!.id;
       const referer = request.headers.get('referer') ?? '';
       let path = '/';
       try {

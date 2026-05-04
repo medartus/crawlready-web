@@ -110,6 +110,9 @@ importers:
       '@clerk/themes':
         specifier: ^2.1.36
         version: 2.4.28
+      '@crawlready/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@crawlready/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -411,6 +414,12 @@ importers:
       vitest-fail-on-console:
         specifier: ^0.7.1
         version: 0.7.1(vite@8.0.10(@types/node@22.18.12)(esbuild@0.25.11)(jiti@1.21.7)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.3))(vitest@2.1.9(@types/node@22.18.12)(esbuild@0.25.11)(jiti@1.21.7)(jsdom@25.0.1)(terser@5.44.0)(tsx@4.20.6)(yaml@2.8.3))
+
+  packages/core:
+    devDependencies:
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@22.18.12)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@25.0.1)(terser@5.44.0)(tsx@4.21.0)(yaml@2.8.3)
 
   packages/database:
     dependencies:

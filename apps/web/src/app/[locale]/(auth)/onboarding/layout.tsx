@@ -4,19 +4,23 @@ import { usePathname } from 'next/navigation';
 
 const steps = [
   { id: 'add-site', label: 'Add Site', number: 1 },
-  { id: 'crawl', label: 'Pre-Cache', number: 2 },
-  { id: 'integrate', label: 'Integrate', number: 3 },
+  { id: 'integrate', label: 'Choose Integration', number: 2 },
+  { id: 'verify', label: 'Verify', number: 3 },
+  { id: 'done', label: 'Done', number: 4 },
 ];
 
 function getCurrentStep(pathname: string): number {
   if (pathname.includes('/add-site')) {
     return 1;
   }
-  if (pathname.includes('/crawl')) {
+  if (pathname.includes('/integrate')) {
     return 2;
   }
-  if (pathname.includes('/integrate')) {
+  if (pathname.includes('/verify')) {
     return 3;
+  }
+  if (pathname.includes('/done')) {
+    return 4;
   }
   return 0;
 }

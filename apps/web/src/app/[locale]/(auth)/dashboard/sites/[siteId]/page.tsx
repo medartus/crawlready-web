@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ArrowLeft, CheckCircle2, Copy, Globe, Key, Loader2, Trash2 } from 'lucide-react';
+import { Activity, AlertCircle, AlertTriangle, ArrowLeft, CheckCircle2, Code, Copy, Globe, Key, Loader2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -15,6 +15,8 @@ type SiteDetail = {
   tier: string;
   created_at: string;
   snippet: Record<string, string>;
+  last_beacon_at: string | null;
+  total_visits: number;
 };
 
 const SNIPPET_TABS = [
@@ -34,6 +36,7 @@ export default function SiteDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedSnippet, setCopiedSnippet] = useState(false);
+  const [copiedScriptTag, setCopiedScriptTag] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('nextjs');
 
@@ -152,10 +155,40 @@ export default function SiteDetailPage() {
             </div>
           </div>
 
+          {/* Script Tag (E4-T2) */}
+          <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
+            <div className="mb-4 flex items-center gap-2">
+              <Code className="size-5 text-indigo-600 dark:text-indigo-400" />
+              <h3 className="font-semibold text-gray-900 dark:text-white">Script Tag (Quick Start)</h3>
+            </div>
+            <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+              Add before
+              {' '}
+              <code className="rounded bg-gray-100 px-1 dark:bg-gray-900">&lt;/head&gt;</code>
+              {' '}
+              for zero-config AI crawler tracking.
+            </p>
+            <div className="relative">
+              <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs text-gray-100">
+                {`<script src="https://crawlready.app/c.js" data-key="${site.site_key}" async></script>\n<noscript><img src="https://crawlready.app/api/v1/t/${site.site_key}" alt="" /></noscript>`}
+              </pre>
+              <button
+                type="button"
+                onClick={() => handleCopy(
+                  `<script src="https://crawlready.app/c.js" data-key="${site.site_key}" async></script>\n<noscript><img src="https://crawlready.app/api/v1/t/${site.site_key}" alt="" /></noscript>`,
+                  setCopiedScriptTag,
+                )}
+                className="absolute right-2 top-2 rounded bg-gray-700 px-2 py-1 text-xs text-gray-300 hover:bg-gray-600"
+              >
+                {copiedScriptTag ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+
           {/* Middleware Snippet */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
             <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">
-              Middleware Snippet
+              Middleware Snippet (Recommended)
             </h3>
             <div className="mb-3 flex gap-1 rounded-lg bg-gray-100 p-1 dark:bg-gray-900">
               {SNIPPET_TABS.map(tab => (
@@ -205,7 +238,42 @@ export default function SiteDetailPage() {
                 </p>
               </div>
             </div>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Status</span>
+                {!site.last_beacon_at
+                  ? (
+                      <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                        <AlertCircle className="size-3" />
+                        No data
+                      </span>
+                    )
+                  : (Date.now() - new Date(site.last_beacon_at).getTime()) < 86400000
+                      ? (
+                          <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <Activity className="size-3" />
+                            Active
+                          </span>
+                        )
+                      : (
+                          <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                            <CheckCircle2 className="size-3" />
+                            Connected
+                          </span>
+                        )}
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Total visits</span>
+                <span className="font-medium text-gray-900 dark:text-white">{site.total_visits}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">Last beacon</span>
+                <span className="text-gray-900 dark:text-white">
+                  {site.last_beacon_at
+                    ? new Date(site.last_beacon_at).toLocaleDateString()
+                    : 'Never'}
+                </span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-gray-500 dark:text-gray-400">Registered</span>
                 <span className="text-gray-900 dark:text-white">{new Date(site.created_at).toLocaleDateString()}</span>

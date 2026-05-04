@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Globe, MoreVertical, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Activity, AlertCircle, CheckCircle2, Copy, Globe, MoreVertical, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -13,7 +13,47 @@ type Site = {
   site_key: string;
   created_at: string;
   visit_count_30d: number;
+  last_beacon_at: string | null;
 };
+
+function IntegrationBadge({ lastBeaconAt }: { readonly lastBeaconAt: string | null }) {
+  if (!lastBeaconAt) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+        <AlertCircle className="size-3" />
+        No data yet
+      </span>
+    );
+  }
+
+  const lastSeen = new Date(lastBeaconAt);
+  const hoursSince = (Date.now() - lastSeen.getTime()) / (1000 * 60 * 60);
+
+  if (hoursSince < 24) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+        <Activity className="size-3" />
+        Active
+      </span>
+    );
+  }
+
+  if (hoursSince < 168) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+        <CheckCircle2 className="size-3" />
+        Connected
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+      <AlertCircle className="size-3" />
+      Stale
+    </span>
+  );
+}
 
 function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => void }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -37,9 +77,12 @@ function SiteCard({ site, onDelete }: { site: Site; onDelete: (id: string) => vo
             <Globe className="size-5 text-indigo-600 dark:text-indigo-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white">
-              {site.domain}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                {site.domain}
+              </h3>
+              <IntegrationBadge lastBeaconAt={site.last_beacon_at} />
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Added
               {' '}
@@ -199,11 +242,31 @@ export default function SitesPage() {
         ? (
             <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center dark:border-gray-700 dark:bg-gray-800/50">
               <Globe className="mx-auto mb-4 size-12 text-gray-400" />
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">No Sites Yet</h3>
-              <p className="mx-auto mb-6 max-w-md text-gray-500 dark:text-gray-400">
-                Add your first website to start making it visible to AI crawlers.
+              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Start Tracking AI Crawler Visits</h3>
+              <p className="mx-auto mb-8 max-w-md text-gray-500 dark:text-gray-400">
+                Add your first website to see which AI bots are visiting, how often, and which pages they access.
               </p>
+
+              <div className="mx-auto mb-8 grid max-w-lg gap-4 text-left sm:grid-cols-3">
+                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="mb-2 flex size-8 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">1</div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Add your domain</p>
+                  <p className="mt-1 text-xs text-gray-500">Register the site you want to track</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="mb-2 flex size-8 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">2</div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Add a snippet</p>
+                  <p className="mt-1 text-xs text-gray-500">~5 lines of middleware or a script tag</p>
+                </div>
+                <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="mb-2 flex size-8 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-600">3</div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">See visits</p>
+                  <p className="mt-1 text-xs text-gray-500">AI bot analytics in real time</p>
+                </div>
+              </div>
+
               <Link href="/onboarding/add-site" className={buttonVariants({ variant: 'default' })}>
+                <Plus className="mr-2 size-4" />
                 Add Your First Site
               </Link>
             </div>

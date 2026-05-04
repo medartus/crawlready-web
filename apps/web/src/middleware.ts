@@ -6,6 +6,7 @@ import {
 } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 
+import { CORRELATION_HEADER, getCorrelationId } from './lib/utils/correlation';
 import { routing } from './libs/i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
@@ -34,6 +35,17 @@ const isProtectedPageRoute = createRouteMatcher([
   '/:locale/onboarding(.*)',
 ]);
 
+/**
+ * Inject X-Correlation-Id into the response and forward it on the request
+ * so downstream API handlers can read it.
+ */
+function withCorrelationId(request: NextRequest, response: NextResponse): NextResponse {
+  const correlationId = getCorrelationId(request);
+  response.headers.set(CORRELATION_HEADER, correlationId);
+  request.headers.set(CORRELATION_HEADER, correlationId);
+  return response;
+}
+
 export default function middleware(
   request: NextRequest,
   event: NextFetchEvent,
@@ -46,7 +58,7 @@ export default function middleware(
     || pathname.startsWith('/api/v1/score/')
     || pathname.startsWith('/api/v1/t/')
   ) {
-    return NextResponse.next();
+    return withCorrelationId(request, NextResponse.next());
   }
 
   // 2. Protect ALL other API routes by default (secure by default)
@@ -57,7 +69,7 @@ export default function middleware(
       await auth.protect();
 
       // Skip intl middleware for API routes (they don't need localization)
-      return NextResponse.next();
+      return withCorrelationId(request, NextResponse.next());
     })(request, event);
   }
 

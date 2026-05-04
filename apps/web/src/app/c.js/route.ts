@@ -13,12 +13,10 @@
  * See docs/architecture/analytics-infrastructure.md §Script-Tag Path
  */
 
+import { AI_BOTS_REGEX_STRING } from '@crawlready/core';
 import { NextResponse } from 'next/server';
 
 const INGEST_URL = 'https://crawlready.app/api/v1/ingest';
-
-// Bot regex — must stay in sync with the known bots in ingest/route.ts
-const AI_BOTS_REGEX = 'GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|PerplexityBot|Perplexity-User|Google-Extended|Applebot-Extended|Meta-ExternalAgent|Bytespider';
 
 function generateScript(): string {
   return `(function(){
@@ -26,7 +24,7 @@ function generateScript(): string {
   var k=document.currentScript&&document.currentScript.getAttribute("data-key");
   if(!k)return;
   var ua=navigator.userAgent||"";
-  var re=/${AI_BOTS_REGEX}/i;
+  var re=/${AI_BOTS_REGEX_STRING}/i;
   var m=re.exec(ua);
   if(!m)return;
   var b=m[0];
